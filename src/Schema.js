@@ -1,6 +1,6 @@
 "use strict"
 
-export default class Schema {
+module.exports = class Schema {
 
     constructor(schema, options = {}) {
         // Raw Schema
@@ -15,9 +15,10 @@ export default class Schema {
             modify: [],
             alter: [],
         };
-        this.primary_keys = [];
+        this.primary_keys = null;
         this.foreign_keys = [];
-        
+
+        this.parseSchema();
 
         return this;
     }
@@ -42,7 +43,9 @@ export default class Schema {
                     this.columns.push(`\`${column}\` ${datatype.name}(${datatype.size})`);
 
                     // Adding NOT NULL || AUTO_INCREMENT
-                    this.constraints.modify.push(`MODIFY \`${column}\`  ${datatype.name}(${datatype.size}) ${not_null?'NOT NULL':''} ${auto_increment?'AUTO_INCREMENT':''}`);
+                    if (not_null || auto_increment) {
+                        this.constraints.modify.push(`MODIFY \`${column}\` ${datatype.name}(${datatype.size}) ${not_null?'NOT NULL':''} ${auto_increment?'AUTO_INCREMENT':''}`);
+                    }
                     
                     // Adding Primary Key to Temp Variable
                     if (primary_key) {
@@ -76,7 +79,7 @@ export default class Schema {
         }
 
         // Adding all primary keys
-        this.primary_keys.push(`ADD PRIMARY KEY (${primary_keys.join()})`);
+        this.primary_keys = `ADD PRIMARY KEY (${primary_keys.join()})`;
 
         // Adding Timestamp
         if (this.options.timestamp) {
