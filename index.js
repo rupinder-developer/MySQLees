@@ -22,7 +22,6 @@ const schema = mysqlees.schema({
             name: 'varchar',
             size: 255
         },
-        not_null: true
     },
     data: {
         datatype: {
@@ -34,5 +33,7 @@ const schema = mysqlees.schema({
 }, {
     timestamp: true
 });
+
+schema.index('test', 'id, name');
 
 mysqlees.model('test1', schema);

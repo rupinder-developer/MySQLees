@@ -88,7 +88,7 @@ module.exports = class Schema {
         }  
     }
 
-    index(index_name, columns, is_unique) {
+    index(index_name, columns, is_unique = false) {
         this.indexes.push({
             index_name,
             columns,

@@ -52,6 +52,12 @@ module.exports =  class Model extends Database {
                 sql += `${alter} ${this.constraints.alter.join()};`;
             }
             
+            if (this.schema.indexes.length > 0) {
+                for(const index of this.schema.indexes) {
+                    sql += `CREATE ${index.is_unique?'UNIQUE':''} INDEX ${index.index_name} ON ${this.model_name} (${index.columns});`;
+                }
+            }
+
             if (this.schema.foreign_keys.length > 0) {
                 for(const foreign_key of this.schema.foreign_keys) {
                     sql += `${alter} ${foreign_key};`;
