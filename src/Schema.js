@@ -2,35 +2,38 @@
 
 export default class Schema {
 
-    constructor(schema, options) {
+    constructor(schema, options = {}) {
         // Raw Schema
         this.schema = schema;
         this.options = options;
         
         // Parsed Schema Data
+        this.indexes = [];
         this.columns = []; 
         this.constraints = {
             add: [],
             modify: [],
-            alter: []
+            alter: [],
         };
-
-        // Indexing Data
-        this.indices = [];
+        this.primary_keys = [];
+        this.foreign_keys = [];
+        
 
         return this;
     }
 
     parseSchema() {
         // Parsing Schema Data
+        let primary_keys = [];
         for (let column in this.schema) {
             const {
+                ref,
                 unique,
                 datatype,
                 not_null,
                 primary_key,
                 default_value,
-                auto_increment
+                auto_increment,
             } = this.schema[column];
 
             if (datatype) {
@@ -38,13 +41,12 @@ export default class Schema {
                     // Adding Columns
                     this.columns.push(`\`${column}\` ${datatype.name}(${datatype.size})`);
 
-
                     // Adding NOT NULL || AUTO_INCREMENT
                     this.constraints.modify.push(`MODIFY \`${column}\`  ${datatype.name}(${datatype.size}) ${not_null?'NOT NULL':''} ${auto_increment?'AUTO_INCREMENT':''}`);
                     
-                    // Adding Primary Key
+                    // Adding Primary Key to Temp Variable
                     if (primary_key) {
-                        this.constraints.add.push(`ADD PRIMARY KEY (\`${column}\`)`);
+                        primary_keys.push(`\`${column}\``);
                     }
 
                     // Adding Unique Key
@@ -52,6 +54,13 @@ export default class Schema {
                         this.constraints.add.push(`ADD UNIQUE KEY \`${column}\` (\`${column}\`)`);
                     }
                     
+                    // Adding Foreign Key
+                    if (ref) {
+                        if (ref.to && ref.foreign_field) {
+                            this.foreign_keys.push(`ADD CONSTRAINT \`${column}_${ref.to}_${ref.foreign_field}\` FOREIGN KEY (\`${column}\`) REFERENCES \`${ref.to}\`(\`${ref.foreign_field}\`) `);
+                        }
+                    }
+
                     // Set default value for column
                     if (typeof default_value !== 'undefined') {
                         if (typeof default_value === 'string') {
@@ -61,9 +70,13 @@ export default class Schema {
                         }
                     }
 
+
                 } // end of datatype.name && datatype.size
             } // end of datatype
         }
+
+        // Adding all primary keys
+        this.primary_keys.push(`ADD PRIMARY KEY (${primary_keys.join()})`);
 
         // Adding Timestamp
         if (this.options.timestamp) {
@@ -73,7 +86,7 @@ export default class Schema {
     }
 
     index(index_name, columns, is_unique) {
-        this.indices.push({
+        this.indexes.push({
             index_name,
             columns,
             is_unique
