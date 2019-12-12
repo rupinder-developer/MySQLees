@@ -1,13 +1,31 @@
 "use strict"
 
+import Database from './Database';
 
-module.exports =  class Model {
+module.exports =  class Model extends Database {
     constructor(model_name, schema) {
+        super();
         this.model_name = model_name;
         this.schema = schema;
-
+        this.validateSchema();
         return this;
     } 
+
+    validateSchema() {
+        global.connection.query(`SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'${this.model_name}' AND TABLE_SCHEMA='${global.config.database}' LIMIT 1`, function(err, result) {
+            if (result) {
+                if (result[0].count === 0) {
+                    this.installSchema();
+                } else {
+                    this.updateSchema();
+                }
+            }
+        }.bind(this));               
+    }
+
+    updateSchema() {
+
+    }
 
     installSchema() {
         if (this.schema.columns.length > 0) {
@@ -39,6 +57,7 @@ module.exports =  class Model {
                     sql += `${alter} ${foreign_key};`;
                 }
             }
+            global.connection.query(sql, function(err, result) {});
         } 
     }
 }

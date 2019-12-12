@@ -1,8 +1,14 @@
 const mysql = require('mysql');
 const mysqlees = require('./build/MySQLees');
 
+mysqlees.connect(mysql, {
+    host: "localhost",
+    user: "root",
+    password: "",
+    database: "tesst"
+}).then(() => console.log("Connected!!")).catch(err => console.log(err));
 
-const cschema = mysqlees.schema({
+const schema = mysqlees.schema({
     id: {
         primary_key: true,
         auto_increment: true,
@@ -24,14 +30,9 @@ const cschema = mysqlees.schema({
             size: 11
         },
         not_null: true,
-        ref: {
-            to: 'orders',
-            foreign_field: 'id'
-        }
     }
 }, {
     timestamp: true
 });
 
-
-mysqlees.model('customer', cschema);
+mysqlees.model('test1', schema);
