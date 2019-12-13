@@ -38,13 +38,13 @@ module.exports = class Schema {
             } = this.schema[column];
 
             if (datatype) {
-                if (datatype.name && datatype.size) {
+                if (datatype.name) {
                     // Adding Columns
-                    this.columns.push(`\`${column}\` ${datatype.name}(${datatype.size})`);
+                    this.columns.push(`\`${column}\` ${datatype.name}${datatype.size?`(${datatype.size})`:``}`);
 
                     // Adding NOT NULL || AUTO_INCREMENT
                     if (not_null || auto_increment) {
-                        this.constraints.modify.push(`MODIFY \`${column}\` ${datatype.name}(${datatype.size}) ${not_null?'NOT NULL':''} ${auto_increment?'AUTO_INCREMENT':''}`);
+                        this.constraints.modify.push(`MODIFY \`${column}\` ${datatype.name}${datatype.size?`(${datatype.size})`:``} ${not_null?'NOT NULL':''} ${auto_increment?'AUTO_INCREMENT':''}`);
                     }
                     
                     // Adding Primary Key to Temp Variable
@@ -66,11 +66,7 @@ module.exports = class Schema {
 
                     // Set default value for column
                     if (typeof default_value !== 'undefined') {
-                        if (typeof default_value === 'string') {
-                            this.constraints.alter.push(`ALTER \`${column}\` SET DEFAULT '${default_value}'`);
-                        } else {
-                            this.constraints.alter.push(`ALTER \`${column}\` SET DEFAULT ${default_value}`);
-                        }
+                        this.constraints.alter.push(`ALTER \`${column}\` SET DEFAULT '${default_value}'`);
                     }
 
 
@@ -84,7 +80,7 @@ module.exports = class Schema {
         // Adding Timestamp
         if (this.options.timestamp) {
             this.columns.push(`\`created_at\` timestamp NOT NULL DEFAULT current_timestamp()`);
-            this.columns.push(`\`updated_at\` timestamp NOT NULL DEFAULT current_timestamp()`);
+            this.columns.push(`\`updated_at\` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE CURRENT_TIMESTAMP`);
         }  
     }
 

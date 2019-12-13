@@ -35,7 +35,9 @@ module.exports =  class Model extends Database {
     }
 
     updateSchema() {
-
+        connection.get(this).query(`DESC \`${model_name.get(this)}\``, function(err, result) {
+            console.log(result);
+        });
     }
 
     installSchema() {
