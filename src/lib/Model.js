@@ -6,6 +6,7 @@ let model_name = new WeakMap();
 let schema = new WeakMap();
 let connection = new WeakMap();
 let config = new WeakMap();
+let update_schema_queries = new WeakMap();
 
 module.exports =  class Model extends Database {
     
@@ -16,7 +17,7 @@ module.exports =  class Model extends Database {
         schema.set(this, _schema);
         connection.set(this, _store.connection);
         config.set(this, _store.config);
-
+        update_schema_queries.set(this, []);
         
         this.validateSchema();
         return this;
@@ -36,7 +37,67 @@ module.exports =  class Model extends Database {
 
     updateSchema() {
         connection.get(this).query(`DESC \`${model_name.get(this)}\``, function(err, result) {
-            console.log(result);
+            let alter = `ALTER TABLE ${model_name.get(this)}`;
+            for(let db_col of result) {
+                const meta_data = {
+                    sql: '',
+                    primary_keys: [],
+                    pk_should_drop: false
+                };
+                if (datatype && datatype.name) {
+                    const column = schema.get(this).schema[db_col.Field];
+                    if (column) {
+                        // If column is already present in database
+                    
+                        // Validate Primary Key 
+                        if (column.primary_keys) {
+                            if (db_col.Key != 'PRI') {
+                                // Adding Primary key
+                                meta_data.primary_keys.push(`\`${db_col.Field}\``)
+                            }
+                        } else if (db_col.Key == 'PRI') {
+                            // Removing Primary Key
+                            meta_data.pk_should_drop = true;
+                        }
+
+                        // Validate NOT NULL & AUTO INCREMENTS
+                        if (column.not_null || column.auto_increment) {
+                            if (meta_data.pk_should_drop) {
+                                meta_data.sql += `${alter} MODIFY \`${db_col.Field}\` ${datatype.name}${datatype.size?`(${datatype.size})`:``} ${not_null?'NOT NULL':''};`;
+                            } else {
+                                meta_data.sql += `${alter} MODIFY \`${db_col.Field}\` ${datatype.name}${datatype.size?`(${datatype.size})`:``} ${not_null?'NOT NULL':''} ${auto_increment?'AUTO_INCREMENT':''};`;
+                            }
+                        }
+
+                        // Validate Unique Key
+                        if (column.unique && !column.primary_keys) {
+                            if (db_col.Key != 'UNI') {
+                                // Adding Unique Key
+                                meta_data.sql += `${alter} ADD UNIQUE KEY \`${db_col.Field}\` (\`${db_col.Field}\`);`
+                            }
+                        } else if (db_col.Key == 'UNI') {
+                            // Removing Unique Key
+                            meta_data.sql += `${alter} DROP INDEX \`${db_col.Field}\`;`;
+                        }
+
+                        // Validate Default Value
+                        if (typeof column.default_value !== 'undefined') {
+                            // Setting Default Value
+                            meta_data.sql += `${alter} ALTER \`${db_col.Field}\` SET DEFAULT '${column.default_value}'`
+                        } else if (db_col.Default) {
+                            // Droping Default Value
+                            meta_data.sql += `${alter} ALTER \`${db_col.Field}\` DROP DEFAULT;`
+                        }
+
+                        // Validate Foreign Key
+                        
+                            
+                    } else {
+                        // If column is not present in database
+                        
+                    }
+                } // end of datatype && datatype.name
+            }
         });
     }
 
@@ -54,7 +115,7 @@ module.exports =  class Model extends Database {
             } 
 
             if (schema.get(this).constraints.add.length > 0) {
-                sql += `${alter} ${this.constraints.add.join()};`;
+                sql += `${alter} ${schema.get(this).constraints.add.join()};`;
             }
 
             if (schema.get(this).constraints.modify.length > 0) {
@@ -62,7 +123,7 @@ module.exports =  class Model extends Database {
             }
 
             if (schema.get(this).constraints.alter.length > 0) {
-                sql += `${alter} ${this.constraints.alter.join()};`;
+                sql += `${alter} ${schema.get(this).constraints.alter.join()};`;
             }
             
             if (schema.get(this).indexes.length > 0) {
@@ -76,7 +137,12 @@ module.exports =  class Model extends Database {
                     sql += `${alter} ${foreign_key};`;
                 }
             }
-            connection.get(this).query(sql, function(err, result) {});
+            
+            connection.get(this).query(sql, function(err, result) {
+                if (err) {
+                    console.log(err);
+                }
+            });
         } 
     }
 }

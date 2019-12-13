@@ -7,34 +7,38 @@ mysqlees.connect(mysql, {
     user: "root",
     password: "",
     database: "test"
-}).then(() => console.log("Connected!!")).catch(err => console.log(err));
+});
 
 const schema = mysqlees.schema({
     id: {
         primary_key: true,
         auto_increment: true,
         datatype: {
-            name: 'int',
-            size: 11
+            name: 'int'
         }
     },
-    name: {
+    phone_number: {
+        primary_key: true,
+        datatype: {
+            name: 'varchar',
+            size: 15
+        }
+    },
+    email: {
+        unique: true,
         datatype: {
             name: 'varchar',
             size: 255
-        },
+        }
     },
-    data: {
+    city: {
         datatype: {
-            name: 'int',
-            size: 11
-        },
-        not_null: true,
+            name: 'varchar',
+            size: 255
+        }
     }
-}, {
-    timestamp: true
-});
+ }, {
+    timestamps: true
+ });
 
-schema.index('test', 'id, name');
-
-const model = mysqlees.model('test12', schema);
+const model = mysqlees.model('data', schema);

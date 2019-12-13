@@ -37,41 +37,37 @@ module.exports = class Schema {
                 auto_increment,
             } = this.schema[column];
 
-            if (datatype) {
-                if (datatype.name) {
-                    // Adding Columns
-                    this.columns.push(`\`${column}\` ${datatype.name}${datatype.size?`(${datatype.size})`:``}`);
+            if (datatype && datatype.name) {
+            
+                // Adding Columns
+                this.columns.push(`\`${column}\` ${datatype.name}${datatype.size?`(${datatype.size})`:``}`);
 
-                    // Adding NOT NULL || AUTO_INCREMENT
-                    if (not_null || auto_increment) {
-                        this.constraints.modify.push(`MODIFY \`${column}\` ${datatype.name}${datatype.size?`(${datatype.size})`:``} ${not_null?'NOT NULL':''} ${auto_increment?'AUTO_INCREMENT':''}`);
-                    }
-                    
-                    // Adding Primary Key to Temp Variable
-                    if (primary_key) {
-                        primary_keys.push(`\`${column}\``);
-                    }
+                // Adding NOT NULL || AUTO_INCREMENT
+                if (not_null || auto_increment) {
+                    this.constraints.modify.push(`MODIFY \`${column}\` ${datatype.name}${datatype.size?`(${datatype.size})`:``} ${not_null?'NOT NULL':''} ${auto_increment?'AUTO_INCREMENT':''}`);
+                }
+                
+                // Adding Primary Key to Temp Variable
+                if (primary_key) {
+                    primary_keys.push(`\`${column}\``);
+                }
 
-                    // Adding Unique Key
-                    if (unique) {
-                        this.constraints.add.push(`ADD UNIQUE KEY \`${column}\` (\`${column}\`)`);
-                    }
-                    
-                    // Adding Foreign Key
-                    if (ref) {
-                        if (ref.to && ref.foreign_field) {
-                            this.foreign_keys.push(`ADD CONSTRAINT \`${column}_${ref.to}_${ref.foreign_field}\` FOREIGN KEY (\`${column}\`) REFERENCES \`${ref.to}\`(\`${ref.foreign_field}\`) `);
-                        }
-                    }
+                // Adding Unique Key
+                if (unique && !primary_key) {
+                    this.constraints.add.push(`ADD UNIQUE KEY \`${column}\` (\`${column}\`)`);
+                }
+                
+                // Adding Foreign Key
+                if (ref && ref.to && ref.foreign_field) {
+                    this.foreign_keys.push(`ADD CONSTRAINT \`${column}_${ref.to}_${ref.foreign_field}\` FOREIGN KEY (\`${column}\`) REFERENCES \`${ref.to}\`(\`${ref.foreign_field}\`) `);
+                }
 
-                    // Set default value for column
-                    if (typeof default_value !== 'undefined') {
-                        this.constraints.alter.push(`ALTER \`${column}\` SET DEFAULT '${default_value}'`);
-                    }
-
-
-                } // end of datatype.name && datatype.size
-            } // end of datatype
+                // Set default value for column
+                if (typeof default_value !== 'undefined') {
+                    this.constraints.alter.push(`ALTER \`${column}\` SET DEFAULT '${default_value}'`);
+                }
+                
+            } // end of datatype && datatype.name
         }
 
         // Adding all primary keys
