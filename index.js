@@ -36,4 +36,5 @@ const schema = mysqlees.schema({
 
 schema.index('test', 'id, name');
 
-mysqlees.model('test1', schema);
+const model = mysqlees.model('test1', schema);
+console.log(JSON.stringify(model));
