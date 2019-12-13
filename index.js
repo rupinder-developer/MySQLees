@@ -1,11 +1,12 @@
 const mysql = require('mysql');
-const mysqlees = require('./build/MySQLees');
+const mysqlees = require('./build/index');
+
 
 mysqlees.connect(mysql, {
     host: "localhost",
     user: "root",
     password: "",
-    database: "tesst"
+    database: "test"
 }).then(() => console.log("Connected!!")).catch(err => console.log(err));
 
 const schema = mysqlees.schema({
@@ -37,4 +38,3 @@ const schema = mysqlees.schema({
 schema.index('test', 'id, name');
 
 const model = mysqlees.model('test1', schema);
-console.log(JSON.stringify(model));

@@ -1,17 +1,15 @@
 "use strict"
 
-global.connection = null;
-global.config = null;
-
-import Schema from './Schema';
-import Model from './Model';
+import Store from './lib/Store';
+import Schema from './lib/Schema';
+import Model from './lib/Model';
 
 class MySQLees {
     connect(mysql, config) {
-        global.config = config;
-        global.connection = mysql.createConnection({...config, multipleStatements: true});
+        Store.config = config;
+        Store.connection = mysql.createConnection({...config, multipleStatements: true});
         return new Promise(function(resolve, reject) {
-            global.connection.connect(function(err) {
+            Store.connection.connect(function(err) {
                 if (err) {
                     reject(err);
                 } else {
@@ -22,7 +20,7 @@ class MySQLees {
     }
 
     model(model_name, schema) {
-        return new Model(model_name, schema);
+        return new Model(model_name, schema, Store);
     }
 
     schema(schema, options = {}) {
@@ -30,4 +28,4 @@ class MySQLees {
     } 
 }
 
-module.exports = new MySQLees;
+module.exports = new MySQLees();

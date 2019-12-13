@@ -4,19 +4,26 @@ import Database from './Database';
 
 let model_name = new WeakMap();
 let schema = new WeakMap();
+let connection = new WeakMap();
+let config = new WeakMap();
 
 module.exports =  class Model extends Database {
     
-    constructor(_model_name, _schema) {
+    constructor(_model_name, _schema, _store) {
         super();
+        // Private Variables
         model_name.set(this, _model_name);
         schema.set(this, _schema);
+        connection.set(this, _store.connection);
+        config.set(this, _store.config);
+
+        
         this.validateSchema();
         return this;
     } 
 
     validateSchema() {
-        global.connection.query(`SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'${model_name.get(this)}' AND TABLE_SCHEMA='${global.config.database}' LIMIT 1`, function(err, result) {
+        connection.get(this).query(`SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'${model_name.get(this)}' AND TABLE_SCHEMA='${config.get(this).database}' LIMIT 1`, function(err, result) {
             if (result) {
                 if (result[0].count === 0) {
                     this.installSchema();
@@ -67,7 +74,7 @@ module.exports =  class Model extends Database {
                     sql += `${alter} ${foreign_key};`;
                 }
             }
-            global.connection.query(sql, function(err, result) {});
+            connection.get(this).query(sql, function(err, result) {});
         } 
     }
 }
