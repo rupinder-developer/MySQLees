@@ -18,8 +18,6 @@ module.exports = class Schema {
         this.primary_keys = null;
         this.foreign_keys = [];
 
-        this.parseSchema();
-
         return this;
     }
 
@@ -74,9 +72,9 @@ module.exports = class Schema {
         this.primary_keys = `ADD PRIMARY KEY (${primary_keys.join()})`;
 
         // Adding Timestamp
-        if (this.options.timestamp) {
-            this.columns.push(`\`created_at\` timestamp NOT NULL DEFAULT current_timestamp()`);
+        if (this.options.timestamps) {
             this.columns.push(`\`updated_at\` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE CURRENT_TIMESTAMP`);
+            this.columns.push(`\`created_at\` timestamp NOT NULL DEFAULT current_timestamp()`);
         }  
     }
 

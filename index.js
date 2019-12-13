@@ -17,28 +17,37 @@ const schema = mysqlees.schema({
             name: 'int'
         }
     },
-    phone_number: {
-        primary_key: true,
+    name: {
         datatype: {
             name: 'varchar',
-            size: 15
-        }
-    },
-    email: {
-        unique: true,
-        datatype: {
-            name: 'varchar',
-            size: 255
-        }
-    },
-    city: {
-        datatype: {
-            name: 'varchar',
-            size: 255
+            size: '255'
         }
     }
- }, {
+}, {
     timestamps: true
- });
+});
 
-const model = mysqlees.model('data', schema);
+const schema2 = mysqlees.schema({
+    id: {
+        primary_key: true,
+        auto_increment: true,
+        datatype: {
+            name: 'int'
+        }
+    },
+    customer_id: {
+        datatype: {
+            name: 'int',
+            size: 11
+        },
+        ref: {
+            to: 'customers',
+            foreign_field: 'id'
+        }
+    }
+}, {
+    timestamps: true
+});
+
+mysqlees.model('orders', schema2);
+mysqlees.model('customers', schema);

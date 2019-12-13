@@ -3,50 +3,54 @@
 import Database from './Database';
 
 let model_name = new WeakMap();
-let schema = new WeakMap();
 let connection = new WeakMap();
 let config = new WeakMap();
-let update_schema_queries = new WeakMap();
 
 module.exports =  class Model extends Database {
-    
+
     constructor(_model_name, _schema, _store) {
         super();
         // Private Variables
         model_name.set(this, _model_name);
-        schema.set(this, _schema);
         connection.set(this, _store.connection);
         config.set(this, _store.config);
-        update_schema_queries.set(this, []);
         
-        this.validateSchema();
+        this.validateSchema(_schema);
         return this;
     } 
 
-    validateSchema() {
+    validateSchema(_schema) {
         connection.get(this).query(`SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'${model_name.get(this)}' AND TABLE_SCHEMA='${config.get(this).database}' LIMIT 1`, function(err, result) {
             if (result) {
                 if (result[0].count === 0) {
-                    this.installSchema();
+                    _schema.parseSchema();
+                    this.installSchema(_schema);
                 } else {
-                    this.updateSchema();
+                    this.updateSchema(_schema);
                 }
             }
         }.bind(this));               
     }
 
-    updateSchema() {
-        connection.get(this).query(`DESC \`${model_name.get(this)}\``, function(err, result) {
-            let alter = `ALTER TABLE ${model_name.get(this)}`;
+    updateSchema(_schema) {
+        const _model_name = model_name.get(this);
+        connection.get(this).query(`DESC \`${_model_name}\``, function(err, result) {
+            let alter = `ALTER TABLE ${_model_name}`;
+            const meta_data = {
+                sql: '',
+                primary_keys: [],
+                pk_should_drop: false
+            };
             for(let db_col of result) {
-                const meta_data = {
-                    sql: '',
-                    primary_keys: [],
-                    pk_should_drop: false
-                };
-                if (datatype && datatype.name) {
-                    const column = schema.get(this).schema[db_col.Field];
-                    if (column) {
+                if (_schema.options.timestamps) {
+                    if (db_col.Field == 'created_at' || db_col.Field == 'updated_at') {
+                        continue;
+                    }
+                }
+                
+                const column = _schema.schema[db_col.Field];
+                if (column) {
+                    if (column.datatype && column.datatype.name) {
                         // If column is already present in database
                     
                         // Validate Primary Key 
@@ -63,9 +67,9 @@ module.exports =  class Model extends Database {
                         // Validate NOT NULL & AUTO INCREMENTS
                         if (column.not_null || column.auto_increment) {
                             if (meta_data.pk_should_drop) {
-                                meta_data.sql += `${alter} MODIFY \`${db_col.Field}\` ${datatype.name}${datatype.size?`(${datatype.size})`:``} ${not_null?'NOT NULL':''};`;
+                                meta_data.sql += `${alter} MODIFY \`${db_col.Field}\` ${column.datatype.name}${column.datatype.size?`(${column.datatype.size})`:``} ${column.not_null?'NOT NULL':''};`;
                             } else {
-                                meta_data.sql += `${alter} MODIFY \`${db_col.Field}\` ${datatype.name}${datatype.size?`(${datatype.size})`:``} ${not_null?'NOT NULL':''} ${auto_increment?'AUTO_INCREMENT':''};`;
+                                meta_data.sql += `${alter} MODIFY \`${db_col.Field}\` ${column.datatype.name}${column.datatype.size?`(${column.datatype.size})`:``} ${column.not_null?'NOT NULL':''} ${column.auto_increment?'AUTO_INCREMENT':''};`;
                             }
                         }
 
@@ -91,58 +95,60 @@ module.exports =  class Model extends Database {
 
                         // Validate Foreign Key
                         
-                            
-                    } else {
-                        // If column is not present in database
-                        
-                    }
-                } // end of datatype && datatype.name
+                    } // end of datatype && datatype.name      
+                } else {
+                    // If column is not present in database
+                    
+                }
             }
-        });
+        }.bind(this));
     }
 
-    installSchema() {
-        if (schema.get(this).columns.length > 0) {
-            let alter = `ALTER TABLE ${model_name.get(this)}`;
+    installSchema(_schema) {
+        if (_schema.columns.length > 0) {
+            const _model_name = model_name.get(this);
+            let alter = `ALTER TABLE \`${_model_name}\``;
             let sql = `
-                CREATE TABLE IF NOT EXISTS \`${model_name.get(this)}\` (
-                    ${schema.get(this).columns.join()}
+                CREATE TABLE IF NOT EXISTS \`${_model_name}\` (
+                    ${_schema.columns.join()}
                 );
             `;
 
-            if (schema.get(this).primary_keys) {
-                sql += `${alter} ${schema.get(this).primary_keys};`;
+            if (_schema.primary_keys) {
+                sql += `${alter} ${_schema.primary_keys};`;
             } 
 
-            if (schema.get(this).constraints.add.length > 0) {
-                sql += `${alter} ${schema.get(this).constraints.add.join()};`;
+            if (_schema.constraints.add.length > 0) {
+                sql += `${alter} ${_schema.constraints.add.join()};`;
             }
 
-            if (schema.get(this).constraints.modify.length > 0) {
-                sql += `${alter} ${schema.get(this).constraints.modify.join()};`;
+            if (_schema.constraints.modify.length > 0) {
+                sql += `${alter} ${_schema.constraints.modify.join()};`;
             }
 
-            if (schema.get(this).constraints.alter.length > 0) {
-                sql += `${alter} ${schema.get(this).constraints.alter.join()};`;
+            if (_schema.constraints.alter.length > 0) {
+                sql += `${alter} ${_schema.constraints.alter.join()};`;
             }
             
-            if (schema.get(this).indexes.length > 0) {
-                for(const index of schema.get(this).indexes) {
-                    sql += `CREATE ${index.is_unique?'UNIQUE':''} INDEX ${index.index_name} ON ${model_name.get(this)} (${index.columns});`;
+            if (_schema.indexes.length > 0) {
+                for(const index of _schema.indexes) {
+                    sql += `CREATE ${index.is_unique?'UNIQUE':''} INDEX ${index.index_name} ON ${_model_name} (${index.columns});`;
                 }
             }
 
-            if (schema.get(this).foreign_keys.length > 0) {
-                for(const foreign_key of schema.get(this).foreign_keys) {
+            if (_schema.foreign_keys.length > 0) {
+                for(const foreign_key of _schema.foreign_keys) {
                     sql += `${alter} ${foreign_key};`;
                 }
             }
             
             connection.get(this).query(sql, function(err, result) {
                 if (err) {
+    
+                    if (err.sql) delete err.sql;
                     console.log(err);
                 }
-            });
+            }.bind(this));
         } 
     }
 }
