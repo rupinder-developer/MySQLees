@@ -8,15 +8,7 @@ class MySQLees {
     connect(mysql, config) {
         Store.config = config;
         Store.connection = mysql.createConnection({...config, multipleStatements: true});
-        return new Promise(function(resolve, reject) {
-            Store.connection.connect(function(err) {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(true);
-                }
-            });
-        });
+        return Store.connection;
     }
 
     model(model_name, schema) {

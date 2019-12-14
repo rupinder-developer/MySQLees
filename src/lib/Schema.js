@@ -143,8 +143,12 @@ module.exports = class Schema {
                     if (err.sql) delete err.sql;
                     console.log(err, ` (Error -> Model = ${this.model_name} )`);
                 }
+
+                // Cleaning Resources
                 fs.unlink(this.schema_files.create_table, function(){});
                 fs.unlink(this.schema_files.alter_table, function(){});
+                delete this.schema_files;
+                delete this.indexes;
             }.bind(this));
         }
     }
