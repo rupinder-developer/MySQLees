@@ -12,7 +12,7 @@ module.exports = class Schema {
         // Parsed Schema Data
         this.schema_files = {
             create_table: '', // Contains CREAT TABLE statement
-            alter_table: [] // Contains all ALTER TABLE statements
+            alter_table: '' // Contains all ALTER TABLE statements
         }; 
         this.indexes = [];
         this.foreign_keys = [];
@@ -23,16 +23,15 @@ module.exports = class Schema {
     parseSchema(model_name) {
         // Creating Schema Files
         let create_table, 
-            alter_table = [],
+            alter_table,
             all_primary_keys = [],
             alter_table_prefix = `ALTER TABLE \`${model_name}\``;
 
         try {
-            this.schema_files.create_table = `${__dirname}/temp/${this.uuid()}.sql`
-            this.schema_files.alter_table = [`${__dirname}/temp/${this.uuid()}.sql`, `${__dirname}/temp/${this.uuid()}.sql`]
+            this.schema_files.create_table = `${__dirname}/temp/${this.uuid()}.sql`;
+            this.schema_files.alter_table = `${__dirname}/temp/${this.uuid()}.sql`;
             create_table = fs.openSync(this.schema_files.create_table, 'a');
-            alter_table[0] = fs.openSync(this.schema_files.alter_table[0], 'a');
-            alter_table[1] = fs.openSync(this.schema_files.alter_table[1], 'a');
+            alter_table = fs.openSync(this.schema_files.alter_table, 'a');
             fs.appendFileSync(create_table, `CREATE TABLE IF NOT EXISTS \`${model_name}\` (`, 'utf8');
             // Parsing Schema Data
             for (let column in this.schema) {
@@ -53,7 +52,7 @@ module.exports = class Schema {
 
                     // Adding NOT NULL || AUTO_INCREMENT
                     if (not_null || auto_increment) {
-                        fs.appendFileSync(alter_table[1], `${alter_table_prefix} MODIFY \`${column}\` ${datatype.name}${datatype.size?`(${datatype.size})`:``} ${not_null?'NOT NULL':''} ${auto_increment?'AUTO_INCREMENT':''};`, 'utf8');
+                        fs.appendFileSync(alter_table, `${alter_table_prefix} MODIFY \`${column}\` ${datatype.name}${datatype.size?`(${datatype.size})`:``} ${not_null?'NOT NULL':''} ${auto_increment?'AUTO_INCREMENT':''};`, 'utf8');
                     }
                     
                     // Adding Primary Key to Temp Variable
@@ -63,7 +62,7 @@ module.exports = class Schema {
 
                     // Adding Unique Key
                     if (unique && !primary_key) {
-                        fs.appendFileSync(alter_table[1], `${alter_table_prefix} ADD UNIQUE KEY \`${column}\` (\`${column}\`);`, 'utf8');
+                        fs.appendFileSync(alter_table, `${alter_table_prefix} ADD UNIQUE KEY \`${column}\` (\`${column}\`);`, 'utf8');
                     }
                     
                     // Adding Foreign Key
@@ -73,22 +72,25 @@ module.exports = class Schema {
 
                     // Set default value for column
                     if (typeof default_value !== 'undefined') {
-                        fs.appendFileSync(alter_table[1], `${alter_table_prefix} ALTER \`${column}\` SET DEFAULT '${default_value}'`, 'utf8');
+                        fs.appendFileSync(alter_table, `${alter_table_prefix} ALTER \`${column}\` SET DEFAULT '${default_value}'`, 'utf8');
                     }
                     
                 } // end of datatype && datatype.name
             }
 
-            // Adding all primary keys
-            fs.appendFileSync(alter_table[0], `${alter_table_prefix} ADD PRIMARY KEY (${all_primary_keys.join()})`, 'utf8');
-
+            
+            
             // Adding Timestamp
             if (this.options.timestamps) {
                 fs.appendFileSync(create_table, `\`updated_at\` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE CURRENT_TIMESTAMP,`, 'utf8');
                 fs.appendFileSync(create_table, `\`created_at\` timestamp NOT NULL DEFAULT current_timestamp()`, 'utf8');
-            }  
+            } 
+
+            // Closing Create Table statement
             fs.appendFileSync(create_table, `);`, 'utf8');
            
+            // Adding all primary keys
+            fs.appendFileSync(create_table, `${alter_table_prefix} ADD PRIMARY KEY (${all_primary_keys.join()})`, 'utf8');
 
         } catch (err) {
             console.log(err);
@@ -99,8 +101,8 @@ module.exports = class Schema {
             if (alter_table[0] !== undefined) {
                 fs.closeSync(alter_table[0]);
             }
-            if (alter_table[1] !== undefined) {
-                fs.closeSync(alter_table[1]);
+            if (alter_table !== undefined) {
+                fs.closeSync(alter_table);
             }
         }
     }
