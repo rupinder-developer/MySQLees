@@ -18,15 +18,18 @@ module.exports =  class Model extends Database {
     } 
 
     createSchema(_model_name, _schema) {
-        store.get(this).connection.query(`SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'${_model_name}' AND TABLE_SCHEMA='${store.get(this).config.database}' LIMIT 1`, function(err, result) {
-            if (result) {
-                if (result[0].count === 0) {
-                    // Installing Schema
-                    _schema.parseSchema(_model_name);
-                } else {
-                    // Updating Schema
+        if (`${_model_name}`.trim()) {
+            store.get(this).connection.query(`SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'${_model_name}' AND TABLE_SCHEMA='${store.get(this).config.database}' LIMIT 1`, function(err, result) {
+                if (result) {
+                    if (result[0].count === 0) {
+                        // Installing Schema
+                        _schema.parseSchema(_model_name);
+                        _schema.installSchema(store.get(this));
+                    } else {
+                        // Updating Schema
+                    }
                 }
-            }
-        }.bind(this));               
+            }.bind(this));     
+        }           
     }
 }
