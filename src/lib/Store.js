@@ -6,7 +6,7 @@ class Store {
         this.config = null;
 
         this.created_models = {};
-        
+        this.pending_fk_queries = []; // Pending Foreign Keys Queries
     }
 }
 

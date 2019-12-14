@@ -16,12 +16,11 @@ module.exports = class Schema {
             alter_table: '' // Contains all ALTER TABLE statements
         }; 
         this.indexes = [];
-        this.foreign_keys = [];
 
         return this;
     }
 
-    parseSchema(model_name) {
+    parseSchema(model_name, store) {
         if (Object.keys(this.schema).length > 0) {
             // Creating Schema Files
             this.model_name = model_name;
@@ -70,7 +69,7 @@ module.exports = class Schema {
                         
                         // Adding Foreign Key
                         if (ref && ref.to && ref.foreign_field) {
-                            this.foreign_keys.push({ref, query: `${alter_table_prefix} ADD CONSTRAINT \`${column}_${ref.to}_${ref.foreign_field}\` FOREIGN KEY (\`${column}\`) REFERENCES \`${ref.to}\`(\`${ref.foreign_field}\`);`});
+                            store.pending_fk_queries.push({ref, query: `${alter_table_prefix} ADD CONSTRAINT \`${column}_${ref.to}_${ref.foreign_field}\` FOREIGN KEY (\`${column}\`) REFERENCES \`${ref.to}\`(\`${ref.foreign_field}\`);`});
                         }
 
                         // Set default value for column
@@ -131,12 +130,22 @@ module.exports = class Schema {
 
     installSchema(store) {
         if (fs.existsSync(this.schema_files.create_table) && fs.existsSync(this.schema_files.alter_table)) {
-            store.connection.query(`${fs.readFileSync(this.schema_files.create_table)} ${fs.readFileSync(this.schema_files.alter_table)} ${this.indexes.join('')}`, function(err, result) {
+            let fk_queries = '';
+            if (store.pending_fk_queries.length > 0) {
+                for(const fk of store.pending_fk_queries) {
+                    if (store.created_models[fk.ref.to]) {
+                        fk_queries += fk.query;
+                    }
+                }
+            }
+            store.connection.query(`${fs.readFileSync(this.schema_files.create_table)} ${fs.readFileSync(this.schema_files.alter_table)} ${this.indexes.join('')} ${fk_queries}`, function(err, result) {
                 if (err) {
                     if (err.sql) delete err.sql;
-                    console.log(err);
+                    console.log(err, ` (Error -> Model = ${this.model_name} )`);
                 }
-            });
+                fs.unlink(this.schema_files.create_table, function(){});
+                fs.unlink(this.schema_files.alter_table, function(){});
+            }.bind(this));
         }
     }
 }
