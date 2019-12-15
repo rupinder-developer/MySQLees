@@ -9,6 +9,7 @@ module.exports = class Schema {
         this.schema = schema;
         this.options = options;
         this.model_name = '';
+        this.store = '';
 
         // Parsed Schema Data
         this.schema_files = {
@@ -20,21 +21,39 @@ module.exports = class Schema {
         return this;
     }
 
-    parseSchema(model_name, store) {
+    implementSchema(model_name, store) {
+        if (`${model_name}`.trim()) {
+            store.connection.query(`SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'${model_name}' AND TABLE_SCHEMA='${store.config.database}' LIMIT 1`, function(err, result) {
+                store.created_models[model_name] = 1;  
+                if (result) {
+                    if (result[0].count === 0) {
+                        // Installing Schema
+                        this.model_name = model_name;
+                        this.store = store;
+                        this.parseSchema();
+                        this.installSchema();  
+                    } else {
+                        // Updating Schema
+                    }
+                }
+            }.bind(this)); 
+        }           
+    }
+
+    parseSchema() {
         if (Object.keys(this.schema).length > 0) {
             // Creating Schema Files
-            this.model_name = model_name;
             let create_table, 
                 alter_table,
                 all_primary_keys = [],
-                alter_table_prefix = `ALTER TABLE \`${model_name}\``;
+                alter_table_prefix = `ALTER TABLE \`${this.model_name}\``;
 
             try {
                 this.schema_files.create_table = `${__dirname}/temp/${this.uuid()}.sql`;
                 this.schema_files.alter_table = `${__dirname}/temp/${this.uuid()}.sql`;
                 create_table = fs.openSync(this.schema_files.create_table, 'a');
                 alter_table = fs.openSync(this.schema_files.alter_table, 'a');
-                fs.appendFileSync(create_table, `CREATE TABLE IF NOT EXISTS \`${model_name}\` (`, 'utf8');
+                fs.appendFileSync(create_table, `CREATE TABLE IF NOT EXISTS \`${this.model_name}\` (`, 'utf8');
                 // Parsing Schema Data
                 for (let column in this.schema) {
                     const {
@@ -69,7 +88,7 @@ module.exports = class Schema {
                         
                         // Adding Foreign Key
                         if (ref && ref.to && ref.foreign_field) {
-                            store.pending_fk_queries.push({ref, query: `${alter_table_prefix} ADD CONSTRAINT \`${column}_${ref.to}_${ref.foreign_field}\` FOREIGN KEY (\`${column}\`) REFERENCES \`${ref.to}\`(\`${ref.foreign_field}\`);`});
+                            this.store.pending_fk_queries.push({ref, query: `${alter_table_prefix} ADD CONSTRAINT \`${column}_${ref.to}_${ref.foreign_field}\` FOREIGN KEY (\`${column}\`) REFERENCES \`${ref.to}\`(\`${ref.foreign_field}\`);`});
                         }
 
                         // Set default value for column
@@ -78,7 +97,7 @@ module.exports = class Schema {
                         }
                         
                     } else {
-                        console.log(`Datatype is missing for column \`${column}\` (Model = ${model_name})`);
+                        console.log(`Datatype is missing for column \`${column}\` (Model = ${this.model_name})`);
                     }
                 } 
                 
@@ -112,33 +131,17 @@ module.exports = class Schema {
         }
     }
 
-    index(index_name, columns, is_unique = false) {
-        if (`${index_name}`.trim() && `${columns}`.trim()) {
-            this.indexes.push(`CREATE ${is_unique?'UNIQUE':''} INDEX ${index_name} ON ${this.model_name} (${columns});`);
-        }
-    }   
-    
-    uuid() {
-        let dt = new Date().getTime();
-        let uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-            let r = (dt + Math.random()*16)%16 | 0;
-            dt = Math.floor(dt/16);
-            return (c=='x' ? r :(r&0x3|0x8)).toString(16);
-        });
-        return uuid;
-    }
-
-    installSchema(store) {
+    installSchema() {
         if (fs.existsSync(this.schema_files.create_table) && fs.existsSync(this.schema_files.alter_table)) {
             let fk_queries = '';
-            if (store.pending_fk_queries.length > 0) {
-                for(const fk of store.pending_fk_queries) {
-                    if (store.created_models[fk.ref.to]) {
+            if (this.store.pending_fk_queries.length > 0) {
+                for(const fk of this.store.pending_fk_queries) {
+                    if (this.store.created_models[fk.ref.to]) {
                         fk_queries += fk.query;
                     }
                 }
             }
-            store.connection.query(`${fs.readFileSync(this.schema_files.create_table)} ${fs.readFileSync(this.schema_files.alter_table)} ${this.indexes.join('')} ${fk_queries}`, function(err, result) {
+            this.store.connection.query(`${fs.readFileSync(this.schema_files.create_table)} ${fs.readFileSync(this.schema_files.alter_table)} ${this.indexes.join('')} ${fk_queries}`, function(err, result) {
                 if (err) {
                     if (err.sql) delete err.sql;
                     console.log(err, ` (Error -> Model = ${this.model_name} )`);
@@ -151,5 +154,21 @@ module.exports = class Schema {
                 delete this.indexes;
             }.bind(this));
         }
+    }
+
+    index(index_name, columns, is_unique = false) {
+        if (`${index_name}`.trim() && `${columns}`.trim()) {
+            this.indexes.push(`CREATE ${is_unique?'UNIQUE':''} INDEX ${index_name} ON ${this.model_name} (${columns});`);
+        }
+    }  
+
+    uuid() {
+        let dt = new Date().getTime();
+        let uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            let r = (dt + Math.random()*16)%16 | 0;
+            dt = Math.floor(dt/16);
+            return (c=='x' ? r :(r&0x3|0x8)).toString(16);
+        });
+        return uuid;
     }
 }

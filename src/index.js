@@ -19,7 +19,8 @@ class MySQLees {
 
     model(model_name, schema) {
         if (Store.db_connection) {
-            return new Model(model_name, schema, Store);
+            schema.implementSchema(model_name, Store);
+            return new Model();
         } else {
             console.log('Error: Database Connection is missing!!')
             process.exit();
