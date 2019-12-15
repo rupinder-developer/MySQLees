@@ -6,6 +6,7 @@ import Model from './lib/Model';
 
 class MySQLees {
     connect(mysql, config) {
+        Store.db_connection = true;
         Store.created_models = {};
         Store.pending_fk_queries = []; // Pending Foreign Keys Queries
         Store.config = config;
@@ -17,12 +18,17 @@ class MySQLees {
     }
 
     model(model_name, schema) {
-        return new Model(model_name, schema, Store);
+        if (Store.db_connection) {
+            return new Model(model_name, schema, Store);
+        } else {
+            console.log('Error: Database Connection is missing!!')
+            process.exit();
+        }
     }
 
     schema(schema, options = {}) {
         return new Schema(schema, options);
-    } 
+    }
 }
 
 module.exports = new MySQLees();
