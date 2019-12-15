@@ -20,13 +20,21 @@ class MySQLees {
     model(modelName, schema) {
         if (Store.isConnected && Store.config.database) {
             schema.implementSchema(modelName, Store);
+            return new Model({
+                isConnected: Store.isConnected,
+                connection: Store.connection,
+                config: Store.config,
+                schema: schema.schema,
+                modelName
+            });
+        } else {
+            if (Store.isConnected && !Store.config.database) {
+                console.log('Error: Failed to connect to database!! (Database not found)');
+            } else {
+                console.log('Error: Failed to connect to database!!, Please use connect() method to establish database connectivity!!');
+            }
+            process.exit();
         }
-        return new Model({
-            isConnected: Store.isConnected,
-            connection: Store.connection,
-            config: Store.config,
-            schema: schema.schema
-        });
     }
 
     schema(schema, options = {}) {
