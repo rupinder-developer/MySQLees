@@ -18,13 +18,15 @@ class MySQLees {
     }
 
     model(modelName, schema) {
-        if (Store.isConnected) {
+        if (Store.isConnected && Store.config.database) {
             schema.implementSchema(modelName, Store);
-            return new Model();
-        } else {
-            console.log('Error: Database Connection is missing!!')
-            process.exit();
         }
+        return new Model({
+            isConnected: Store.isConnected,
+            connection: Store.connection,
+            config: Store.config,
+            schema: schema.schema
+        });
     }
 
     schema(schema, options = {}) {
