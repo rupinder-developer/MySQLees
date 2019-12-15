@@ -8,27 +8,27 @@ module.exports = class Schema {
         // Raw Schema
         this.schema = schema;
         this.options = options;
-        this.model_name = '';
+        this.modelName = '';
         this.store = '';
 
         // Parsed Schema Data
-        this.schema_files = {
-            create_table: '', // Contains CREAT TABLE statement
-            alter_table: '' // Contains all ALTER TABLE statements
+        this.schemaFiles = {
+            createTable: '', // Contains CREAT TABLE statement
+            alterTable: '' // Contains all ALTER TABLE statements
         }; 
         this.indexes = [];
 
         return this;
     }
 
-    implementSchema(model_name, store) {
-        if (`${model_name}`.trim()) {
-            store.connection.query(`SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'${model_name}' AND TABLE_SCHEMA='${store.config.database}' LIMIT 1`, function(err, result) {
-                store.created_models[model_name] = 1;  
+    implementSchema(modelName, store) {
+        if (`${modelName}`.trim()) {
+            store.connection.query(`SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'${modelName}' AND TABLE_SCHEMA='${store.config.database}' LIMIT 1`, function(err, result) {
+                store.createdModels[modelName] = 1;  
                 if (result) {
                     if (result[0].count === 0) {
                         // Installing Schema
-                        this.model_name = model_name;
+                        this.modelName = modelName;
                         this.store = store;
                         this.parseSchema();
                         this.installSchema();  
@@ -43,114 +43,114 @@ module.exports = class Schema {
     parseSchema() {
         if (Object.keys(this.schema).length > 0) {
             // Creating Schema Files
-            let create_table, 
-                alter_table,
-                all_primary_keys = [],
-                alter_table_prefix = `ALTER TABLE \`${this.model_name}\``;
+            let createTable, 
+                alterTable,
+                allPrimaryKeys = [],
+                alterTablePrefix = `ALTER TABLE \`${this.modelName}\``;
 
             try {
-                this.schema_files.create_table = `${__dirname}/temp/${this.uuid()}.sql`;
-                this.schema_files.alter_table = `${__dirname}/temp/${this.uuid()}.sql`;
-                create_table = fs.openSync(this.schema_files.create_table, 'a');
-                alter_table = fs.openSync(this.schema_files.alter_table, 'a');
-                fs.appendFileSync(create_table, `CREATE TABLE IF NOT EXISTS \`${this.model_name}\` (`, 'utf8');
+                this.schemaFiles.createTable = `${__dirname}/temp/${this.uuid()}.sql`;
+                this.schemaFiles.alterTable = `${__dirname}/temp/${this.uuid()}.sql`;
+                createTable = fs.openSync(this.schemaFiles.createTable, 'a');
+                alterTable = fs.openSync(this.schemaFiles.alterTable, 'a');
+                fs.appendFileSync(createTable, `CREATE TABLE IF NOT EXISTS \`${this.modelName}\` (`, 'utf8');
                 // Parsing Schema Data
                 for (let column in this.schema) {
                     const {
                         ref,
                         unique,
                         datatype,
-                        not_null,
-                        primary_key,
-                        default_value,
-                        auto_increment,
+                        notNull,
+                        primaryKey,
+                        defaultValue,
+                        autoIncrement,
                     } = this.schema[column];
 
                     if (datatype && datatype.name) {
                     
                         // Adding Columns
-                        fs.appendFileSync(create_table, `\`${column}\` ${datatype.name}${datatype.size?`(${datatype.size})`:``},`, 'utf8');
+                        fs.appendFileSync(createTable, `\`${column}\` ${datatype.name}${datatype.size?`(${datatype.size})`:``},`, 'utf8');
 
-                        // Adding NOT NULL || AUTO_INCREMENT
-                        if (not_null || auto_increment) {
-                            fs.appendFileSync(alter_table, `${alter_table_prefix} MODIFY \`${column}\` ${datatype.name}${datatype.size?`(${datatype.size})`:``} ${not_null?'NOT NULL':''} ${auto_increment?'AUTO_INCREMENT':''};`, 'utf8');
+                        // Adding NOT NULL || autoIncrement
+                        if (notNull || autoIncrement) {
+                            fs.appendFileSync(alterTable, `${alterTablePrefix} MODIFY \`${column}\` ${datatype.name}${datatype.size?`(${datatype.size})`:``} ${notNull?'NOT NULL':''} ${autoIncrement?'autoIncrement':''};`, 'utf8');
                         }
                         
                         // Adding Primary Key to Temp Variable
-                        if (primary_key) {
-                            all_primary_keys.push(`\`${column}\``);
+                        if (primaryKey) {
+                            allPrimaryKeys.push(`\`${column}\``);
                         }
 
                         // Adding Unique Key
-                        if (unique && !primary_key) {
-                            fs.appendFileSync(alter_table, `${alter_table_prefix} ADD UNIQUE KEY \`${column}\` (\`${column}\`);`, 'utf8');
+                        if (unique && !primaryKey) {
+                            fs.appendFileSync(alterTable, `${alterTablePrefix} ADD UNIQUE KEY \`${column}\` (\`${column}\`);`, 'utf8');
                         }
                         
                         // Adding Foreign Key
                         if (ref && ref.to && ref.foreign_field) {
-                            this.store.pending_fk_queries.push({ref, query: `${alter_table_prefix} ADD CONSTRAINT \`${column}_${ref.to}_${ref.foreign_field}\` FOREIGN KEY (\`${column}\`) REFERENCES \`${ref.to}\`(\`${ref.foreign_field}\`);`});
+                            this.store.pendingFkQueries.push({ref, query: `${alterTablePrefix} ADD CONSTRAINT \`${column}_${ref.to}_${ref.foreign_field}\` FOREIGN KEY (\`${column}\`) REFERENCES \`${ref.to}\`(\`${ref.foreign_field}\`);`});
                         }
 
                         // Set default value for column
-                        if (typeof default_value !== 'undefined') {
-                            fs.appendFileSync(alter_table, `${alter_table_prefix} ALTER \`${column}\` SET DEFAULT '${default_value}';`, 'utf8');
+                        if (typeof defaultValue !== 'undefined') {
+                            fs.appendFileSync(alterTable, `${alterTablePrefix} ALTER \`${column}\` SET DEFAULT '${defaultValue}';`, 'utf8');
                         }
                         
                     } else {
-                        console.log(`Datatype is missing for column \`${column}\` (Model = ${this.model_name})`);
+                        console.log(`Datatype is missing for column \`${column}\` (Model = ${this.modelName})`);
                     }
                 } 
                 
                 // Adding Timestamp
                 if (this.options.timestamps) {
-                    fs.appendFileSync(create_table, `\`updated_at\` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE CURRENT_TIMESTAMP,`, 'utf8');
-                    fs.appendFileSync(create_table, `\`created_at\` timestamp NOT NULL DEFAULT current_timestamp()`, 'utf8');
+                    fs.appendFileSync(createTable, `\`updated_at\` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE CURRENT_TIMESTAMP,`, 'utf8');
+                    fs.appendFileSync(createTable, `\`created_at\` timestamp NOT NULL DEFAULT current_timestamp()`, 'utf8');
                 } 
 
                 // Closing Create Table statement
-                fs.appendFileSync(create_table, `);`, 'utf8');
+                fs.appendFileSync(createTable, `);`, 'utf8');
             
                 // Adding all primary keys
-                if (all_primary_keys.length > 0) {
-                    fs.appendFileSync(create_table, `${alter_table_prefix} ADD PRIMARY KEY (${all_primary_keys.join()});`, 'utf8');
+                if (allPrimaryKeys.length > 0) {
+                    fs.appendFileSync(createTable, `${alterTablePrefix} ADD PRIMARY KEY (${allPrimaryKeys.join()});`, 'utf8');
                 }
 
             } catch (err) {
                 console.log(err);
             } finally {
-                if (create_table !== undefined) {
-                    fs.closeSync(create_table);
+                if (createTable !== undefined) {
+                    fs.closeSync(createTable);
                 }
-                if (alter_table[0] !== undefined) {
-                    fs.closeSync(alter_table[0]);
+                if (alterTable[0] !== undefined) {
+                    fs.closeSync(alterTable[0]);
                 }
-                if (alter_table !== undefined) {
-                    fs.closeSync(alter_table);
+                if (alterTable !== undefined) {
+                    fs.closeSync(alterTable);
                 }
             }
         }
     }
 
     installSchema() {
-        if (fs.existsSync(this.schema_files.create_table) && fs.existsSync(this.schema_files.alter_table)) {
+        if (fs.existsSync(this.schemaFiles.createTable) && fs.existsSync(this.schemaFiles.alterTable)) {
             let fk_queries = '';
-            if (this.store.pending_fk_queries.length > 0) {
-                for(const fk of this.store.pending_fk_queries) {
-                    if (this.store.created_models[fk.ref.to]) {
+            if (this.store.pendingFkQueries.length > 0) {
+                for(const fk of this.store.pendingFkQueries) {
+                    if (this.store.createdModels[fk.ref.to]) {
                         fk_queries += fk.query;
                     }
                 }
             }
-            this.store.connection.query(`${fs.readFileSync(this.schema_files.create_table)} ${fs.readFileSync(this.schema_files.alter_table)} ${this.indexes.join('')} ${fk_queries}`, function(err, result) {
+            this.store.connection.query(`${fs.readFileSync(this.schemaFiles.createTable)} ${fs.readFileSync(this.schemaFiles.alterTable)} ${this.indexes.join('')} ${fk_queries}`, function(err, result) {
                 if (err) {
                     if (err.sql) delete err.sql;
-                    console.log(err, ` (Error -> Model = ${this.model_name} )`);
+                    console.log(err, ` (Error -> Model = ${this.modelName} )`);
                 }
 
                 // Cleaning Resources
-                fs.unlink(this.schema_files.create_table, function(){});
-                fs.unlink(this.schema_files.alter_table, function(){});
-                delete this.schema_files;
+                fs.unlink(this.schemaFiles.createTable, function(){});
+                fs.unlink(this.schemaFiles.alterTable, function(){});
+                delete this.schemaFiles;
                 delete this.indexes;
             }.bind(this));
         }
@@ -158,7 +158,7 @@ module.exports = class Schema {
 
     index(index_name, columns, is_unique = false) {
         if (`${index_name}`.trim() && `${columns}`.trim()) {
-            this.indexes.push(`CREATE ${is_unique?'UNIQUE':''} INDEX ${index_name} ON ${this.model_name} (${columns});`);
+            this.indexes.push(`CREATE ${is_unique?'UNIQUE':''} INDEX ${index_name} ON ${this.modelName} (${columns});`);
         }
     }  
 

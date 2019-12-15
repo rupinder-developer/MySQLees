@@ -6,9 +6,9 @@ import Model from './lib/Model';
 
 class MySQLees {
     connect(mysql, config) {
-        Store.db_connection = true;
-        Store.created_models = {};
-        Store.pending_fk_queries = []; // Pending Foreign Keys Queries
+        Store.isConnected = true;
+        Store.createdModels = {};
+        Store.pendingFkQueries = []; // Pending Foreign Keys Queries
         Store.config = config;
         Store.connection = mysql.createConnection({...config, multipleStatements: true});
         Store.connection.connect(function(err) {
@@ -17,9 +17,9 @@ class MySQLees {
         return Store.connection;
     }
 
-    model(model_name, schema) {
-        if (Store.db_connection) {
-            schema.implementSchema(model_name, Store);
+    model(modelName, schema) {
+        if (Store.isConnected) {
+            schema.implementSchema(modelName, Store);
             return new Model();
         } else {
             console.log('Error: Database Connection is missing!!')

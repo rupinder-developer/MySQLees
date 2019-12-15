@@ -10,8 +10,8 @@ mysqlees.connect(mysql, {
 
 const schema = mysqlees.schema({
     id: {
-        primary_key: true,
-        auto_increment: true,
+        primaryKey: true,
+        autoIncrement: true,
         datatype: {
             name: 'int'
         }
@@ -28,8 +28,8 @@ const schema = mysqlees.schema({
 
 const schema2 = mysqlees.schema({
     id: {
-        primary_key: true,
-        auto_increment: true,
+        primaryKey: true,
+        autoIncrement: true,
         datatype: {
             name: 'int'
         }
