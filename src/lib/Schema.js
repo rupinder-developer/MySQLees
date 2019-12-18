@@ -43,10 +43,12 @@ module.exports = class Schema {
     }
 
     parseSchema() {
-        if (Object.keys(this.schema).length > 0) {
+        let schemaLength = Object.keys(this.schema).length;
+        if (schemaLength > 0) {
             // Creating Schema Files
             let createTable, 
                 alterTable,
+                allColumns = [],
                 allPrimaryKeys = [],
                 alterTablePrefix = `ALTER TABLE \`${this.modelName}\``;
 
@@ -66,12 +68,26 @@ module.exports = class Schema {
                         primaryKey,
                         defaultValue,
                         autoIncrement,
+                        deprecated
                     } = this.schema[column];
+                
+                    if (this.options.timestamps && (column == 'created_at' || column == 'updated_at')) {
+                        continue;
+                    }
 
-                    if (datatype && datatype.name) {
+                    if (deprecated) {
+                        schemaLength--;
+                        if (schemaLength <= 0) {
+                            console.log(`Error -> (Model = ${this.modelName}): It is not possible to decrecate all the columns of any Model!!`);
+                            process.exit();
+                        }
+                        continue;
+                    }
+
+                    if (datatype && datatype.name && !deprecated) {
                     
                         // Adding Columns
-                        fs.appendFileSync(createTable, `\`${column}\` ${datatype.name}${datatype.size?`(${datatype.size})`:``},`, 'utf8');
+                        allColumns.push(`\`${column}\` ${datatype.name}${datatype.size?`(${datatype.size})`:``}`);
 
                         // Adding NOT NULL || autoIncrement
                         if (notNull || autoIncrement) {
@@ -103,9 +119,12 @@ module.exports = class Schema {
                     }
                 } 
                 
-                // Adding Timestamp
+                // Adding All Columns
+                fs.appendFileSync(createTable, allColumns.join(','), 'utf8');
+
+                // Adding Timestamps
                 if (this.options.timestamps) {
-                    fs.appendFileSync(createTable, `\`updated_at\` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE CURRENT_TIMESTAMP,`, 'utf8');
+                    fs.appendFileSync(createTable, `,\`updated_at\` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE CURRENT_TIMESTAMP,`, 'utf8');
                     fs.appendFileSync(createTable, `\`created_at\` timestamp NOT NULL DEFAULT current_timestamp()`, 'utf8');
                 } 
 
@@ -171,10 +190,14 @@ module.exports = class Schema {
                     primaryKeys = fs.openSync(this.schemaFiles.extra, 'a');
                     for (let dbCol of result) {
                         let column = this.schema[dbCol.Field], pkShouldDrop = false;
-                        if (this.options.timestamps & (dbCol.Field == 'created_at' || dbCol.Field == 'updated_at')) {
-                                continue;
+
+                        if (this.options.timestamps && (dbCol.Field == 'created_at' || dbCol.Field == 'updated_at')) {    
+                            continue;
                         }
-                        if (column) {
+                        if (column.deprecated) {
+                            // If column is no more needed in DB stucture
+                            fs.appendFileSync(alterTable, `${alterTablePrefix} DROP COLUMN \`${dbCol.Field}\`;`, 'utf8');   
+                        } else if (column) {
                             if (column.datatype && column.datatype.name) {
                                 // Validate Primary Key
                                 if (column.primaryKey && dbCol.Key != 'PRI') {
@@ -190,6 +213,9 @@ module.exports = class Schema {
                                     } else {
                                         fs.appendFileSync(alterTable, `${alterTablePrefix} MODIFY \`${dbCol.Field}\` ${column.datatype.name}${column.datatype.size?`(${column.datatype.size})`:``} ${column.notNull?'NOT NULL':''} ${column.autoIncrement && column.primaryKey?'AUTO_INCREMENT':''};`, 'utf8');
                                     }
+                                } else {
+                                    // Modifing only datatype
+                                    fs.appendFileSync(alterTable, `${alterTablePrefix} MODIFY \`${dbCol.Field}\` ${column.datatype.name}${column.datatype.size?`(${column.datatype.size})`:``};`, 'utf8');
                                 }
 
                                 // Validate Unique Key
@@ -208,7 +234,7 @@ module.exports = class Schema {
                                     fs.appendFileSync(alterTable, `${alterTablePrefix} ALTER \`${dbCol.Field}\` SET DEFAULT '${column.defaultValue}';`, 'utf8');
                                 } else if (dbCol.Default) {
                                     // Droping Default Value
-                                    fs.appendFileSync(alterTable, `${alterTablePrefix} ALTER \`${db_col.Field}\` DROP DEFAULT;`, 'utf8')
+                                    fs.appendFileSync(alterTable, `${alterTablePrefix} ALTER \`${dbCol.Field}\` DROP DEFAULT;`, 'utf8')
                                 }
 
                                 // Validate Foreign Key
@@ -221,7 +247,7 @@ module.exports = class Schema {
                                     fs.appendFileSync(alterTable, `${alterTablePrefix} DROP PRIMARY KEY;`, 'utf8');
                                 }
                             }
-                        }
+                        }  
                     }
                     if (allPrimaryKeys.length > 0) {
                         fs.appendFileSync(primaryKeys, `${alterTablePrefix} ADD PRIMARY KEY (${allPrimaryKeys.join()});`, 'utf8');

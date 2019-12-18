@@ -32,7 +32,7 @@ const schema2 = mysqlees.schema({
         autoIncrement: true,
         datatype: {
             name: 'int'
-        }
+        },
     },
     customer_id: {
         datatype: {
@@ -42,7 +42,14 @@ const schema2 = mysqlees.schema({
         ref: {
             to: 'customers',
             foreignField: 'id'
-        }
+        },
+    },
+    text: {
+        datatype: {
+            name: 'int',
+            size: 11
+        },
+        deprecated: true
     }
 }, {
     timestamps: true
