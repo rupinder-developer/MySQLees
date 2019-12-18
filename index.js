@@ -41,7 +41,7 @@ const schema2 = mysqlees.schema({
         },
         ref: {
             to: 'customers',
-            foreign_field: 'id'
+            foreignField: 'id'
         }
     }
 }, {

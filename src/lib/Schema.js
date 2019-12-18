@@ -14,7 +14,8 @@ module.exports = class Schema {
         // Parsed Schema Data
         this.schemaFiles = {
             createTable: '', // Contains CREAT TABLE statement
-            alterTable: '' // Contains all ALTER TABLE statements
+            alterTable: '', // Contains all ALTER TABLE statements
+            extra: ''
         }; 
         this.indexes = [];
 
@@ -26,14 +27,15 @@ module.exports = class Schema {
             store.connection.query(`SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'${modelName}' AND TABLE_SCHEMA='${store.config.database}' LIMIT 1`, function(err, result) {
                 store.createdModels[modelName] = 1;  
                 if (result) {
-                    if (result[0].count === 0) {
-                        // Installing Schema
-                        this.modelName = modelName;
-                        this.store = store;
+                    // Installing Schema
+                    this.modelName = modelName;
+                    this.store = store;
+                    if (result[0].count === 0) { 
                         this.parseSchema();
                         this.installSchema();  
                     } else {
                         // Updating Schema
+                        this.updateSchema();
                     }
                 }
             }.bind(this)); 
@@ -73,7 +75,7 @@ module.exports = class Schema {
 
                         // Adding NOT NULL || autoIncrement
                         if (notNull || autoIncrement) {
-                            fs.appendFileSync(alterTable, `${alterTablePrefix} MODIFY \`${column}\` ${datatype.name}${datatype.size?`(${datatype.size})`:``} ${notNull?'NOT NULL':''} ${autoIncrement?'autoIncrement':''};`, 'utf8');
+                            fs.appendFileSync(alterTable, `${alterTablePrefix} MODIFY \`${column}\` ${datatype.name}${datatype.size?`(${datatype.size})`:``} ${notNull?'NOT NULL':''} ${autoIncrement && primaryKey?'AUTO_INCREMENT':''};`, 'utf8');
                         }
                         
                         // Adding Primary Key to Temp Variable
@@ -87,8 +89,8 @@ module.exports = class Schema {
                         }
                         
                         // Adding Foreign Key
-                        if (ref && ref.to && ref.foreign_field) {
-                            this.store.pendingFkQueries.push({ref, query: `${alterTablePrefix} ADD CONSTRAINT \`${column}_${ref.to}_${ref.foreign_field}\` FOREIGN KEY (\`${column}\`) REFERENCES \`${ref.to}\`(\`${ref.foreign_field}\`);`});
+                        if (ref && ref.to && ref.foreignField) {
+                            this.store.pendingFkQueries.push({ref, query: `${alterTablePrefix} ADD CONSTRAINT \`${column}\` FOREIGN KEY (\`${column}\`) REFERENCES \`${ref.to}\`(\`${ref.foreignField}\`);`});
                         }
 
                         // Set default value for column
@@ -121,9 +123,6 @@ module.exports = class Schema {
                 if (createTable !== undefined) {
                     fs.closeSync(createTable);
                 }
-                if (alterTable[0] !== undefined) {
-                    fs.closeSync(alterTable[0]);
-                }
                 if (alterTable !== undefined) {
                     fs.closeSync(alterTable);
                 }
@@ -141,6 +140,7 @@ module.exports = class Schema {
                     }
                 }
             }
+
             this.store.connection.query(`${fs.readFileSync(this.schemaFiles.createTable)} ${fs.readFileSync(this.schemaFiles.alterTable)} ${this.indexes.join('')} ${fk_queries}`, function(err, result) {
                 if (err) {
                     if (err.sql) delete err.sql;
@@ -154,6 +154,121 @@ module.exports = class Schema {
                 delete this.indexes;
             }.bind(this));
         }
+    }
+    
+    updateSchema() {
+        this.store.connection.query(`DESC \`${this.modelName}\``, function(err, result) {
+            if (!err) {
+                let primaryKeys,
+                    alterTable,
+                    allPrimaryKeys = [],
+                    isUniqueIndexDropped = false,
+                    alterTablePrefix = `ALTER TABLE \`${this.modelName}\``;
+                try {
+                    this.schemaFiles.extra = `${__dirname}/temp/${this.uuid()}.sql`;
+                    this.schemaFiles.alterTable = `${__dirname}/temp/${this.uuid()}.sql`;
+                    alterTable = fs.openSync(this.schemaFiles.alterTable, 'a');
+                    primaryKeys = fs.openSync(this.schemaFiles.extra, 'a');
+                    for (let dbCol of result) {
+                        let column = this.schema[dbCol.Field], pkShouldDrop = false;
+                        if (this.options.timestamps & (dbCol.Field == 'created_at' || dbCol.Field == 'updated_at')) {
+                                continue;
+                        }
+                        if (column) {
+                            if (column.datatype && column.datatype.name) {
+                                // Validate Primary Key
+                                if (column.primaryKey && dbCol.Key != 'PRI') {
+                                    allPrimaryKeys.push(`\`${dbCol.Field}\``);
+                                } else if (!column.primaryKey && dbCol.Key == 'PRI') {
+                                    pkShouldDrop = true;
+                                }
+
+                                // Validate Not Null & Auto Increment
+                                if (column.notNull || column.autoIncrement) {
+                                    if (pkShouldDrop) {
+                                        fs.appendFileSync(alterTable, `${alterTablePrefix} MODIFY \`${dbCol.Field}\` ${column.datatype.name}${column.datatype.size?`(${column.datatype.size})`:``} ${column.notNull?'NOT NULL':''};`, 'utf8');
+                                    } else {
+                                        fs.appendFileSync(alterTable, `${alterTablePrefix} MODIFY \`${dbCol.Field}\` ${column.datatype.name}${column.datatype.size?`(${column.datatype.size})`:``} ${column.notNull?'NOT NULL':''} ${column.autoIncrement && column.primaryKey?'AUTO_INCREMENT':''};`, 'utf8');
+                                    }
+                                }
+
+                                // Validate Unique Key
+                                if (column.unique && !column.primary_keys && dbCol.Key != 'UNI') {
+                                    // Adding Unique Key
+                                    fs.appendFileSync(alterTable, `${alterTablePrefix} ADD UNIQUE KEY \`${dbCol.Field}\` (\`${dbCol.Field}\`);`, 'utf8');
+                                } else if (!column.unique && dbCol.Key == 'UNI') {
+                                    // Removing Unique Key
+                                    fs.appendFileSync(alterTable, `${alterTablePrefix} DROP INDEX \`${dbCol.Field}\`;`, 'utf8');
+                                    isUniqueIndexDropped = true;
+                                }
+
+                                // Validate Default Value
+                                if (typeof column.defaultValue !== 'undefined') {
+                                    // Setting Default Value
+                                    fs.appendFileSync(alterTable, `${alterTablePrefix} ALTER \`${dbCol.Field}\` SET DEFAULT '${column.defaultValue}';`, 'utf8');
+                                } else if (dbCol.Default) {
+                                    // Droping Default Value
+                                    fs.appendFileSync(alterTable, `${alterTablePrefix} ALTER \`${db_col.Field}\` DROP DEFAULT;`, 'utf8')
+                                }
+
+                                // Validate Foreign Key
+                                if (column.ref && column.ref.to && column.ref.foreignField) {
+                                    this.store.pendingFkQueries.push({ref: column.ref, query: `${alterTablePrefix} ADD CONSTRAINT \`${dbCol.Field}\` FOREIGN KEY (\`${dbCol.Field}\`) REFERENCES \`${column.ref.to}\`(\`${column.ref.foreignField}\`);`});
+                                }
+
+                                // Remove Primary Key
+                                if (pkShouldDrop) {
+                                    fs.appendFileSync(alterTable, `${alterTablePrefix} DROP PRIMARY KEY;`, 'utf8');
+                                }
+                            }
+                        }
+                    }
+                    if (allPrimaryKeys.length > 0) {
+                        fs.appendFileSync(primaryKeys, `${alterTablePrefix} ADD PRIMARY KEY (${allPrimaryKeys.join()});`, 'utf8');
+                    }
+                } catch (err) {
+                    console.log(err);
+                } finally {
+                    if (alterTable !== undefined) {
+                        fs.closeSync(alterTable);
+                    }
+                    if (primaryKeys !== undefined) {
+                        fs.closeSync(primaryKeys);
+                    }
+                }
+                this.store.connection.query(`SELECT CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS T WHERE T.TABLE_NAME='${this.modelName}' AND CONSTRAINT_TYPE='FOREIGN KEY'`, function(err, result) {
+                    if (!err) {
+                        let tempQuery = '';
+                        for (let item of result) {
+                            tempQuery += `${alterTablePrefix} DROP CONSTRAINT \`${item['CONSTRAINT_NAME']}\`; ${!isUniqueIndexDropped ? `${alterTablePrefix} DROP INDEX \`${item['CONSTRAINT_NAME']}\`;`:``}`;
+                        }
+
+                        let fk_queries = '';
+                        if (this.store.pendingFkQueries.length > 0) {
+                            for(const fk of this.store.pendingFkQueries) {
+                                if (this.store.createdModels[fk.ref.to]) {
+                                    fk_queries += fk.query;
+                                }
+                            }
+                        }
+                        let sql = `${tempQuery} ${fs.readFileSync(this.schemaFiles.extra)} ${fs.readFileSync(this.schemaFiles.alterTable)} ${fk_queries}`.trim();
+                        if (sql) {
+                            this.store.connection.query(sql, function(err, result) {
+                                if (err) {
+                                    if (err.sql) delete err.sql;
+                                    console.log(err, ` (Error -> Model = ${this.modelName} )`);
+                                }
+                                
+                                fs.unlink(this.schemaFiles.alterTable, function(){});
+                                fs.unlink(this.schemaFiles.extra, function(){});
+                                delete this.schemaFiles;
+                            }.bind(this));
+                            this.store.pendingFkQueries = [];
+                        }
+                    }
+                }.bind(this));
+            } 
+        }.bind(this));
     }
 
     index(index_name, columns, is_unique = false) {
