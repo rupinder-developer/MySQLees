@@ -151,16 +151,16 @@ module.exports = class Schema {
 
     installSchema() {
         if (fs.existsSync(this.schemaFiles.createTable) && fs.existsSync(this.schemaFiles.alterTable)) {
-            let fk_queries = '';
+            let fkQueries = '';
             if (this.store.pendingFkQueries.length > 0) {
                 for(const fk of this.store.pendingFkQueries) {
                     if (this.store.createdModels[fk.ref.to]) {
-                        fk_queries += fk.query;
+                        fkQueries += fk.query;
                     }
                 }
             }
 
-            this.store.connection.query(`${fs.readFileSync(this.schemaFiles.createTable)} ${fs.readFileSync(this.schemaFiles.alterTable)} ${this.indexes.join('')} ${fk_queries}`, function(err, result) {
+            this.store.connection.query(`${fs.readFileSync(this.schemaFiles.createTable)} ${fs.readFileSync(this.schemaFiles.alterTable)} ${this.indexes.join('')} ${fkQueries}`, function(err, result) {
                 if (err) {
                     if (err.sql) delete err.sql;
                     console.log(err, ` (Error -> Model = ${this.modelName} )`);
@@ -269,15 +269,15 @@ module.exports = class Schema {
                             tempQuery += `${alterTablePrefix} DROP CONSTRAINT \`${item['CONSTRAINT_NAME']}\`; ${!isUniqueIndexDropped ? `${alterTablePrefix} DROP INDEX \`${item['CONSTRAINT_NAME']}\`;`:``}`;
                         }
 
-                        let fk_queries = '';
+                        let fkQueries = '';
                         if (this.store.pendingFkQueries.length > 0) {
                             for(const fk of this.store.pendingFkQueries) {
                                 if (this.store.createdModels[fk.ref.to]) {
-                                    fk_queries += fk.query;
+                                    fkQueries += fk.query;
                                 }
                             }
                         }
-                        let sql = `${tempQuery} ${fs.readFileSync(this.schemaFiles.extra)} ${fs.readFileSync(this.schemaFiles.alterTable)} ${fk_queries}`.trim();
+                        let sql = `${tempQuery} ${fs.readFileSync(this.schemaFiles.extra)} ${fs.readFileSync(this.schemaFiles.alterTable)} ${fkQueries}`.trim();
                         if (sql) {
                             this.store.connection.query(sql, function(err, result) {
                                 if (err) {
