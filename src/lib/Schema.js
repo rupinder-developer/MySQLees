@@ -194,60 +194,63 @@ module.exports = class Schema {
                         if (this.options.timestamps && (dbCol.Field == 'created_at' || dbCol.Field == 'updated_at')) {    
                             continue;
                         }
-                        if (column.deprecated) {
-                            // If column is no more needed in DB stucture
-                            fs.appendFileSync(alterTable, `${alterTablePrefix} DROP COLUMN \`${dbCol.Field}\`;`, 'utf8');   
-                        } else if (column) {
-                            if (column.datatype && column.datatype.name) {
-                                // Validate Primary Key
-                                if (column.primaryKey && dbCol.Key != 'PRI') {
-                                    allPrimaryKeys.push(`\`${dbCol.Field}\``);
-                                } else if (!column.primaryKey && dbCol.Key == 'PRI') {
-                                    pkShouldDrop = true;
-                                }
-
-                                // Validate Not Null & Auto Increment
-                                if (column.notNull || column.autoIncrement) {
-                                    if (pkShouldDrop) {
-                                        fs.appendFileSync(alterTable, `${alterTablePrefix} MODIFY \`${dbCol.Field}\` ${column.datatype.name}${column.datatype.size?`(${column.datatype.size})`:``} ${column.notNull?'NOT NULL':''};`, 'utf8');
-                                    } else {
-                                        fs.appendFileSync(alterTable, `${alterTablePrefix} MODIFY \`${dbCol.Field}\` ${column.datatype.name}${column.datatype.size?`(${column.datatype.size})`:``} ${column.notNull?'NOT NULL':''} ${column.autoIncrement && column.primaryKey?'AUTO_INCREMENT':''};`, 'utf8');
+                        if (column) {
+                            if (column.deprecated) {
+                                // If column is no more needed in DB stucture
+                                fs.appendFileSync(alterTable, `${alterTablePrefix} DROP COLUMN \`${dbCol.Field}\`;`, 'utf8');   
+                            } else  {
+                                if (column.datatype && column.datatype.name) {
+                                    // Validate Primary Key
+                                    if (column.primaryKey && dbCol.Key != 'PRI') {
+                                        allPrimaryKeys.push(`\`${dbCol.Field}\``);
+                                    } else if (!column.primaryKey && dbCol.Key == 'PRI') {
+                                        pkShouldDrop = true;
                                     }
-                                } else {
-                                    // Modifing only datatype
-                                    fs.appendFileSync(alterTable, `${alterTablePrefix} MODIFY \`${dbCol.Field}\` ${column.datatype.name}${column.datatype.size?`(${column.datatype.size})`:``};`, 'utf8');
+    
+                                    // Validate Not Null & Auto Increment
+                                    if (column.notNull || column.autoIncrement) {
+                                        if (pkShouldDrop) {
+                                            fs.appendFileSync(alterTable, `${alterTablePrefix} MODIFY \`${dbCol.Field}\` ${column.datatype.name}${column.datatype.size?`(${column.datatype.size})`:``} ${column.notNull?'NOT NULL':''};`, 'utf8');
+                                        } else {
+                                            fs.appendFileSync(alterTable, `${alterTablePrefix} MODIFY \`${dbCol.Field}\` ${column.datatype.name}${column.datatype.size?`(${column.datatype.size})`:``} ${column.notNull?'NOT NULL':''} ${column.autoIncrement && column.primaryKey?'AUTO_INCREMENT':''};`, 'utf8');
+                                        }
+                                    } else {
+                                        // Modifing only datatype
+                                        fs.appendFileSync(alterTable, `${alterTablePrefix} MODIFY \`${dbCol.Field}\` ${column.datatype.name}${column.datatype.size?`(${column.datatype.size})`:``};`, 'utf8');
+                                    }
+    
+                                    // Validate Unique Key
+                                    if (column.unique && !column.primary_keys && dbCol.Key != 'UNI') {
+                                        // Adding Unique Key
+                                        fs.appendFileSync(alterTable, `${alterTablePrefix} ADD UNIQUE KEY \`${dbCol.Field}\` (\`${dbCol.Field}\`);`, 'utf8');
+                                    } else if (!column.unique && dbCol.Key == 'UNI') {
+                                        // Removing Unique Key
+                                        fs.appendFileSync(alterTable, `${alterTablePrefix} DROP INDEX \`${dbCol.Field}\`;`, 'utf8');
+                                        isUniqueIndexDropped = true;
+                                    }
+    
+                                    // Validate Default Value
+                                    if (typeof column.defaultValue !== 'undefined') {
+                                        // Setting Default Value
+                                        fs.appendFileSync(alterTable, `${alterTablePrefix} ALTER \`${dbCol.Field}\` SET DEFAULT '${column.defaultValue}';`, 'utf8');
+                                    } else if (dbCol.Default) {
+                                        // Droping Default Value
+                                        fs.appendFileSync(alterTable, `${alterTablePrefix} ALTER \`${dbCol.Field}\` DROP DEFAULT;`, 'utf8')
+                                    }
+    
+                                    // Validate Foreign Key
+                                    if (column.ref && column.ref.to && column.ref.foreignField) {
+                                        this.store.pendingFkQueries.push({ref: column.ref, query: `${alterTablePrefix} ADD CONSTRAINT \`${dbCol.Field}\` FOREIGN KEY (\`${dbCol.Field}\`) REFERENCES \`${column.ref.to}\`(\`${column.ref.foreignField}\`);`});
+                                    }
+    
+                                    // Remove Primary Key
+                                    if (pkShouldDrop) {
+                                        fs.appendFileSync(alterTable, `${alterTablePrefix} DROP PRIMARY KEY;`, 'utf8');
+                                    }
                                 }
-
-                                // Validate Unique Key
-                                if (column.unique && !column.primary_keys && dbCol.Key != 'UNI') {
-                                    // Adding Unique Key
-                                    fs.appendFileSync(alterTable, `${alterTablePrefix} ADD UNIQUE KEY \`${dbCol.Field}\` (\`${dbCol.Field}\`);`, 'utf8');
-                                } else if (!column.unique && dbCol.Key == 'UNI') {
-                                    // Removing Unique Key
-                                    fs.appendFileSync(alterTable, `${alterTablePrefix} DROP INDEX \`${dbCol.Field}\`;`, 'utf8');
-                                    isUniqueIndexDropped = true;
-                                }
-
-                                // Validate Default Value
-                                if (typeof column.defaultValue !== 'undefined') {
-                                    // Setting Default Value
-                                    fs.appendFileSync(alterTable, `${alterTablePrefix} ALTER \`${dbCol.Field}\` SET DEFAULT '${column.defaultValue}';`, 'utf8');
-                                } else if (dbCol.Default) {
-                                    // Droping Default Value
-                                    fs.appendFileSync(alterTable, `${alterTablePrefix} ALTER \`${dbCol.Field}\` DROP DEFAULT;`, 'utf8')
-                                }
-
-                                // Validate Foreign Key
-                                if (column.ref && column.ref.to && column.ref.foreignField) {
-                                    this.store.pendingFkQueries.push({ref: column.ref, query: `${alterTablePrefix} ADD CONSTRAINT \`${dbCol.Field}\` FOREIGN KEY (\`${dbCol.Field}\`) REFERENCES \`${column.ref.to}\`(\`${column.ref.foreignField}\`);`});
-                                }
-
-                                // Remove Primary Key
-                                if (pkShouldDrop) {
-                                    fs.appendFileSync(alterTable, `${alterTablePrefix} DROP PRIMARY KEY;`, 'utf8');
-                                }
-                            }
-                        }  
+                            }  
+                        }
+                        
                     }
                     if (allPrimaryKeys.length > 0) {
                         fs.appendFileSync(primaryKeys, `${alterTablePrefix} ADD PRIMARY KEY (${allPrimaryKeys.join()});`, 'utf8');
