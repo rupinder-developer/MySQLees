@@ -53,6 +53,9 @@ module.exports = class Schema {
                 alterTablePrefix = `ALTER TABLE \`${this.modelName}\``;
 
             try {
+                if (!fs.existsSync(`${__dirname}/temp`)){
+                    fs.mkdirSync(`${__dirname}/temp`);
+                }
                 this.schemaFiles.createTable = `${__dirname}/temp/${this.uuid()}.sql`;
                 this.schemaFiles.alterTable = `${__dirname}/temp/${this.uuid()}.sql`;
                 createTable = fs.openSync(this.schemaFiles.createTable, 'a');
