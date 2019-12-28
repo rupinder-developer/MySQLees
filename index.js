@@ -49,6 +49,7 @@ const schema2 = mysqlees.schema({
             name: 'int',
             size: 11
         },
+        primaryKey: true,
         deprecated: true
     }
 }, {
