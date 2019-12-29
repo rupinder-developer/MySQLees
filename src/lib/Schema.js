@@ -190,7 +190,6 @@ module.exports = class Schema {
                     updateInit,
                     allPrimaryKeys = [],
                     pkShouldDrop = false,
-                    isUniqueIndexDropped = false,
                     updatedColumns = {},
                     alterTablePrefix = `ALTER TABLE \`${this.modelName}\``;
                 try {
@@ -256,7 +255,6 @@ module.exports = class Schema {
                                 } else if (!column.unique && dbCol.Key == 'UNI') {
                                     // Removing Unique Key
                                     fs.appendFileSync(alterTable, `${alterTablePrefix} DROP INDEX \`${dbCol.Field}\`;`, 'utf8');
-                                    isUniqueIndexDropped = true;
                                 }
 
                                 // Validate Default Value
@@ -334,12 +332,23 @@ module.exports = class Schema {
                         fs.closeSync(primaryKeys);
                     }
                 }
-                this.store.connection.query(`SELECT CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS T WHERE T.TABLE_NAME='${this.modelName}' AND CONSTRAINT_TYPE='FOREIGN KEY'`, function(err, result) {
+                 // Removing all Foreign Keys
+                this.store.connection.query(`SELECT TABLE_NAME, CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS T WHERE CONSTRAINT_SCHEMA = '${this.store.config.database}' AND CONSTRAINT_TYPE='FOREIGN KEY'`, function(err, result) {
                     if (!err) {
                         let tempQuery = '';
-                        // Remove Primary Key
                         for (let item of result) {
-                            tempQuery += `${alterTablePrefix} DROP FOREIGN KEY \`${item['CONSTRAINT_NAME']}\`; ${!isUniqueIndexDropped ? `${alterTablePrefix} DROP INDEX \`${item['CONSTRAINT_NAME']}\`;`:``}`;
+                            tempQuery += `
+                            set @var=if((SELECT true FROM information_schema.TABLE_CONSTRAINTS WHERE
+                                CONSTRAINT_SCHEMA = DATABASE() AND
+                                TABLE_NAME        = '${item['TABLE_NAME']}' AND
+                                CONSTRAINT_NAME   = '${item['CONSTRAINT_NAME']}' AND
+                                CONSTRAINT_TYPE   = 'FOREIGN KEY') = true,'ALTER TABLE ${item['TABLE_NAME']}
+                                DROP FOREIGN KEY ${item['CONSTRAINT_NAME']}','select 1');
+                    
+                            prepare stmt from @var;
+                            execute stmt;
+                            deallocate prepare stmt;
+                            `;
                         }
 
                         let fkQueries = '';
@@ -350,7 +359,8 @@ module.exports = class Schema {
                                 }
                             }
                         }
-                        let sql = `${tempQuery} ${fs.readFileSync(this.schemaFiles.updateInit)} ${pkShouldDrop?`${alterTablePrefix} DROP PRIMARY KEY;`:''} ${fs.readFileSync(this.schemaFiles.updateNewCol)} ${fs.readFileSync(this.schemaFiles.extra)} ${fs.readFileSync(this.schemaFiles.alterTable)} ${fkQueries}`.trim();
+                        
+                        let sql = `SET foreign_key_checks = 0; ${tempQuery} ${fs.readFileSync(this.schemaFiles.updateInit)} ${pkShouldDrop?`${alterTablePrefix} DROP PRIMARY KEY;`:''} ${fs.readFileSync(this.schemaFiles.updateNewCol)} ${fs.readFileSync(this.schemaFiles.extra)} ${fs.readFileSync(this.schemaFiles.alterTable)} ${fkQueries} SET foreign_key_checks = 1;`.trim();
                         if (sql) {
                             this.store.connection.query(sql, function(err, result) {
                                 if (err) {
@@ -364,10 +374,10 @@ module.exports = class Schema {
                                 fs.unlink(this.schemaFiles.updateInit, function(){});
                                 delete this.schemaFiles;
                             }.bind(this));
-                            this.store.pendingFkQueries = [];
                         }
                     }
                 }.bind(this));
+                
             } 
         }.bind(this));
     }
