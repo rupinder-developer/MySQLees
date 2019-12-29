@@ -191,6 +191,7 @@ module.exports = class Schema {
                     allPrimaryKeys = [],
                     pkShouldDrop = false,
                     updatedColumns = {},
+                    droppedFks = {},
                     alterTablePrefix = `ALTER TABLE \`${this.modelName}\``;
                 try {
                     this.schemaFiles.extra = `${__dirname}/temp/${this.uuid()}.sql`;
@@ -268,6 +269,19 @@ module.exports = class Schema {
 
                                 // Validate Foreign Key
                                 if (column.ref && column.ref.to && column.ref.foreignField) {
+                                    this.store.dropFkQueries += `
+                                    set @var=if((SELECT true FROM information_schema.TABLE_CONSTRAINTS WHERE
+                                        CONSTRAINT_SCHEMA = DATABASE() AND
+                                        TABLE_NAME        = '${this.modelName}' AND
+                                        CONSTRAINT_NAME   = '${dbCol.Field}' AND
+                                        CONSTRAINT_TYPE   = 'FOREIGN KEY') = true,'ALTER TABLE ${this.modelName}
+                                        DROP FOREIGN KEY ${dbCol.Field}','select 1');
+                            
+                                    prepare stmt from @var;
+                                    execute stmt;
+                                    deallocate prepare stmt;
+                                    `;
+                                    droppedFks[column] = true;
                                     this.store.pendingFkQueries.push({ref: column.ref, query: `${alterTablePrefix} ADD CONSTRAINT \`${dbCol.Field}\` FOREIGN KEY (\`${dbCol.Field}\`) REFERENCES \`${column.ref.to}\`(\`${column.ref.foreignField}\`);`});
                                 }
 
@@ -302,7 +316,21 @@ module.exports = class Schema {
                             
                             // Adding Foreign Key
                             if (this.schema[column].ref && this.schema[column].ref.to && this.schema[column].ref.foreignField) {
+                                this.store.dropFkQueries += `
+                                set @var=if((SELECT true FROM information_schema.TABLE_CONSTRAINTS WHERE
+                                    CONSTRAINT_SCHEMA = DATABASE() AND
+                                    TABLE_NAME        = '${this.modelName}' AND
+                                    CONSTRAINT_NAME   = '${column}' AND
+                                    CONSTRAINT_TYPE   = 'FOREIGN KEY') = true,'ALTER TABLE ${this.modelName}
+                                    DROP FOREIGN KEY ${column}','select 1');
+                        
+                                prepare stmt from @var;
+                                execute stmt;
+                                deallocate prepare stmt;
+                                `;
+                                droppedFks[column] = true;
                                 this.store.pendingFkQueries.push({ref: this.schema[column].ref, query: `${alterTablePrefix} ADD CONSTRAINT \`${column}\` FOREIGN KEY (\`${column}\`) REFERENCES \`${this.schema[column].ref.to}\`(\`${this.schema[column].ref.foreignField}\`);`});
+                                
                             }
 
                             // Set default value for column
@@ -335,20 +363,21 @@ module.exports = class Schema {
                  // Removing all Foreign Keys
                 this.store.connection.query(`SELECT TABLE_NAME, CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS T WHERE CONSTRAINT_SCHEMA = '${this.store.config.database}' AND CONSTRAINT_TYPE='FOREIGN KEY'`, function(err, result) {
                     if (!err) {
-                        let tempQuery = '';
                         for (let item of result) {
-                            tempQuery += `
-                            set @var=if((SELECT true FROM information_schema.TABLE_CONSTRAINTS WHERE
-                                CONSTRAINT_SCHEMA = DATABASE() AND
-                                TABLE_NAME        = '${item['TABLE_NAME']}' AND
-                                CONSTRAINT_NAME   = '${item['CONSTRAINT_NAME']}' AND
-                                CONSTRAINT_TYPE   = 'FOREIGN KEY') = true,'ALTER TABLE ${item['TABLE_NAME']}
-                                DROP FOREIGN KEY ${item['CONSTRAINT_NAME']}','select 1');
-                    
-                            prepare stmt from @var;
-                            execute stmt;
-                            deallocate prepare stmt;
-                            `;
+                            if (!droppedFks[item['CONSTRAINT_NAME']]) {
+                                this.store.dropFkQueries += `
+                                set @var=if((SELECT true FROM information_schema.TABLE_CONSTRAINTS WHERE
+                                    CONSTRAINT_SCHEMA = DATABASE() AND
+                                    TABLE_NAME        = '${item['TABLE_NAME']}' AND
+                                    CONSTRAINT_NAME   = '${item['CONSTRAINT_NAME']}' AND
+                                    CONSTRAINT_TYPE   = 'FOREIGN KEY') = true,'ALTER TABLE ${item['TABLE_NAME']}
+                                    DROP FOREIGN KEY ${item['CONSTRAINT_NAME']}','select 1');
+                        
+                                prepare stmt from @var;
+                                execute stmt;
+                                deallocate prepare stmt;
+                                `;
+                            }
                         }
 
                         let fkQueries = '';
@@ -360,7 +389,7 @@ module.exports = class Schema {
                             }
                         }
                         
-                        let sql = `SET foreign_key_checks = 0; ${tempQuery} ${fs.readFileSync(this.schemaFiles.updateInit)} ${pkShouldDrop?`${alterTablePrefix} DROP PRIMARY KEY;`:''} ${fs.readFileSync(this.schemaFiles.updateNewCol)} ${fs.readFileSync(this.schemaFiles.extra)} ${fs.readFileSync(this.schemaFiles.alterTable)} ${fkQueries} SET foreign_key_checks = 1;`.trim();
+                        let sql = `SET foreign_key_checks = 0; ${this.store.dropFkQueries} ${fs.readFileSync(this.schemaFiles.updateInit)} ${pkShouldDrop?`${alterTablePrefix} DROP PRIMARY KEY;`:''} ${fs.readFileSync(this.schemaFiles.updateNewCol)} ${fs.readFileSync(this.schemaFiles.extra)} ${fs.readFileSync(this.schemaFiles.alterTable)} ${fkQueries} SET foreign_key_checks = 1;`.trim();
                         if (sql) {
                             this.store.connection.query(sql, function(err, result) {
                                 if (err) {

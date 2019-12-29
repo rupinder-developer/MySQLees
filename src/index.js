@@ -10,7 +10,7 @@ class MySQLees {
         Store.createdModels = {};
         Store.pendingFkQueries = []; // Pending Foreign Keys Queries
         Store.config = config;
-        Store.removeFkCounter = 0; // Counter to detect whether all Foreign Keys have been removed or not
+        Store.dropFkQueries = ''; // This Variable contains the queries which helps to drop all the present Foreign Keys in the database while updating schema.
         Store.connection = mysql.createConnection({...config, multipleStatements: true});
         Store.connection.connect(function(err) {
             if (err) console.log(err);
