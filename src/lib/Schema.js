@@ -21,6 +21,7 @@ module.exports = class Schema {
             
         }; 
         this.indexes = [];
+        this.indexesObject = [];
 
         return this;
     }
@@ -33,6 +34,7 @@ module.exports = class Schema {
                     // Installing Schema
                     this.modelName = modelName;
                     this.store = store;
+                    this.parseIndexes();
                     if (result[0].count === 0) { 
                         this.parseSchema();
                         this.installSchema();  
@@ -389,7 +391,7 @@ module.exports = class Schema {
                             }
                         }
                         
-                        let sql = `SET foreign_key_checks = 0; ${this.store.dropFkQueries} ${fs.readFileSync(this.schemaFiles.updateInit)} ${pkShouldDrop?`${alterTablePrefix} DROP PRIMARY KEY;`:''} ${fs.readFileSync(this.schemaFiles.updateNewCol)} ${fs.readFileSync(this.schemaFiles.extra)} ${fs.readFileSync(this.schemaFiles.alterTable)} ${fkQueries} SET foreign_key_checks = 1;`.trim();
+                        let sql = `SET foreign_key_checks = 0; ${this.store.dropFkQueries} ${fs.readFileSync(this.schemaFiles.updateInit)} ${pkShouldDrop?`${alterTablePrefix} DROP PRIMARY KEY;`:''} ${fs.readFileSync(this.schemaFiles.updateNewCol)} ${fs.readFileSync(this.schemaFiles.extra)} ${fs.readFileSync(this.schemaFiles.alterTable)} ${this.indexes.join('')} ${fkQueries} SET foreign_key_checks = 1;`.trim();
                         if (sql) {
                             this.store.connection.query(sql, function(err, result) {
                                 if (err) {
@@ -402,6 +404,7 @@ module.exports = class Schema {
                                 fs.unlink(this.schemaFiles.updateNewCol, function(){});
                                 fs.unlink(this.schemaFiles.updateInit, function(){});
                                 delete this.schemaFiles;
+                                delete this.indexes;
                             }.bind(this));
                         }
                     }
@@ -411,11 +414,28 @@ module.exports = class Schema {
         }.bind(this));
     }
 
-    index(index_name, columns, is_unique = false) {
-        if (`${index_name}`.trim() && `${columns}`.trim()) {
-            this.indexes.push(`CREATE ${is_unique?'UNIQUE':''} INDEX ${index_name} ON ${this.modelName} (${columns});`);
+    parseIndexes() {
+        for(let index of this.indexesObject) {
+            this.indexes.push(`
+            set @var=if((SELECT true FROM information_schema.STATISTICS WHERE
+                TABLE_SCHEMA      =  DATABASE() AND
+                TABLE_NAME        = '${this.modelName}' AND
+                INDEX_NAME        = '${index.indexName}') = true,'ALTER TABLE ${this.modelName}
+                DROP INDEX ${index.indexName}','select 1');
+    
+            prepare stmt from @var;
+            execute stmt;
+            deallocate prepare stmt;
+            `);
+            if (`${index.indexName}`.trim() && `${index.columns}`.trim() && !index.options.deprecated) {
+                this.indexes.push(`CREATE ${index.options.unique?'UNIQUE':''} INDEX ${index.indexName} ON ${this.modelName} (${index.columns});`);
+            } 
         }
-    }  
+    }
+
+    index(indexName, columns, options = {}) {
+        this.indexesObject.push({indexName, columns, options});   
+    } 
 
     uuid() {
         let dt = new Date().getTime();

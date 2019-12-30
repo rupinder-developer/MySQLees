@@ -49,11 +49,14 @@ const schema2 = mysqlees.schema({
             name: 'int',
             size: 11
         },
-        primaryKey: true,
-        deprecated: true
     }
 }, {
     timestamps: true
+});
+
+schema2.index('text', 'text', {
+    unique: true,
+    deprecated: true
 });
 
 const m = mysqlees.model('orders', schema2);
