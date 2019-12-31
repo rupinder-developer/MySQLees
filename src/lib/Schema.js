@@ -34,12 +34,13 @@ module.exports = class Schema {
                     // Installing Schema
                     this.modelName = modelName;
                     this.store = store;
-                    this.parseIndexes();
-                    if (result[0].count === 0) { 
+                    if (result[0].count === 0) {
+                        this.parseIndexes();
                         this.parseSchema();
                         this.installSchema();  
                     } else {
                         // Updating Schema
+                        this.parseIndexes();
                         this.updateSchema();
                     }
                 }
@@ -179,6 +180,7 @@ module.exports = class Schema {
                 fs.unlink(this.schemaFiles.alterTable, function(){});
                 delete this.schemaFiles;
                 delete this.indexes;
+                delete this.indexesObject;
             }.bind(this));
         }
     }
@@ -405,6 +407,7 @@ module.exports = class Schema {
                                 fs.unlink(this.schemaFiles.updateInit, function(){});
                                 delete this.schemaFiles;
                                 delete this.indexes;
+                                delete this.indexesObject;
                             }.bind(this));
                         }
                     }
