@@ -343,7 +343,42 @@ module.exports = class Schema {
                             }
                         }
                     }
- 
+                    
+                    // Adding Timestamps if required
+                    if (this.options.timestamps) {
+                        fs.appendFileSync(alterTable, `
+                        SET @preparedStatement = (SELECT IF(
+                            (
+                              SELECT true FROM INFORMATION_SCHEMA.COLUMNS
+                              WHERE
+                                (TABLE_NAME = '${this.modelName}') AND 
+                                (TABLE_SCHEMA = '${this.store.config.database}') AND
+                                (COLUMN_NAME = 'created_at')
+                            ) = true,
+                            "SELECT 1",
+                            CONCAT("${alterTablePrefix} ADD \`created_at\` timestamp NOT NULL DEFAULT current_timestamp();")
+                          ));
+
+                          PREPARE alterIfNotExists FROM @preparedStatement;
+                          EXECUTE alterIfNotExists;
+                          DEALLOCATE PREPARE alterIfNotExists;
+                          
+                          SET @preparedStatement = (SELECT IF(
+                            (
+                              SELECT true FROM INFORMATION_SCHEMA.COLUMNS
+                              WHERE
+                                (TABLE_NAME = '${this.modelName}') AND 
+                                (TABLE_SCHEMA = '${this.store.config.database}') AND
+                                (COLUMN_NAME = 'updated_at')
+                            ) = true,
+                            "SELECT 1",
+                            CONCAT("${alterTablePrefix} ADD \`updated_at\` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE CURRENT_TIMESTAMP;")
+                          ));
+                          PREPARE alterIfNotExists FROM @preparedStatement;
+                          EXECUTE alterIfNotExists;
+                          DEALLOCATE PREPARE alterIfNotExists;
+                        `, 'utf8');
+                    }
                     
                     if (allPrimaryKeys.length > 0) {
                         fs.appendFileSync(primaryKeys, `${alterTablePrefix} ADD PRIMARY KEY (${allPrimaryKeys.join()});`, 'utf8');
