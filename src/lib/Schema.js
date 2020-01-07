@@ -38,7 +38,7 @@ module.exports = class Schema {
                         this.parseIndexes();
                         this.parseSchema();
                         this.installSchema();  
-                    } else {
+                    } else if(store.options.autoMigration){
                         // Updating Schema
                         this.parseIndexes();
                         this.updateSchema();

@@ -8,7 +8,11 @@ mysqlees.connect(mysql, {
     database: "test"
 });
 
-const schema = mysqlees.schema({
+mysqlees.options({
+    autoMigration: false
+});
+
+const customers = mysqlees.schema({
     id: {
         primaryKey: true,
         autoIncrement: true,
@@ -26,7 +30,7 @@ const schema = mysqlees.schema({
     timestamps: true
 });
 
-const schema2 = mysqlees.schema({
+const orders = mysqlees.schema({
     id: {
         primaryKey: true,
         autoIncrement: true,
@@ -54,10 +58,10 @@ const schema2 = mysqlees.schema({
     timestamps: true
 });
 
-schema2.index('text', 'text', {
+orders.index('text', 'text', {
     unique: true,
     deprecated: true
 });
 
-const m = mysqlees.model('orders', schema2);
-const m2 = mysqlees.model('customers', schema);
+const m = mysqlees.model('orders', orders);
+const m2 = mysqlees.model('customers', customers);

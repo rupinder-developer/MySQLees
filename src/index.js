@@ -6,6 +6,7 @@ import Model from './lib/Model';
 
 class MySQLees {
     connect(mysql, config) {
+        Store.options = {};
         Store.isConnected = true;
         Store.createdModels = {};
         Store.pendingFkQueries = []; // Pending Foreign Keys Queries
@@ -40,6 +41,10 @@ class MySQLees {
 
     schema(schema, options = {}) {
         return new Schema(schema, options);
+    }
+
+    options(options = {}) {
+        Store.options = options;
     }
 }
 
