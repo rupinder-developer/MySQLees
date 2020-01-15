@@ -254,13 +254,14 @@ module.exports = class Schema {
                                 }
 
                                 // Validate Unique Key
-                                if (column.unique && !column.primary_keys && dbCol.Key != 'UNI') {
+                                if (column.unique && !column.primaryKey && dbCol.Key != 'UNI') {
                                     // Adding Unique Key
                                     fs.appendFileSync(alterTable, `${alterTablePrefix} ADD UNIQUE KEY \`${dbCol.Field}\` (\`${dbCol.Field}\`);`, 'utf8');
-                                } else if (!column.unique && dbCol.Key == 'UNI') {
+                                } else if ((!column.unique && dbCol.Key == 'UNI') || (column.unique && column.primaryKey && dbCol.Key == 'UNI')) {
                                     // Removing Unique Key
                                     fs.appendFileSync(alterTable, `${alterTablePrefix} DROP INDEX \`${dbCol.Field}\`;`, 'utf8');
                                 }
+                                
 
                                 // Validate Default Value
                                 if (typeof column.defaultValue !== 'undefined') {
