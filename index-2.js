@@ -108,22 +108,20 @@ const products = mysqlees.schema({
     },
     mrp: {
         datatype: {
-            name: 'int'
+            name: 'decimal',
+            size: '10, 2'
         }
     },
     customer_discount: {
         datatype: {
-            name: 'int'
+            name: 'decimal',
+            size: '10, 2'
         }
     },
     lp: {
         datatype: {
-            name: 'int'
-        }
-    },
-    qty: {
-        datatype: {
-            name: 'int'
+            name: 'decimal',
+            size: '10, 2'
         }
     },
     category: {
@@ -139,7 +137,8 @@ const products = mysqlees.schema({
     },
     cost_price: {
          datatype: {
-            name: 'int'
+            name: 'decimal',
+            size: '10, 2'
         }
     },
     filename: {
@@ -169,3 +168,183 @@ const inventory = mysqlees.schema({
 }, {timestamps: true});
 
 mysqlees.model('inventory', inventory);
+
+const invoice_data = mysqlees.schema({
+    id: {
+        autoIncrement: true,
+        primaryKey: true,
+        datatype: {
+            name: 'int'
+        }
+    },
+    eancode: {
+        datatype: {
+            name: 'varchar',
+            size: 255
+        }
+    },
+    product_name: {
+        datatype: {
+            name: 'varchar',
+            size: 255
+        }
+    },
+    hsn_code: {
+        datatype: {
+            name: 'varchar',
+            size: 255
+        }
+    },
+    mrp: {
+        datatype: {
+            name: 'decimal',
+            size: '10, 2'
+        }
+    },
+    qty: {
+        datatype: {
+            name: 'int'
+        }
+    },
+    customer_discount: {
+        datatype: {
+            name: 'decimal',
+            size: '10, 2'
+        }
+    },
+    td: {
+        datatype: {
+            name: 'decimal',
+            size: '10, 2'
+        }
+    },
+    cgst_rate: {
+        datatype: {
+            name: 'decimal',
+            size: '10, 2'
+        }
+    },
+    cgst_amount: {
+        datatype: {
+            name: 'decimal',
+            size: '10, 2'
+        }
+    },
+    sgst_rate: {
+        datatype: {
+            name: 'decimal',
+            size: '10, 2'
+        }
+    },
+    sgst_amount: {
+        datatype: {
+            name: 'decimal',
+            size: '10, 2'
+        }
+    },
+    igst_rate: {
+        datatype: {
+            name: 'decimal',
+            size: '10, 2'
+        }
+    },
+    igst_amount: {
+        datatype: {
+            name: 'decimal',
+            size: '10, 2'
+        }
+    },
+    total_amount: {
+        datatype: {
+            name: 'decimal',
+            size: '10, 2'
+        }
+    },
+    invoice_id: {
+        datatype: {
+            name: 'int'
+        },
+        ref: {
+            to: 'invoice',
+            foreignField: 'id'
+        }
+    }
+}, {timestamps: true});
+
+mysqlees.model('invoice_data', invoice_data);
+
+const invoice = mysqlees.schema({
+    id: {
+        autoIncrement: true,
+        primaryKey: true,
+        datatype: {
+            name: 'int'
+        }
+    },
+    name: {
+        datatype: {
+            name: 'varchar',
+            size: 255
+        }
+    },
+    address: {
+        datatype: {
+            name: 'varchar',
+            size: 255
+        }
+    },
+    contact: {
+        datatype: {
+            name: 'varchar',
+            size: 255
+        }
+    },
+    contact: {
+        datatype: {
+            name: 'varchar',
+            size: 255
+        }
+    },
+    gstin: {
+        datatype: {
+            name: 'varchar',
+            size: 255
+        }
+    },
+    bill_to: {
+        datatype: {
+            name: 'varchar',
+            size: 255
+        }
+    },
+    address_to: {
+        datatype: {
+            name: 'varchar',
+            size: 255
+        }
+    },
+    contact_to: {
+        datatype: {
+            name: 'varchar',
+            size: 255
+        }
+    },
+    invoice_no: {
+        datatype: {
+            name: 'varchar',
+            size: 255
+        }
+    },
+    invoice_date: {
+        datatype: {
+            name: 'date'
+        }
+    },
+    is_draft: {
+        datatype: {
+            name: 'int'
+        }
+    }
+}, {timestamps: true});
+
+mysqlees.model('invoice', invoice);

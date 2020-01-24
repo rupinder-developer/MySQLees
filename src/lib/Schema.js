@@ -250,7 +250,7 @@ module.exports = class Schema {
                                     }
                                 } else {
                                     // Modifing only datatype
-                                    fs.appendFileSync(alterTable, `${alterTablePrefix} MODIFY \`${dbCol.Field}\` ${column.datatype.name}${column.datatype.size?`(${column.datatype.size})`:``};`, 'utf8');
+                                    fs.appendFileSync(updateInit, `${alterTablePrefix} MODIFY \`${dbCol.Field}\` ${column.datatype.name}${column.datatype.size?`(${column.datatype.size})`:``};`, 'utf8');
                                 }
 
                                 // Validate Unique Key

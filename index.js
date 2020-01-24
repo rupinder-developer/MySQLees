@@ -9,7 +9,7 @@ mysqlees.connect(mysql, {
 });
 
 mysqlees.options({
-    autoMigration: false
+    autoMigration: true
 });
 
 const customers = mysqlees.schema({
@@ -36,7 +36,7 @@ const orders = mysqlees.schema({
         autoIncrement: true,
         datatype: {
             name: 'int'
-        },
+        }
     },
     customer_id: {
         datatype: {
@@ -53,6 +53,8 @@ const orders = mysqlees.schema({
             name: 'int',
             size: 11
         },
+        autoIncrement: true
+        
     }
 }, {
     timestamps: true
@@ -64,4 +66,4 @@ orders.index('text', 'text', {
 });
 
 const m = mysqlees.model('orders', orders);
-const m2 = mysqlees.model('customers', customers);
+// const m2 = mysqlees.model('customers', customers);
