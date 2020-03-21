@@ -87,7 +87,7 @@ module.exports = class Schema {
                     if (deprecated) {
                         schemaLength--;
                         if (schemaLength <= 0) {
-                            console.log(`Error -> (Model = ${this.modelName}): It is not possible to decrecate all the columns of any Model!!`);
+                            console.log(`Error -> (Model = ${this.modelName}): It is not possible to deprecate all the columns of any Model!!`);
                             process.exit();
                         }
                         continue;
