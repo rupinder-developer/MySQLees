@@ -212,7 +212,9 @@ module.exports = class Schema {
                         let column = this.schema[dbCol.Field], aiShouldDrop = false;
 
                         if (this.options.timestamps && (dbCol.Field == 'created_at' || dbCol.Field == 'updated_at')) {    
-                            continue;
+                            if (!(this.schema['created_at'] || this.schema['updated_at'])) {
+                                continue;
+                            }
                         }
                         
                         if (column) {
