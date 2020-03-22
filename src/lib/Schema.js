@@ -347,8 +347,10 @@ module.exports = class Schema {
                         }
                     }
                     
-                    // Adding Timestamps if required
+                    
+                    // Adding || Removing Timestamps
                     if (this.options.timestamps) {
+                        // Adding Timestamps
                         fs.appendFileSync(alterTable, `
                         SET @preparedStatement = (SELECT IF(
                             (
@@ -381,6 +383,47 @@ module.exports = class Schema {
                           EXECUTE alterIfNotExists;
                           DEALLOCATE PREPARE alterIfNotExists;
                         `, 'utf8');
+                    } else {
+                        // Removing Timestamps 
+                        if (!this.schema['created_at']) {
+                            fs.appendFileSync(alterTable, `
+                            SET @preparedStatement = (SELECT IF(
+                                (
+                                  SELECT true FROM INFORMATION_SCHEMA.COLUMNS
+                                  WHERE
+                                    (TABLE_NAME = '${this.modelName}') AND 
+                                    (TABLE_SCHEMA = '${this.store.config.database}') AND
+                                    (COLUMN_NAME = 'created_at')
+                                ) = true,
+                                "${alterTablePrefix} DROP COLUMN \`created_at\`;",
+                                "SELECT 1"
+                              ));
+    
+                              PREPARE alterIfNotExists FROM @preparedStatement;
+                              EXECUTE alterIfNotExists;
+                              DEALLOCATE PREPARE alterIfNotExists;
+                            `, 'utf8');
+                        }
+
+                        if (!this.schema['updated_at']) {
+                            fs.appendFileSync(alterTable, `
+                              SET @preparedStatement = (SELECT IF(
+                                (
+                                  SELECT true FROM INFORMATION_SCHEMA.COLUMNS
+                                  WHERE
+                                    (TABLE_NAME = '${this.modelName}') AND 
+                                    (TABLE_SCHEMA = '${this.store.config.database}') AND
+                                    (COLUMN_NAME = 'updated_at')
+                                ) = true,
+                                "${alterTablePrefix} DROP COLUMN \`updated_at\`;",
+                                "SELECT 1"
+                              ));
+                              PREPARE alterIfNotExists FROM @preparedStatement;
+                              EXECUTE alterIfNotExists;
+                              DEALLOCATE PREPARE alterIfNotExists;
+                            `, 'utf8');
+                        }
+                        
                     }
                     
                     if (allPrimaryKeys.length > 0) {

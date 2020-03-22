@@ -55,6 +55,11 @@ const orders = mysqlees.schema({
         },
         autoIncrement: true
         
+    },
+    created_at: {
+        datatype: {
+            name: 'date'
+        }
     }
 }, {
     timestamps: true
