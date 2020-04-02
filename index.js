@@ -36,7 +36,8 @@ const orders = mysqlees.schema({
         autoIncrement: true,
         datatype: {
             name: 'int'
-        }
+        },
+        renamedFrom: 'order_id'
     },
     customer_id: {
         datatype: {
@@ -48,19 +49,14 @@ const orders = mysqlees.schema({
             foreignField: 'id'
         },
     },
-    text: {
+    text2: {
         datatype: {
             name: 'int',
             size: 11
         },
-        autoIncrement: true
-        
+        autoIncrement: true,
+        renamedFrom: 'text',
     },
-    created_at: {
-        datatype: {
-            name: 'date'
-        }
-    }
 }, {
     timestamps: true
 });

@@ -302,7 +302,7 @@ module.exports = class Schema {
                     // Adding new columns to the database
                     for(let column in this.schema) {
                         
-                        if (!(updatedColumns[column] || this.schema[column].deprecated) && this.schema[column].datatype && this.schema[column].datatype.name) {
+                        if (!(updatedColumns[column] || this.schema[column].deprecated || this.schema[column].renamedFrom) && this.schema[column].datatype && this.schema[column].datatype.name) {
                             // Adding new column
                             fs.appendFileSync(updateNewCol, `${alterTablePrefix} ADD \`${column}\` ${this.schema[column].datatype.name}${this.schema[column].datatype.size?`(${this.schema[column].datatype.size})`:``} ;`, 'utf8');
                             
@@ -344,6 +344,25 @@ module.exports = class Schema {
                             if (typeof this.schema[column].defaultValue !== 'undefined') {
                                 fs.appendFileSync(alterTable, `${alterTablePrefix} ALTER \`${column}\` SET DEFAULT '${this.schema[column].defaultValue}';`, 'utf8');
                             }
+                        } else if (!this.schema[column].deprecated && this.schema[column].renamedFrom && this.schema[column].datatype && this.schema[column].datatype.name) {
+                            // Rename Column
+                            fs.appendFileSync(alterTable, `
+                            SET @preparedStatement = (SELECT IF(
+                                (
+                                  SELECT true FROM INFORMATION_SCHEMA.COLUMNS
+                                  WHERE
+                                    (TABLE_NAME = '${this.modelName}') AND 
+                                    (TABLE_SCHEMA = '${this.store.config.database}') AND
+                                    (COLUMN_NAME = '${this.schema[column].renamedFrom}')
+                                ) = true,
+                                "${alterTablePrefix} CHANGE COLUMN \`${this.schema[column].renamedFrom}\` \`${column}\` ${this.schema[column].datatype.name}${this.schema[column].datatype.size?`(${this.schema[column].datatype.size})`:``}",
+                                "SELECT 1"
+                              ));
+    
+                              PREPARE alterIfNotExists FROM @preparedStatement;
+                              EXECUTE alterIfNotExists;
+                              DEALLOCATE PREPARE alterIfNotExists;
+                            `, 'utf8');
                         }
                     }
                     
