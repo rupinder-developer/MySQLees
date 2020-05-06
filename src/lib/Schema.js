@@ -4,99 +4,99 @@ const fs = require('fs');
 
 module.exports = class Schema {
 
-    constructor(schema, options = {}) {
-        // Raw Schema
-        this.schema = schema;
-        this.options = options;
-        this.modelName = '';
-        this.store = '';
+        constructor(schema, options = {}) {
+            // Raw Schema
+            this.schema = schema;
+            this.options = options;
+            this.modelName = '';
+            this.store = '';
 
-        // Schema Temporary files
-        this.schemaFiles = {
-            createTable: '',
-            alterTable: '',
-            extra: '',
-            updateNewCol: '',
-            updateInit: ''
-            
-        }; 
-        this.indexes = [];
-        this.indexesObject = [];
+            // Schema Temporary files
+            this.schemaFiles = {
+                createTable: '',
+                alterTable: '',
+                extra: '',
+                updateNewCol: '',
+                updateInit: ''
 
-        return this;
-    }
+            };
+            this.indexes = [];
+            this.indexesObject = [];
 
-    implementSchema(modelName, store) {
-        if (`${modelName}`.trim()) {
-            store.connection.query(`SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'${modelName}' AND TABLE_SCHEMA='${store.config.database}' LIMIT 1`, function(err, result) {
-                store.createdModels[modelName] = 1;  
-                if (result) {
-                    // Installing Schema
-                    this.modelName = modelName;
-                    this.store = store;
-                    if (result[0].count === 0) {
-                        this.parseIndexes();
-                        this.parseSchema();
-                        this.installSchema();  
-                    } else if(store.options.autoMigration){
-                        // Updating Schema
-                        this.parseIndexes();
-                        this.updateSchema();
-                    }
-                }
-            }.bind(this)); 
-        }           
-    }
+            return this;
+        }
 
-    parseSchema() {
-        let schemaLength = Object.keys(this.schema).length;
-        if (schemaLength > 0) {
-            // Creating Schema Files
-            let createTable, 
-                alterTable,
-                allColumns = [],
-                allPrimaryKeys = [],
-                alterTablePrefix = `ALTER TABLE \`${this.modelName}\``;
-
-            try {
-                if (!fs.existsSync(`${__dirname}/temp`)){
-                    fs.mkdirSync(`${__dirname}/temp`);
-                }
-                this.schemaFiles.createTable = `${__dirname}/temp/${this.uuid()}.sql`;
-                this.schemaFiles.alterTable = `${__dirname}/temp/${this.uuid()}.sql`;
-                createTable = fs.openSync(this.schemaFiles.createTable, 'a');
-                alterTable = fs.openSync(this.schemaFiles.alterTable, 'a');
-                fs.appendFileSync(createTable, `CREATE TABLE IF NOT EXISTS \`${this.modelName}\` (`, 'utf8');
-                // Parsing Schema Data
-                for (let column in this.schema) {
-                    const {
-                        ref,
-                        unique,
-                        datatype,
-                        notNull,
-                        primaryKey,
-                        defaultValue,
-                        autoIncrement,
-                        deprecated
-                    } = this.schema[column];
-                
-                    if (this.options.timestamps && (column == 'created_at' || column == 'updated_at')) {
-                        continue;
-                    }
-
-                    if (deprecated) {
-                        schemaLength--;
-                        if (schemaLength <= 0) {
-                            console.log(`Error -> (Model = ${this.modelName}): It is not possible to deprecate all the columns of any Model!!`);
-                            process.exit();
+        implementSchema(modelName, store) {
+            if (`${modelName}`.trim()) {
+                store.connection.query(`SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'${modelName}' AND TABLE_SCHEMA='${store.config.database}' LIMIT 1`, function(err, result) {
+                    store.createdModels[modelName] = 1;
+                    if (result) {
+                        // Installing Schema
+                        this.modelName = modelName;
+                        this.store = store;
+                        if (result[0].count === 0) {
+                            this.parseIndexes();
+                            this.parseSchema();
+                            this.installSchema();
+                        } else if (store.options.autoMigration) {
+                            // Updating Schema
+                            this.parseIndexes();
+                            this.updateSchema();
                         }
-                        continue;
                     }
+                }.bind(this));
+            }
+        }
 
-                    if (datatype && datatype.name && !deprecated) {
-                    
-                        // Adding Columns
-                        allColumns.push(`\`${column}\` ${datatype.name}${datatype.size?`(${datatype.size})`:``}`);
+        parseSchema() {
+                let schemaLength = Object.keys(this.schema).length;
+                if (schemaLength > 0) {
+                    // Creating Schema Files
+                    let createTable,
+                        alterTable,
+                        allColumns = [],
+                        allPrimaryKeys = [],
+                        alterTablePrefix = `ALTER TABLE \`${this.modelName}\``;
+
+                    try {
+                        if (!fs.existsSync(`${__dirname}/temp`)) {
+                            fs.mkdirSync(`${__dirname}/temp`);
+                        }
+                        this.schemaFiles.createTable = `${__dirname}/temp/${this.uuid()}.sql`;
+                        this.schemaFiles.alterTable = `${__dirname}/temp/${this.uuid()}.sql`;
+                        createTable = fs.openSync(this.schemaFiles.createTable, 'a');
+                        alterTable = fs.openSync(this.schemaFiles.alterTable, 'a');
+                        fs.appendFileSync(createTable, `CREATE TABLE IF NOT EXISTS \`${this.modelName}\` (`, 'utf8');
+                        // Parsing Schema Data
+                        for (let column in this.schema) {
+                            const {
+                                ref,
+                                unique,
+                                datatype,
+                                notNull,
+                                primaryKey,
+                                defaultValue,
+                                autoIncrement,
+                                deprecated
+                            } = this.schema[column];
+
+                            if (this.options.timestamps && (column == 'created_at' || column == 'updated_at')) {
+                                continue;
+                            }
+
+                            if (deprecated) {
+                                schemaLength--;
+                                if (schemaLength <= 0) {
+                                    console.log(`Error -> (Model = ${this.modelName}): It is not possible to deprecate all the columns of any Model!!`);
+                                    process.exit();
+                                }
+                                continue;
+                            }
+
+                            if (datatype && datatype.name && !deprecated) {
+
+                                // Adding Columns
+                                allColumns.push(`\`${column}\` ${datatype.name}${datatype.size?`(${datatype.size})`:``}`);
 
                         // Adding NOT NULL || autoIncrement
                         if (notNull || autoIncrement) {
@@ -115,7 +115,7 @@ module.exports = class Schema {
                         
                         // Adding Foreign Key
                         if (ref && ref.to && ref.foreignField) {
-                            this.store.pendingFkQueries.push({ref, query: `${alterTablePrefix} ADD CONSTRAINT \`${column}\` FOREIGN KEY (\`${column}\`) REFERENCES \`${ref.to}\`(\`${ref.foreignField}\`);`});
+                            this.store.pendingFkQueries.push({ref, query: `${alterTablePrefix} ADD CONSTRAINT \`${this.modelName}_${column}\` FOREIGN KEY (\`${column}\`) REFERENCES \`${ref.to}\`(\`${ref.foreignField}\`);`});
                         }
 
                         // Set default value for column
@@ -280,16 +280,16 @@ module.exports = class Schema {
                                     set @var=if((SELECT true FROM information_schema.TABLE_CONSTRAINTS WHERE
                                         CONSTRAINT_SCHEMA = DATABASE() AND
                                         TABLE_NAME        = '${this.modelName}' AND
-                                        CONSTRAINT_NAME   = '${dbCol.Field}' AND
+                                        CONSTRAINT_NAME   = '${this.modelName}_${dbCol.Field}' AND
                                         CONSTRAINT_TYPE   = 'FOREIGN KEY') = true,'ALTER TABLE ${this.modelName}
-                                        DROP FOREIGN KEY ${dbCol.Field}','select 1');
+                                        DROP FOREIGN KEY ${this.modelName}_${dbCol.Field}','select 1');
                             
                                     prepare stmt from @var;
                                     execute stmt;
                                     deallocate prepare stmt;
                                     `;
                                     droppedFks[column] = true;
-                                    this.store.pendingFkQueries.push({ref: column.ref, query: `${alterTablePrefix} ADD CONSTRAINT \`${dbCol.Field}\` FOREIGN KEY (\`${dbCol.Field}\`) REFERENCES \`${column.ref.to}\`(\`${column.ref.foreignField}\`);`});
+                                    this.store.pendingFkQueries.push({ref: column.ref, query: `${alterTablePrefix} ADD CONSTRAINT \`${this.modelName}_${dbCol.Field}\` FOREIGN KEY (\`${dbCol.Field}\`) REFERENCES \`${column.ref.to}\`(\`${column.ref.foreignField}\`);`});
                                 }
 
                             }  
@@ -327,16 +327,16 @@ module.exports = class Schema {
                                 set @var=if((SELECT true FROM information_schema.TABLE_CONSTRAINTS WHERE
                                     CONSTRAINT_SCHEMA = DATABASE() AND
                                     TABLE_NAME        = '${this.modelName}' AND
-                                    CONSTRAINT_NAME   = '${column}' AND
+                                    CONSTRAINT_NAME   = '${this.modelName}_${column}' AND
                                     CONSTRAINT_TYPE   = 'FOREIGN KEY') = true,'ALTER TABLE ${this.modelName}
-                                    DROP FOREIGN KEY ${column}','select 1');
+                                    DROP FOREIGN KEY ${this.modelName}_${column}','select 1');
                         
                                 prepare stmt from @var;
                                 execute stmt;
                                 deallocate prepare stmt;
                                 `;
                                 droppedFks[column] = true;
-                                this.store.pendingFkQueries.push({ref: this.schema[column].ref, query: `${alterTablePrefix} ADD CONSTRAINT \`${column}\` FOREIGN KEY (\`${column}\`) REFERENCES \`${this.schema[column].ref.to}\`(\`${this.schema[column].ref.foreignField}\`);`});
+                                this.store.pendingFkQueries.push({ref: this.schema[column].ref, query: `${alterTablePrefix} ADD CONSTRAINT \`${this.modelName}_${column}\` FOREIGN KEY (\`${column}\`) REFERENCES \`${this.schema[column].ref.to}\`(\`${this.schema[column].ref.foreignField}\`);`});
                                 
                             }
 
@@ -473,9 +473,9 @@ module.exports = class Schema {
                                 set @var=if((SELECT true FROM information_schema.TABLE_CONSTRAINTS WHERE
                                     CONSTRAINT_SCHEMA = DATABASE() AND
                                     TABLE_NAME        = '${item['TABLE_NAME']}' AND
-                                    CONSTRAINT_NAME   = '${item['CONSTRAINT_NAME']}' AND
+                                    CONSTRAINT_NAME   = '${item['TABLE_NAME']}_${item['CONSTRAINT_NAME']}' AND
                                     CONSTRAINT_TYPE   = 'FOREIGN KEY') = true,'ALTER TABLE ${item['TABLE_NAME']}
-                                    DROP FOREIGN KEY ${item['CONSTRAINT_NAME']}','select 1');
+                                    DROP FOREIGN KEY ${item['TABLE_NAME']}_${item['CONSTRAINT_NAME']}','select 1');
                         
                                 prepare stmt from @var;
                                 execute stmt;
