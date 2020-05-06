@@ -165,6 +165,7 @@ module.exports = class Schema {
                 for(const fk of this.store.pendingFkQueries) {
                     if (this.store.createdModels[fk.ref.to]) {
                         fkQueries += fk.query;
+                        delete this.store.createdModels[fk.ref.to]
                     }
                 }
             }
