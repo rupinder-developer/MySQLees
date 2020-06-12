@@ -76,3 +76,7 @@ orders.index('text', 'text', {
 
 const m = mysqlees.model('orders', orders);
 const m2 = mysqlees.model('customers', customers);
+
+console.log(m);
+console.log('------');
+console.log(m2);
