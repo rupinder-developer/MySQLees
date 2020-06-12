@@ -49,13 +49,21 @@ const orders = mysqlees.schema({
             foreignField: 'id'
         },
     },
-    text2: {
+    tempText: {
+        primaryKey: true,
         datatype: {
             name: 'int',
             size: 11
         },
-        autoIncrement: true,
-        renamedFrom: 'text',
+        renamedFrom: 'text2'
+    },
+    new2: {
+        datatype: {
+            name: 'varchar',
+            size: 255
+        },
+        unique: false,
+        renamedFrom: 'new'
     },
 }, {
     timestamps: true
@@ -67,4 +75,4 @@ orders.index('text', 'text', {
 });
 
 const m = mysqlees.model('orders', orders);
-// const m2 = mysqlees.model('customers', customers);
+const m2 = mysqlees.model('customers', customers);

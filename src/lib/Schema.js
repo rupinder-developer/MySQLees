@@ -17,7 +17,8 @@ module.exports = class Schema {
             alterTable: '',
             extra: '',
             updateNewCol: '',
-            updateInit: ''
+            updateInit: '',
+            renameColumn: ''
 
         };
         this.indexes = [];
@@ -189,13 +190,15 @@ module.exports = class Schema {
     updateSchema() {
         this.store.connection.query(`DESC \`${this.modelName}\``, function (err, result) {
             if (!err) {
-                let primaryKeys,
+                var primaryKeys,
                     alterTable,
+                    renameColumn,
                     updateNewCol,
                     updateInit,
                     allPrimaryKeys = [],
                     pkShouldDrop = false,
                     updatedColumns = {},
+                    dbCols = {},
                     droppedFks = {},
                     alterTablePrefix = `ALTER TABLE \`${this.modelName}\``;
                 try {
@@ -203,22 +206,23 @@ module.exports = class Schema {
                     this.schemaFiles.alterTable = `${__dirname}/temp/${this.uuid()}.sql`;
                     this.schemaFiles.updateNewCol = `${__dirname}/temp/${this.uuid()}.sql`;
                     this.schemaFiles.updateInit = `${__dirname}/temp/${this.uuid()}.sql`;
+                    this.schemaFiles.renameColumn = `${__dirname}/temp/${this.uuid()}.sql`;
                     updateNewCol = fs.openSync(this.schemaFiles.updateNewCol, 'a');
                     updateInit = fs.openSync(this.schemaFiles.updateInit, 'a');
                     alterTable = fs.openSync(this.schemaFiles.alterTable, 'a');
                     primaryKeys = fs.openSync(this.schemaFiles.extra, 'a');
+                    renameColumn = fs.openSync(this.schemaFiles.renameColumn, 'a');
 
-                    // Updating existing columns in the database
-                    for (let dbCol of result) {
-                        let column = this.schema[dbCol.Field], aiShouldDrop = false;
+                    const updateColumn = (dbCol, schemaCol = '') => {
+                        let column = this.schema[schemaCol ? schemaCol : dbCol.Field], aiShouldDrop = false, skip = false;
 
                         if (this.options.timestamps && (dbCol.Field == 'created_at' || dbCol.Field == 'updated_at')) {
                             if (!(this.schema['created_at'] || this.schema['updated_at'])) {
-                                continue;
+                                skip = true;
                             }
                         }
 
-                        if (column) {
+                        if (column && !skip) {
                             if (column.deprecated) {
                                 // If column is no more needed in DB stucture
                                 if (dbCol.Key == 'PRI') {
@@ -297,7 +301,14 @@ module.exports = class Schema {
                             // Adding Column to the list of Updated Columns
                             updatedColumns[dbCol.Field] = true;
                         }
+                    }
 
+                    // Updating existing columns in the database
+                    for (let dbCol of result) {
+                        updateColumn(dbCol);
+
+                        // Saving each database column
+                        dbCols[dbCol.Field] = dbCol;
                     }
 
                     // Adding new columns to the database
@@ -346,8 +357,13 @@ module.exports = class Schema {
                                 fs.appendFileSync(alterTable, `${alterTablePrefix} ALTER \`${column}\` SET DEFAULT '${this.schema[column].defaultValue}';`, 'utf8');
                             }
                         } else if (!this.schema[column].deprecated && this.schema[column].renamedFrom && this.schema[column].datatype && this.schema[column].datatype.name) {
+                            // Update Column
+                            if (dbCols[this.schema[column].renamedFrom]) {
+                                updateColumn(dbCols[this.schema[column].renamedFrom], column);
+                            }
+
                             // Rename Column
-                            fs.appendFileSync(alterTable, `
+                            fs.appendFileSync(renameColumn, `
                             SET @preparedStatement = (SELECT IF(
                                 (
                                   SELECT true FROM INFORMATION_SCHEMA.COLUMNS
@@ -364,6 +380,9 @@ module.exports = class Schema {
                               EXECUTE alterIfNotExists;
                               DEALLOCATE PREPARE alterIfNotExists;
                             `, 'utf8');
+
+
+
                         }
                     }
 
@@ -464,6 +483,9 @@ module.exports = class Schema {
                     if (primaryKeys !== undefined) {
                         fs.closeSync(primaryKeys);
                     }
+                    if (renameColumn !== undefined) {
+                        fs.closeSync(renameColumn);
+                    }
                 }
                 // Removing all Foreign Keys
                 this.store.connection.query(`SELECT TABLE_NAME, CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS T WHERE CONSTRAINT_SCHEMA = '${this.store.config.database}' AND CONSTRAINT_TYPE='FOREIGN KEY'`, function (err, result) {
@@ -494,7 +516,7 @@ module.exports = class Schema {
                             }
                         }
 
-                        let sql = `SET foreign_key_checks = 0; ${this.store.dropFkQueries} ${fs.readFileSync(this.schemaFiles.updateInit)} ${pkShouldDrop ? `${alterTablePrefix} DROP PRIMARY KEY;` : ''} ${fs.readFileSync(this.schemaFiles.updateNewCol)} ${fs.readFileSync(this.schemaFiles.extra)} ${fs.readFileSync(this.schemaFiles.alterTable)} ${this.indexes.join('')} ${fkQueries} SET foreign_key_checks = 1;`.trim();
+                        let sql = `SET foreign_key_checks = 0; ${this.store.dropFkQueries} ${fs.readFileSync(this.schemaFiles.updateInit)} ${pkShouldDrop ? `${alterTablePrefix} DROP PRIMARY KEY;` : ''} ${fs.readFileSync(this.schemaFiles.updateNewCol)} ${fs.readFileSync(this.schemaFiles.extra)} ${fs.readFileSync(this.schemaFiles.alterTable)} ${fs.readFileSync(this.schemaFiles.renameColumn)} ${this.indexes.join('')} ${fkQueries} SET foreign_key_checks = 1;`.trim();
                         if (sql) {
                             this.store.connection.query(sql, function (err, result) {
                                 if (err) {
@@ -506,6 +528,7 @@ module.exports = class Schema {
                                 fs.unlink(this.schemaFiles.extra, function () { });
                                 fs.unlink(this.schemaFiles.updateNewCol, function () { });
                                 fs.unlink(this.schemaFiles.updateInit, function () { });
+                                fs.unlink(this.schemaFiles.renameColumn, function () { });
                                 delete this.schemaFiles;
                                 delete this.indexes;
                                 delete this.indexesObject;
