@@ -1,9 +1,10 @@
 "use strict"
 
-import Database from './Database';
-import Store    from './Store';
+// Classes
+import QueryBuilder from './QueryBuilder';
+import Store        from './Store';
 
-module.exports =  class Model extends Database {
+module.exports =  class Model extends QueryBuilder {
     constructor(options) {
         super(options);
     } 

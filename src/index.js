@@ -1,18 +1,24 @@
 "use strict"
 
+// Inbuilt Modules
+import cluster from 'cluster';
+
+// Classes
 import Model  from './lib/Model';
 import Store  from './lib/Store';
 import Schema from './lib/Schema';
 
 class MySQLees {
     static connect(mysql, config) {
+        
         Store.pendingFkQueries = []; // Pending Foreign Keys Queries
         Store.dropFkQueries    = ''; // This Variable contains the queries which helps to drop all the present Foreign Keys in the database while updating schema.
         Store.createdModels    = {};
-        Store.isConnected      = true;
-        Store.options          = {};
-        Store.config           = config;
-        Store.connection       = mysql.createConnection({...config, multipleStatements: true});
+        
+        Store.isConnected = true;
+        Store.options     = {};
+        Store.config      = config;
+        Store.connection  = mysql.createConnection({...config, multipleStatements: true});
         
         Store.connection.connect(function(err) {
             if (err) console.log(err);
@@ -27,7 +33,9 @@ class MySQLees {
 
     static model(modelName, schema) {
         if (Store.isConnected && Store.config.database) {
-            schema.implementSchema(modelName);
+            if (cluster.isMaster) {
+                schema.implementSchema(modelName);
+            }
             return new Model({
                 schema: schema.schema,
                 modelName

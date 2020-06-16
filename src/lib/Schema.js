@@ -1,6 +1,9 @@
 "use strict"
 
-import fs     from 'fs';
+// Inbuilt Modules
+import fs from 'fs';
+
+// Classes
 import Store  from './Store';
 
 module.exports = class Schema {
@@ -38,7 +41,7 @@ module.exports = class Schema {
                         this.parseIndexes();
                         this.parseSchema();
                         this.installSchema();
-                    } else if (store.options.autoMigration) {
+                    } else if (Store.options.autoMigration) {
                         // Updating Schema
                         this.parseIndexes();
                         this.updateSchema();
