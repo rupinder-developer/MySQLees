@@ -4,6 +4,7 @@ const mysqlees = require('./build/index');
 mysqlees.bind(mysql);
 
 mysqlees.connect({
+    connectionLimit: 10,
     host: "localhost",
     user: "root",
     password: "",

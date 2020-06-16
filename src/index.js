@@ -27,7 +27,7 @@ class MySQLees {
             process.exit();
         }
         
-        // for mysql connection
+        // MySQL Connection Variables
         Store.isConnected = true;
         Store.options     = {};
         Store.config      = config;
@@ -36,6 +36,21 @@ class MySQLees {
         Store.connection.connect(function(err) {
             if (err) console.error(err);
         }); 
+
+        return Store.connection;
+    }
+
+    static createPool(config) {
+        if (!Store.mysql) {
+            console.error('Error: Failed to bind MySQL!!');
+            process.exit();
+        }
+        
+        // MySQL Connection Variables
+        Store.isConnected = true;
+        Store.options     = {};
+        Store.config      = config;
+        Store.connection  = Store.mysql.createPool(config).getConnection();
 
         return Store.connection;
     }

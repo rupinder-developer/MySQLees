@@ -32,15 +32,7 @@ module.exports = class Schema {
 
     implementSchema(modelName) {
         if (`${modelName}`.trim()) {
-            if (!Schema.connection) {
-                Schema.connection = Store.mysql.createConnection({
-                    host: Store.config.host,
-                    user: Store.config.user,
-                    password: Store.config.password,
-                    database: Store.config.database,
-                    multipleStatements: true
-                });
-            }
+            this.startConnection();
             Schema.connection.query(`SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'${modelName}' AND TABLE_SCHEMA='${Store.config.database}' LIMIT 1`, function (err, result) {
                 Store.createdModels[modelName] = 1;
                 if (result) {
@@ -54,6 +46,8 @@ module.exports = class Schema {
                         // Updating Schema
                         this.parseIndexes();
                         this.updateSchema();
+                    } else {
+                        
                     }
                 }
             }.bind(this));
@@ -191,21 +185,9 @@ module.exports = class Schema {
                     if (err.sql) delete err.sql;
                     console.error(err, ` (Error -> Model = ${this.modelName} )`);
                 }        
-                
-                // Saving data for schema implementation
-                Store.implementedModels.push(this.modelName);
-                
-                // Cleaning Resources
-                if (Object.keys(Store.createdModels).length == Store.implementedModels.length && Store.implementedModels.length > 0) {
-                    // Close Schema Connection
-                    Schema.connection.end();
                     
-                    delete Store.pendingFkQueries; 
-                    delete Store.dropFkQueries;    
-                    delete Store.createdModels;    
-                    delete Store.implementedModels;
-                    delete Schema.connection;
-                }
+                // Cleaning Resources
+                this.endConnection();
                 fs.unlink(this.schemaFiles.createTable, function () { });
                 fs.unlink(this.schemaFiles.alterTable, function () { });
 
@@ -555,20 +537,11 @@ module.exports = class Schema {
                                     console.error(err, ` (Error -> Model = ${this.modelName} )`);
                                 }
 
-                                // Saving data for schema implementation
-                                Store.implementedModels.push(this.modelName);
+                                
+                                
                                 
                                 // Cleaning Resources
-                                if (Object.keys(Store.createdModels).length == Store.implementedModels.length && Store.implementedModels.length > 0) {
-                                    // Close Schema Connection
-                                    Schema.connection.end();
-                                    
-                                    delete Store.pendingFkQueries; 
-                                    delete Store.dropFkQueries;    
-                                    delete Store.createdModels;    
-                                    delete Store.implementedModels;
-                                    delete Schema.connection;      
-                                }
+                                this.endConnection();
                                 fs.unlink(this.schemaFiles.alterTable, function () { });
                                 fs.unlink(this.schemaFiles.extra, function () { });
                                 fs.unlink(this.schemaFiles.updateNewCol, function () { });
@@ -619,5 +592,31 @@ module.exports = class Schema {
             return (c == 'x' ? r : (r & 0x3 | 0x8)).toString(16);
         });
         return uuid;
+    }
+
+    startConnection() {
+        if (!Schema.connection) {
+            Schema.connection = Store.mysql.createConnection({
+                host: Store.config.host,
+                user: Store.config.user,
+                password: Store.config.password,
+                database: Store.config.database,
+                multipleStatements: true
+            });
+        }
+    }
+
+    endConnection() {
+        Store.implementedModels.push(this.modelName);
+        if (Object.keys(Store.createdModels).length == Store.implementedModels.length && Store.implementedModels.length > 0) {
+            // Close Schema Connection
+            Schema.connection.end();
+
+            delete Store.pendingFkQueries; 
+            delete Store.dropFkQueries;    
+            delete Store.createdModels;    
+            delete Store.implementedModels;
+            delete Schema.connection;      
+        }
     }
 }
