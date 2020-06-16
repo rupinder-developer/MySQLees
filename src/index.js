@@ -10,6 +10,12 @@ import Schema from './lib/Schema';
 
 class MySQLees {
     static bind(mysql) {
+        // Initializing variables for schema implementation
+        Store.pendingFkQueries = []; // Pending Foreign Keys Queries
+        Store.dropFkQueries    = ''; // This Variable contains the queries which helps to drop all the present Foreign Keys in the database while updating schema.
+        Store.createdModels    = {};
+
+        // Binding official MySQL package
         Store.mysql = mysql; 
     }
     
@@ -18,11 +24,6 @@ class MySQLees {
             console.error('Error: Failed to bind MySQL!!');
             process.exit();
         }
-
-        // for schema implementation
-        Store.pendingFkQueries = []; // Pending Foreign Keys Queries
-        Store.dropFkQueries    = ''; // This Variable contains the queries which helps to drop all the present Foreign Keys in the database while updating schema.
-        Store.createdModels    = {};
         
         // for mysql connection
         Store.isConnected = true;
