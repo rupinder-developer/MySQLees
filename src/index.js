@@ -9,16 +9,26 @@ import Store  from './lib/Store';
 import Schema from './lib/Schema';
 
 class MySQLees {
-    static connect(mysql, config) {
-        
+    static bind(mysql) {
+        Store.mysql = mysql; 
+    }
+    
+    static connect(config) {
+        if (!Store.mysql) {
+            console.error('Error: Failed to bind MySQL!!');
+            process.exit();
+        }
+
+        // for schema implementation
         Store.pendingFkQueries = []; // Pending Foreign Keys Queries
         Store.dropFkQueries    = ''; // This Variable contains the queries which helps to drop all the present Foreign Keys in the database while updating schema.
         Store.createdModels    = {};
         
+        // for mysql connection
         Store.isConnected = true;
         Store.options     = {};
         Store.config      = config;
-        Store.connection  = mysql.createConnection({...config, multipleStatements: true});
+        Store.connection  = Store.mysql.createConnection({...config, multipleStatements: true});
         
         Store.connection.connect(function(err) {
             if (err) console.log(err);
@@ -27,8 +37,12 @@ class MySQLees {
         return Store.connection;
     }
 
-    static getConnection() {
+    static connection() {
         return Store.connection;
+    }
+
+    static mysql() {
+        return Store.mysql;
     }
 
     static model(modelName, schema) {
@@ -42,9 +56,9 @@ class MySQLees {
             });
         }
         if (Store.isConnected && !Store.config.database) {
-            console.log('Error: Failed to connect to database!! (Database not found)');
+            console.error('Error: Failed to connect to database!! (Database not found)');
         } else {
-            console.log('Error: Failed to connect to database!!, Please use connect() method to establish database connectivity!!');
+            console.error('Error: Failed to connect to database!!, Please use connect() method to establish database connectivity!!');
         }
         process.exit();
     }

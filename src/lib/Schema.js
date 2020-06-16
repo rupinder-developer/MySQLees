@@ -4,7 +4,7 @@
 import fs from 'fs';
 
 // Classes
-import Store  from './Store';
+import Store from './Store';
 
 module.exports = class Schema {
 

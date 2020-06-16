@@ -1,7 +1,9 @@
 const mysql = require('mysql');
 const mysqlees = require('./build/index');
 
-mysqlees.connect(mysql, {
+mysqlees.bind(mysql);
+
+mysqlees.connect({
     host: "localhost",
     user: "root",
     password: "",
