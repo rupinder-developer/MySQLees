@@ -19,12 +19,12 @@ const customers = mysqlees.schema({
     id: {
         primaryKey: true,
         autoIncrement: true,
-        datatype: {
+        dataType: {
             name: 'int'
         }
     },
     name: {
-        datatype: {
+        dataType: {
             name: 'varchar',
             size: '255'
         }
@@ -37,13 +37,13 @@ const orders = mysqlees.schema({
     id: {
         primaryKey: true,
         autoIncrement: true,
-        datatype: {
+        dataType: {
             name: 'int'
         },
         renamedFrom: 'order_id'
     },
     customer_id: {
-        datatype: {
+        dataType: {
             name: 'int',
             size: 11
         },
@@ -54,14 +54,14 @@ const orders = mysqlees.schema({
     },
     text2: {
         primaryKey: true,
-        datatype: {
+        dataType: {
             name: 'int',
             size: 11
         },
         renamedFrom: 'text'
     },
     new2: {
-        datatype: {
+        dataType: {
             name: 'varchar',
             size: 255
         },
@@ -86,7 +86,7 @@ const dump = mysqlees.schema({
     id: {
         primaryKey: true,
         autoIncrement: true,
-        datatype: {
+        dataType: {
             name: 'int'
         }
     }
