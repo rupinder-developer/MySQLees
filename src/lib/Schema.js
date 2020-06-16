@@ -47,7 +47,22 @@ module.exports = class Schema {
                         this.parseIndexes();
                         this.updateSchema();
                     } else {
-                        
+                        if (!Schema.connectionTimeout) {
+                            Schema.connectionTimeout = setTimeout(function(){
+                                Schema.connection.end();   
+                                
+                                delete Store.pendingFkQueries; 
+                                delete Store.dropFkQueries;    
+                                delete Store.createdModels;    
+                                delete Store.implementedModels;
+                                delete Schema.connection;
+                                delete Schema.connectionTimeout;
+
+                                delete this.schemaFiles;
+                                delete this.indexes;
+                                delete this.indexesObject;
+                            }, 30000);
+                        }
                     }
                 }
             }.bind(this));
@@ -225,7 +240,7 @@ module.exports = class Schema {
                     primaryKeys  = fs.openSync(this.schemaFiles.extra, 'a');
                     renameColumn = fs.openSync(this.schemaFiles.renameColumn, 'a');
 
-                    const updateColumn = (dbCol, schemaCol = '') => {
+                    const updateColumn = function(dbCol, schemaCol = '') {
                         let column = this.schema[schemaCol ? schemaCol : dbCol.Field], aiShouldDrop = false, skip = false;
                         
                         if (this.options.timestamps && (dbCol.Field == 'created_at' || dbCol.Field == 'updated_at')) {
@@ -313,7 +328,7 @@ module.exports = class Schema {
                             // Adding Column to the list of Updated Columns
                             updatedColumns[dbCol.Field] = true;
                         }
-                    }
+                    }.bind(this)
 
                     // Updating existing columns in the database
                     for (let dbCol of result) {

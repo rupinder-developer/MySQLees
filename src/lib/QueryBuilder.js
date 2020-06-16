@@ -5,7 +5,7 @@ import Store from './Store';
 
 module.exports = class QueryBuilder {
     constructor(options) {
-        this._options = () => {
+        this._options = function() {
             return options;
         }
     }

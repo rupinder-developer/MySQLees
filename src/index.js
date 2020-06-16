@@ -11,14 +11,19 @@ import Schema from './lib/Schema';
 class MySQLees {
     static bind(mysql) {
         // Initializing variables for schema implementation
-        Store.pendingFkQueries  = []; // Pending Foreign Keys Queries
-        Store.dropFkQueries     = ''; // This Variable contains the queries which helps to drop all the present Foreign Keys in the database while updating schema.
-        Store.createdModels     = {};
-        Store.implementedModels = [];
-        Schema.connection       = null; // Connection variable of schema implementation 
+        Store.pendingFkQueries   = []; // Pending Foreign Keys Queries
+        Store.dropFkQueries      = ''; // This Variable contains the queries which helps to drop all the present Foreign Keys in the database while updating schema.
+        Store.createdModels      = {};
+        Store.implementedModels  = [];
+        Schema.connectionTimeout = null;
+        Schema.connection        = null; // Connection variable of schema implementation 
 
         // Binding official MySQL package
         Store.mysql = mysql; 
+    }
+
+    static mysql() {
+        return Store.mysql;
     }
     
     static connect(config) {
@@ -29,6 +34,7 @@ class MySQLees {
         
         // MySQL Connection Variables
         Store.isConnected = true;
+        Store.isPool      = false;
         Store.options     = {};
         Store.config      = config;
         Store.connection  = Store.mysql.createConnection(config);
@@ -48,19 +54,16 @@ class MySQLees {
         
         // MySQL Connection Variables
         Store.isConnected = true;
+        Store.isPool      = true;
         Store.options     = {};
         Store.config      = config;
-        Store.connection  = Store.mysql.createPool(config).getConnection();
-
+        Store.connection  = Store.mysql.createPool(config);
+    
         return Store.connection;
     }
 
     static connection() {
         return Store.connection;
-    }
-
-    static mysql() {
-        return Store.mysql;
     }
 
     static model(modelName, schema) {
