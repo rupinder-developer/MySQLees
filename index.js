@@ -51,13 +51,13 @@ const orders = mysqlees.schema({
             foreignField: 'id'
         },
     },
-    tempText: {
+    text2: {
         primaryKey: true,
         datatype: {
             name: 'int',
             size: 11
         },
-        renamedFrom: 'text2'
+        renamedFrom: 'text'
     },
     new2: {
         datatype: {

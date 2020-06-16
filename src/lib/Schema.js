@@ -32,12 +32,21 @@ module.exports = class Schema {
 
     implementSchema(modelName) {
         if (`${modelName}`.trim()) {
-            Store.connection.query(`SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'${modelName}' AND TABLE_SCHEMA='${Store.config.database}' LIMIT 1`, function (err, result) {
+            if (!Schema.connection) {
+                Schema.connection = Store.mysql.createConnection({
+                    host: Store.config.host,
+                    user: Store.config.user,
+                    password: Store.config.password,
+                    database: Store.config.database,
+                    multipleStatements: true
+                });
+            }
+            Schema.connection.query(`SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'${modelName}' AND TABLE_SCHEMA='${Store.config.database}' LIMIT 1`, function (err, result) {
                 Store.createdModels[modelName] = 1;
                 if (result) {
-                    // Installing Schema
                     this.modelName = modelName;
                     if (result[0].count === 0) {
+                        // Installing Schema
                         this.parseIndexes();
                         this.parseSchema();
                         this.installSchema();
@@ -94,7 +103,7 @@ module.exports = class Schema {
                     if (deprecated) {
                         schemaLength--;
                         if (schemaLength <= 0) {
-                            console.log(`Error -> (Model = ${this.modelName}): It is not possible to deprecate all the columns of any Model!!`);
+                            console.error(`Error -> (Model = ${this.modelName}): It is not possible to deprecate all the columns of any Model!!`);
                             process.exit();
                         }
                         continue;
@@ -131,7 +140,7 @@ module.exports = class Schema {
                         }
 
                     } else {
-                        console.log(`Datatype is missing for column \`${column}\` (Model = ${this.modelName})`);
+                        console.error(`Datatype is missing for column \`${column}\` (Model = ${this.modelName})`);
                     }
                 }
 
@@ -153,7 +162,7 @@ module.exports = class Schema {
                 }
 
             } catch (err) {
-                console.log(err);
+                console.error(err);
             } finally {
                 if (createTable !== undefined) {
                     fs.closeSync(createTable);
@@ -172,18 +181,30 @@ module.exports = class Schema {
                 for (const fk of Store.pendingFkQueries) {
                     if (Store.createdModels[fk.ref.to]) {
                         fkQueries += fk.query;
-                        delete Store.createdModels[fk.ref.to]
                     }
                 }
             }
 
-            Store.connection.query(`${fs.readFileSync(this.schemaFiles.createTable)} ${fs.readFileSync(this.schemaFiles.alterTable)} ${this.indexes.join('')} ${fkQueries}`, function (err, result) {
+            Schema.connection.query(`${fs.readFileSync(this.schemaFiles.createTable)} ${fs.readFileSync(this.schemaFiles.alterTable)} ${this.indexes.join('')} ${fkQueries}`, function (err, result) {
                 if (err) {
                     if (err.sql) delete err.sql;
-                    console.log(err, ` (Error -> Model = ${this.modelName} )`);
-                }
-
+                    console.error(err, ` (Error -> Model = ${this.modelName} )`);
+                }        
+                
+                // Saving data for schema implementation
+                Store.implementedModels.push(this.modelName);
+                
                 // Cleaning Resources
+                if (Object.keys(Store.createdModels).length == Store.implementedModels.length && Store.implementedModels.length > 0) {
+                    // Close Schema Connection
+                    Schema.connection.end();
+                    
+                    delete Store.pendingFkQueries; 
+                    delete Store.dropFkQueries;    
+                    delete Store.createdModels;    
+                    delete Store.implementedModels;
+                    delete Schema.connection;
+                }
                 fs.unlink(this.schemaFiles.createTable, function () { });
                 fs.unlink(this.schemaFiles.alterTable, function () { });
 
@@ -195,7 +216,7 @@ module.exports = class Schema {
     }
 
     updateSchema() {
-        Store.connection.query(`DESC \`${this.modelName}\``, function (err, result) {
+        Schema.connection.query(`DESC \`${this.modelName}\``, function (err, result) {
             if (!err) {
                 var primaryKeys,
                     alterTable,
@@ -477,7 +498,7 @@ module.exports = class Schema {
                         fs.appendFileSync(primaryKeys, `${alterTablePrefix} ADD PRIMARY KEY (${allPrimaryKeys.join()});`, 'utf8');
                     }
                 } catch (err) {
-                    console.log(err);
+                    console.error(err);
                 } finally {
                     if (updateInit !== undefined) {
                         fs.closeSync(updateInit);
@@ -497,7 +518,7 @@ module.exports = class Schema {
                 }
 
                 // Removing all Foreign Keys
-                Store.connection.query(`SELECT TABLE_NAME, CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS T WHERE CONSTRAINT_SCHEMA = '${Store.config.database}' AND CONSTRAINT_TYPE='FOREIGN KEY'`, function (err, result) {
+                Schema.connection.query(`SELECT TABLE_NAME, CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS T WHERE CONSTRAINT_SCHEMA = '${Store.config.database}' AND CONSTRAINT_TYPE='FOREIGN KEY'`, function (err, result) {
                     if (!err) {
                         for (let item of result) {
                             if (!droppedFks[item['CONSTRAINT_NAME']]) {
@@ -527,12 +548,26 @@ module.exports = class Schema {
 
                         let sql = `SET foreign_key_checks = 0; ${Store.dropFkQueries} ${fs.readFileSync(this.schemaFiles.updateInit)} ${pkShouldDrop ? `${alterTablePrefix} DROP PRIMARY KEY;` : ''} ${fs.readFileSync(this.schemaFiles.updateNewCol)} ${fs.readFileSync(this.schemaFiles.extra)} ${fs.readFileSync(this.schemaFiles.alterTable)} ${fs.readFileSync(this.schemaFiles.renameColumn)} ${this.indexes.join('')} ${fkQueries} SET foreign_key_checks = 1;`.trim();
                         if (sql) {
-                            Store.connection.query(sql, function (err, result) {
+                            Schema.connection.query(sql, function (err, result) {
                                 if (err) {
                                     if (err.sql) delete err.sql;
-                                    console.log(err, ` (Error -> Model = ${this.modelName} )`);
+                                    console.error(err, ` (Error -> Model = ${this.modelName} )`);
                                 }
 
+                                // Saving data for schema implementation
+                                Store.implementedModels.push(this.modelName);
+                                
+                                // Cleaning Resources
+                                if (Object.keys(Store.createdModels).length == Store.implementedModels.length && Store.implementedModels.length > 0) {
+                                    // Close Schema Connection
+                                    Schema.connection.end();
+                                    
+                                    delete Store.pendingFkQueries; 
+                                    delete Store.dropFkQueries;    
+                                    delete Store.createdModels;    
+                                    delete Store.implementedModels;
+                                    delete Schema.connection;      
+                                }
                                 fs.unlink(this.schemaFiles.alterTable, function () { });
                                 fs.unlink(this.schemaFiles.extra, function () { });
                                 fs.unlink(this.schemaFiles.updateNewCol, function () { });

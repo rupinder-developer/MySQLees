@@ -11,9 +11,11 @@ import Schema from './lib/Schema';
 class MySQLees {
     static bind(mysql) {
         // Initializing variables for schema implementation
-        Store.pendingFkQueries = []; // Pending Foreign Keys Queries
-        Store.dropFkQueries    = ''; // This Variable contains the queries which helps to drop all the present Foreign Keys in the database while updating schema.
-        Store.createdModels    = {};
+        Store.pendingFkQueries  = []; // Pending Foreign Keys Queries
+        Store.dropFkQueries     = ''; // This Variable contains the queries which helps to drop all the present Foreign Keys in the database while updating schema.
+        Store.createdModels     = {};
+        Store.implementedModels = [];
+        Schema.connection       = null; // Connection variable of schema implementation 
 
         // Binding official MySQL package
         Store.mysql = mysql; 
@@ -29,10 +31,10 @@ class MySQLees {
         Store.isConnected = true;
         Store.options     = {};
         Store.config      = config;
-        Store.connection  = Store.mysql.createConnection({...config, multipleStatements: true});
+        Store.connection  = Store.mysql.createConnection(config);
         
         Store.connection.connect(function(err) {
-            if (err) console.log(err);
+            if (err) console.error(err);
         }); 
 
         return Store.connection;
