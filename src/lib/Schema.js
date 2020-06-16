@@ -178,9 +178,10 @@ module.exports = class Schema {
         if (fs.existsSync(this.schemaFiles.createTable) && fs.existsSync(this.schemaFiles.alterTable)) {
             let fkQueries = '';
             if (Store.pendingFkQueries.length > 0) {
-                for (const fk of Store.pendingFkQueries) {
-                    if (Store.createdModels[fk.ref.to]) {
-                        fkQueries += fk.query;
+                for (const fk in Store.pendingFkQueries) {
+                    if (Store.createdModels[Store.pendingFkQueries[fk].ref.to]) {
+                        fkQueries += Store.pendingFkQueries[fk].query;
+                        delete Store.pendingFkQueries[fk]
                     }
                 }
             }

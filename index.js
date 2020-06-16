@@ -76,5 +76,20 @@ orders.index('text', 'text', {
     deprecated: true
 });
 
+
+
 const m = mysqlees.model('orders', orders);
 const m2 = mysqlees.model('customers', customers);                
+
+const dump = mysqlees.schema({
+    id: {
+        primaryKey: true,
+        autoIncrement: true,
+        datatype: {
+            name: 'int'
+        }
+    }
+}, {
+    timestamps: true
+});
+mysqlees.model('dump', dump);                
