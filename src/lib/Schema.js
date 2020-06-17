@@ -198,8 +198,17 @@ module.exports = class Schema {
             Schema.connection.query(`${fs.readFileSync(this.schemaFiles.createTable)} ${fs.readFileSync(this.schemaFiles.alterTable)} ${this.indexes.join('')} ${fkQueries}`, function (err, result) {
                 if (err) {
                     if (err.sql) delete err.sql;
-                    console.error(err, ` (Error -> Model = ${this.modelName} )`);
-                }        
+
+                    let {code, errno, sqlState, sqlMessage} = err;
+                    let mysqleesError = '';
+                    if (err.errno == 1064) {
+                        mysqleesError = 'Failed to parse Data Type;';
+                        sqlMessage = 'You have an error in your SQL syntax;';
+                    } else {
+                        mysqleesError = 'Failed to implement schema;';
+                    }
+                    console.error('Error:', {code, errno, sqlState, sqlMessage, mysqleesError}, `-> Model = ${this.modelName}`);
+                }       
                     
                 // Cleaning Resources
                 this.endConnection();
@@ -549,7 +558,16 @@ module.exports = class Schema {
                             Schema.connection.query(sql, function (err, result) {
                                 if (err) {
                                     if (err.sql) delete err.sql;
-                                    console.error(err, ` (Error -> Model = ${this.modelName} )`);
+
+                                    let {code, errno, sqlState, sqlMessage} = err;
+                                    let mysqleesError = '';
+                                    if (err.errno == 1064) {
+                                        mysqleesError = 'Failed to parse Data Type;';
+                                        sqlMessage = 'You have an error in your SQL syntax;';
+                                    } else {
+                                        mysqleesError = 'Failed to implement schema;';
+                                    }
+                                    console.error('Error:', {code, errno, sqlState, sqlMessage, mysqleesError}, `-> Model = ${this.modelName}`);
                                 }
 
                                 

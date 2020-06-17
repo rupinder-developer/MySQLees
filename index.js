@@ -30,9 +30,9 @@ const customers = mysqlees.schema({
 
 const orders = mysqlees.schema({
     id: {
+        dataType: 'int',
         primaryKey: true,
         autoIncrement: true,
-        dataType: 'int',
         renamedFrom: 'order_id'
     },
     customer_id: {

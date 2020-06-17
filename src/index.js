@@ -21,10 +21,6 @@ class MySQLees {
         // Binding official MySQL package
         Store.mysql = mysql; 
     }
-
-    static mysql() {
-        return Store.mysql;
-    }
     
     static connect(config) {
         if (!Store.mysql) {
@@ -64,6 +60,10 @@ class MySQLees {
 
     static connection() {
         return Store.connection;
+    }
+
+    static mysql() {
+        return Store.mysql;
     }
 
     static model(modelName, schema) {
