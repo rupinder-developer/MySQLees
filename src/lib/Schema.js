@@ -118,14 +118,14 @@ module.exports = class Schema {
                         continue;
                     }
 
-                    if (dataType && dataType.name && !deprecated) {
+                    if (dataType && !deprecated) {
 
                         // Adding Columns
-                        allColumns.push(`\`${column}\` ${dataType.name}${dataType.size ? `(${dataType.size})` : ``}`);
+                        allColumns.push(`\`${column}\` ${dataType}`);
 
                         // Adding NOT NULL || autoIncrement
                         if (notNull || autoIncrement) {
-                            fs.appendFileSync(alterTable, `${alterTablePrefix} MODIFY \`${column}\` ${dataType.name}${dataType.size ? `(${dataType.size})` : ``} ${notNull ? 'NOT NULL' : ''} ${autoIncrement && primaryKey ? 'AUTO_INCREMENT' : ''};`, 'utf8');
+                            fs.appendFileSync(alterTable, `${alterTablePrefix} MODIFY \`${column}\` ${dataType} ${notNull ? 'NOT NULL' : ''} ${autoIncrement && primaryKey ? 'AUTO_INCREMENT' : ''};`, 'utf8');
                         }
 
                         // Adding Primary Key to Temp Variable
@@ -254,19 +254,19 @@ module.exports = class Schema {
                                 // If column is no more needed in DB stucture
                                 if (dbCol.Key == 'PRI') {
                                     if (column.autoIncrement) {
-                                        fs.appendFileSync(updateInit, `${alterTablePrefix} MODIFY \`${dbCol.Field}\` ${column.dataType.name}${column.dataType.size ? `(${column.dataType.size})` : ``};`, 'utf8');
+                                        fs.appendFileSync(updateInit, `${alterTablePrefix} MODIFY \`${dbCol.Field}\` ${dbCol.Type};`, 'utf8');
                                     }
                                     pkShouldDrop = true;
                                 }
                                 fs.appendFileSync(alterTable, `${alterTablePrefix} DROP COLUMN \`${dbCol.Field}\`;`, 'utf8');
 
-                            } else if (column.dataType && column.dataType.name) {
+                            } else if (column.dataType) {
                                 // Validate Primary Key
                                 if (column.primaryKey) {
                                     allPrimaryKeys.push(`\`${dbCol.Field}\``);
                                     if (dbCol.Key == 'PRI') {
                                         if (column.autoIncrement) {
-                                            fs.appendFileSync(updateInit, `${alterTablePrefix} MODIFY \`${dbCol.Field}\` ${column.dataType.name}${column.dataType.size ? `(${column.dataType.size})` : ``};`, 'utf8');
+                                            fs.appendFileSync(updateInit, `${alterTablePrefix} MODIFY \`${dbCol.Field}\` ${column.dataType};`, 'utf8');
                                         }
                                         pkShouldDrop = true;
                                     }
@@ -278,13 +278,13 @@ module.exports = class Schema {
                                 // Validate Not Null & Auto Increment
                                 if (column.notNull || column.autoIncrement) {
                                     if (aiShouldDrop) {
-                                        fs.appendFileSync(alterTable, `${alterTablePrefix} MODIFY \`${dbCol.Field}\` ${column.dataType.name}${column.dataType.size ? `(${column.dataType.size})` : ``} ${column.notNull ? 'NOT NULL' : ''};`, 'utf8');
+                                        fs.appendFileSync(alterTable, `${alterTablePrefix} MODIFY \`${dbCol.Field}\` ${column.dataType} ${column.notNull ? 'NOT NULL' : ''};`, 'utf8');
                                     } else {
-                                        fs.appendFileSync(alterTable, `${alterTablePrefix} MODIFY \`${dbCol.Field}\` ${column.dataType.name}${column.dataType.size ? `(${column.dataType.size})` : ``} ${column.notNull ? 'NOT NULL' : ''} ${column.autoIncrement && column.primaryKey ? 'AUTO_INCREMENT' : ''};`, 'utf8');
+                                        fs.appendFileSync(alterTable, `${alterTablePrefix} MODIFY \`${dbCol.Field}\` ${column.dataType} ${column.notNull ? 'NOT NULL' : ''} ${column.autoIncrement && column.primaryKey ? 'AUTO_INCREMENT' : ''};`, 'utf8');
                                     }
                                 } else {
                                     // Modifing only dataType
-                                    fs.appendFileSync(updateInit, `${alterTablePrefix} MODIFY \`${dbCol.Field}\` ${column.dataType.name}${column.dataType.size ? `(${column.dataType.size})` : ``};`, 'utf8');
+                                    fs.appendFileSync(updateInit, `${alterTablePrefix} MODIFY \`${dbCol.Field}\` ${column.dataType};`, 'utf8');
                                 }
 
                                 // Validate Unique Key
@@ -341,13 +341,13 @@ module.exports = class Schema {
                     // Adding new columns to the database
                     for (let column in this.schema) {
 
-                        if (!(updatedColumns[column] || this.schema[column].deprecated || this.schema[column].renamedFrom) && this.schema[column].dataType && this.schema[column].dataType.name) {
+                        if (!(updatedColumns[column] || this.schema[column].deprecated || this.schema[column].renamedFrom) && this.schema[column].dataType) {
                             // Adding new column
-                            fs.appendFileSync(updateNewCol, `${alterTablePrefix} ADD \`${column}\` ${this.schema[column].dataType.name}${this.schema[column].dataType.size ? `(${this.schema[column].dataType.size})` : ``} ;`, 'utf8');
+                            fs.appendFileSync(updateNewCol, `${alterTablePrefix} ADD \`${column}\` ${this.schema[column].dataType} ;`, 'utf8');
 
                             // Adding NOT NULL || autoIncrement
                             if (this.schema[column].notNull || this.schema[column].autoIncrement) {
-                                fs.appendFileSync(alterTable, `${alterTablePrefix} MODIFY \`${column}\` ${this.schema[column].dataType.name}${this.schema[column].dataType.size ? `(${this.schema[column].dataType.size})` : ``} ${this.schema[column].notNull ? 'NOT NULL' : ''} ${this.schema[column].autoIncrement && this.schema[column].primaryKey ? 'AUTO_INCREMENT' : ''};`, 'utf8');
+                                fs.appendFileSync(alterTable, `${alterTablePrefix} MODIFY \`${column}\` ${this.schema[column].dataType} ${this.schema[column].notNull ? 'NOT NULL' : ''} ${this.schema[column].autoIncrement && this.schema[column].primaryKey ? 'AUTO_INCREMENT' : ''};`, 'utf8');
                             }
 
                             // Adding Primary Key to Temp Variable
@@ -383,7 +383,7 @@ module.exports = class Schema {
                             if (typeof this.schema[column].defaultValue !== 'undefined') {
                                 fs.appendFileSync(alterTable, `${alterTablePrefix} ALTER \`${column}\` SET DEFAULT '${this.schema[column].defaultValue}';`, 'utf8');
                             }
-                        } else if (!this.schema[column].deprecated && this.schema[column].renamedFrom && this.schema[column].dataType && this.schema[column].dataType.name) {
+                        } else if (!this.schema[column].deprecated && this.schema[column].renamedFrom && this.schema[column].dataType) {
                             // Update Column
                             if (dbCols[this.schema[column].renamedFrom]) {
                                 updateColumn(dbCols[this.schema[column].renamedFrom], column);
@@ -399,7 +399,7 @@ module.exports = class Schema {
                                     (TABLE_SCHEMA = '${Store.config.database}') AND
                                     (COLUMN_NAME = '${this.schema[column].renamedFrom}')
                                 ) = true,
-                                "${alterTablePrefix} CHANGE COLUMN \`${this.schema[column].renamedFrom}\` \`${column}\` ${this.schema[column].dataType.name}${this.schema[column].dataType.size ? `(${this.schema[column].dataType.size})` : ``}",
+                                "${alterTablePrefix} CHANGE COLUMN \`${this.schema[column].renamedFrom}\` \`${column}\` ${this.schema[column].dataType}",
                                 "SELECT 1"
                               ));
     
