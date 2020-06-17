@@ -7,6 +7,7 @@ import cluster from 'cluster';
 import Model  from './lib/Model';
 import Store  from './lib/Store';
 import Schema from './lib/Schema';
+import DataTypes from './lib/DataTypes';
 
 class MySQLees {
     static bind(mysql) {
@@ -92,5 +93,8 @@ class MySQLees {
         Store.options = options;
     }
 }
+
+// Satic Variables for MySQLess
+MySQLees.dataType = DataTypes;
 
 module.exports = MySQLees;
