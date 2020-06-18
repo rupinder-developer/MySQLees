@@ -16,18 +16,24 @@ module.exports =  class Model extends QueryBuilder {
 
     set schema(schema) {
         const finalSchema = {};
-        const primaryKeys = [];
+        const primaryKeys = {
+            string: '',
+            array: []    
+        };
+
         for(let column in schema) {
             if (schema[column].deprecated) {
                 continue;
             }
 
             if (schema[column].primaryKey) {
-                primaryKeys.push(column);
+                primaryKeys.array.push(column);
             }
 
             finalSchema[column] = schema[column];
         }
+
+        primaryKeys.string = primaryKeys.array.join();
 
         this._schema = () => finalSchema;
         this._primaryKeys = () => primaryKeys;
