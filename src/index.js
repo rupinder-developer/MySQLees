@@ -72,10 +72,10 @@ class MySQLees {
             if (cluster.isMaster) {
                 schema.implementSchema(modelName);
             }
-            return new Model({
-                schema: schema.schema,
-                modelName
-            });
+            const model = new Model();
+            model.schema = schema.schema;
+            model.modelName = modelName;
+            return model;
         }
         if (Store.isConnected && !Store.config.database) {
             console.error('Error: Failed to connect to database!! (Database not found)');
