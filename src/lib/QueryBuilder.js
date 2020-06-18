@@ -18,34 +18,57 @@ module.exports = class QueryBuilder {
     where(obj) {
         let final = [];
         for (let i in obj) {
-      
-          if (i === '$and') {
-            if (Array.isArray(obj[i])) {
-                let and = [];
-                for (let k in obj[i]) {
-                  and.push(`${where(obj[i][k])}`);
+            if (i === '$and') {
+                if (Array.isArray(obj[i])) {
+                    let and = [];
+                    for (let k in obj[i]) {
+                        and.push(`${where(obj[i][k])}`);
+                    }
+
+                    final.push(`(${and.join(' AND ')})`);
                 }
-                
-                final.push(`(${and.join(' AND ')})`);
-            }
-          } else if (i === '$or') {
-            if (Array.isArray(obj[i])) {
-                let or = [];
-                for (let j in obj[i]) {
-                    or.push(`${where(obj[i][j])}`);
+            } else if (i === '$or') {
+                if (Array.isArray(obj[i])) {
+                    let or = [];
+                    for (let j in obj[i]) {
+                        or.push(`${where(obj[i][j])}`);
+                    }
+
+                    final.push(`(${or.join(' OR ')})`);
                 }
-      
-                final.push(`(${or.join(' OR ')})`);
+            } else {
+                if (typeof obj[i] === 'object') {
+                    for (let l in obj[i]) {
+                        if (l === '$lt') {
+                            final.push(`${Store.mysql.escapeId(i)}<${Store.mysql.escape(obj[i][l])}`);
+                        } else if (l === '$lte') {
+                            final.push(`${Store.mysql.escapeId(i)}<=${Store.mysql.escape(obj[i][l])}`);
+                        } else if (l === '$gt') {
+                            final.push(`${Store.mysql.escapeId(i)}>${Store.mysql.escape(obj[i][l])}`);
+                        } else if (l === '$gte') {
+                            final.push(`${Store.mysql.escapeId(i)}>=${Store.mysql.escape(obj[i][l])}`);
+                        } else if (l === '$ne') {
+                            final.push(`${Store.mysql.escapeId(i)}<>${Store.mysql.escape(obj[i][l])}`);
+                        } else if (l === '$in' || l === '$nin') {
+                            let temp = [];
+                            let operator = (l === '$in' ? 'IN' : 'NOT IN');
+                            if (Array.isArray(obj[i][l])) {
+                                for (let value of obj[i][l]) {
+                                    temp.push(Store.mysql.escape(value));
+                                }
+                            }
+                            final.push(`(${Store.mysql.escapeId(i)} ${operator}(${temp.join()}))`);
+                        }
+                    }
+                } else {
+                    final.push(`${Store.mysql.escapeId(i)}=${obj[i]}`);
+                }
             }
-          } else {
-            final.push(`${i}=${obj[i]}`);
-          }
         }
-      
+
         if (final.length > 1) {
-          return `(${final.join(' AND ')})`
-        } 
-      
-        return `${final.join(' AND ')}`
-      }
+            return `(${final.join(' AND ')})`
+        }      
+        return `${final.join(' AND ')}`;
+    }
 }
