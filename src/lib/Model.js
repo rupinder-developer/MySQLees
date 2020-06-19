@@ -18,7 +18,8 @@ module.exports =  class Model extends QueryBuilder {
         const finalSchema = {};
         const primaryKeys = {
             string: '',
-            array: []    
+            array: [],
+            object: {} 
         };
 
         for(let column in schema) {
@@ -28,6 +29,7 @@ module.exports =  class Model extends QueryBuilder {
 
             if (schema[column].primaryKey) {
                 primaryKeys.array.push(column);
+                primaryKeys.object[column] = 1;
             }
 
             finalSchema[column] = schema[column];

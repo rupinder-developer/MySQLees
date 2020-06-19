@@ -65,10 +65,13 @@ module.exports = class QueryBuilder {
                 }
             }
         }
-
+        
+        if (final.length === 0) {
+            return '';
+        }
         if (final.length > 1) {
-            return `(${final.join(' AND ')})`
+            return `WHERE (${final.join(' AND ')})`
         }      
-        return `${final.join(' AND ')}`;
+        return `WHERE ${final.join(' AND ')}`;
     }
 }
