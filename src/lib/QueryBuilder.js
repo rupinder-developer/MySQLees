@@ -49,6 +49,10 @@ module.exports = class QueryBuilder {
                             final.push(`${Store.mysql.escapeId(i)}>=${Store.mysql.escape(obj[i][l])}`);
                         } else if (l === '$ne') {
                             final.push(`${Store.mysql.escapeId(i)}<>${Store.mysql.escape(obj[i][l])}`);
+                        } else if (l === '$like') {
+                            final.push(`${Store.mysql.escapeId(i)} LIKE ${Store.mysql.escape(obj[i][l])}`);
+                        } else if (l === '$nlike') {
+                            final.push(`${Store.mysql.escapeId(i)} NOT LIKE ${Store.mysql.escape(obj[i][l])}`);
                         } else if (l === '$in' || l === '$nin') {
                             let temp = [];
                             let operator = (l === '$in' ? 'IN' : 'NOT IN');
@@ -73,5 +77,13 @@ module.exports = class QueryBuilder {
             return `WHERE (${final.join(' AND ')})`
         }      
         return `WHERE ${final.join(' AND ')}`;
+    }
+
+    limit(limit, offset) {
+        return ` LIMIT ${offset ? `${offset}, ` : ''} ${limit}`;
+    }
+
+    orderBy(cols, sortBy = '') {
+        return ` ORDER BY ${cols} ${sortBy}`
     }
 }
