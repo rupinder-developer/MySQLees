@@ -25,6 +25,14 @@ module.exports =  class Model extends QueryBuilder {
                 this[column] = obj[column];
             }
         }
+        
+        // Map Timestamps to Model
+        if (obj.hasOwnProperty('created_at')) {
+            this['created_at'] = obj['created_at'];
+        }
+        if (obj.hasOwnProperty('updated_at')) {
+            this['updated_at'] = obj['updated_at'];
+        }
     }
 
     /**
@@ -35,7 +43,8 @@ module.exports =  class Model extends QueryBuilder {
      * @return {Model} - New Instance of Model
      */
     create(obj) {
-        var model           = new Model(obj);
+        const model = new Model(obj);
+
         model._$schema      = this._$schema;
         model._$modelName   = this._$modelName;
         model._$primaryKeys = this._$primaryKeys;
