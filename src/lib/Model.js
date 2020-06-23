@@ -20,8 +20,8 @@ module.exports =  class Model extends QueryBuilder {
         this._$connection = () => Store.connection;
 
         // Map obj to Model
-        for (let column in obj) {
-            if (this._$schema()[column]) {
+        for (let column in this._$schema()) {
+            if (obj.hasOwnProperty(column)) {
                 this[column] = obj[column];
             }
         }
@@ -31,7 +31,8 @@ module.exports =  class Model extends QueryBuilder {
      * Create new instace of Model
      * 
      * @param {Object} obj
-     * @return {Object} - New Instance of Model
+     * 
+     * @return {Model} - New Instance of Model
      */
     create(obj) {
         return new Model({...obj, ...this});
@@ -54,6 +55,7 @@ module.exports =  class Model extends QueryBuilder {
      * Set new connection to Model
      * 
      * @param {Object} connection - MySQL Connection
+     * 
      * @return {Model} 
      */
     useConnection(connection) {
