@@ -205,7 +205,7 @@ module.exports = class Schema {
                         mysqleesError = 'Failed to parse Data Type;';
                         sqlMessage = 'You have an error in your SQL syntax;';
                     } else {
-                        mysqleesError = 'Failed to implement schema;';
+                        mysqleesError = 'Failed to generate schema;';
                     }
                     console.error('Error:', {code, errno, sqlState, sqlMessage, mysqleesError}, `-> Model = ${this.modelName}`);
                 }       
@@ -565,7 +565,7 @@ module.exports = class Schema {
                                         mysqleesError = 'Failed to parse Data Type;';
                                         sqlMessage = 'You have an error in your SQL syntax;';
                                     } else {
-                                        mysqleesError = 'Failed to implement schema;';
+                                        mysqleesError = 'Failed to migrate schema;';
                                     }
                                     console.error('Error:', {code, errno, sqlState, sqlMessage, mysqleesError}, `-> Model = ${this.modelName}`);
                                 }
