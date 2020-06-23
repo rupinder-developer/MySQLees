@@ -14,10 +14,10 @@ module.exports =  class Model extends QueryBuilder {
         super();
 
         // Private Varibales
-        this._$schema = () => null;
-        this._$modelName = () => null;
+        this._$schema      = () => null;
+        this._$modelName   = () => null;
         this._$primaryKeys = () => null;
-        this._$connection = () => Store.connection;
+        this._$connection  = () => Store.connection;
 
         // Map obj to Model
         for (let column in this._$schema()) {
@@ -35,7 +35,13 @@ module.exports =  class Model extends QueryBuilder {
      * @return {Model} - New Instance of Model
      */
     create(obj) {
-        return new Model({...obj, ...this});
+        var model           = new Model(obj);
+        model._$schema      = this._$schema;
+        model._$modelName   = this._$modelName;
+        model._$primaryKeys = this._$primaryKeys;
+        model._$connection  = this._$connection;
+
+        return model;
     }
 
     /**
@@ -109,7 +115,7 @@ module.exports =  class Model extends QueryBuilder {
 
         primaryKeys.string = primaryKeys.array.join();
 
-        this._$schema = () => finalSchema;
+        this._$schema      = () => finalSchema;
         this._$primaryKeys = () => primaryKeys;
     }
 
