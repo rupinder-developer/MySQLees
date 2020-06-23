@@ -4,16 +4,10 @@ import Store from './Store';
 
 module.exports = class QueryBuilder {
     /**
+     * Generate WHERE Clause Statement
      * 
-     * Example 
-     * obj ={
-     *  $and : [
-     *      { $or : [ { price : 0.99}, { price : 1.99 } ] },
-     *      { $or : [ { sale : true }, { qty :  20 } ] }
-     *    ]
-     * }
-     * 
-     * Result = ( (price=0.99 OR price=1.99) AND (sale=true OR qty=20) )
+     * @param {Object} obj 
+     * @return {String}
      */
     where(obj) {
         let final = [];
@@ -79,10 +73,24 @@ module.exports = class QueryBuilder {
         return `WHERE ${final.join(' AND ')}`;
     }
 
-    limit(limit, offset) {
+    /**
+     * Generate LIMIT Clause Statement
+     * 
+     * @param {Number} limit 
+     * @param {Number} [offset] 
+     * @return {String}
+     */
+    limit(limit, offset = null) {
         return ` LIMIT ${offset ? `${offset}, ` : ''} ${limit}`;
     }
 
+    /**
+     * Generate ORDER BY Clause Statement
+     * 
+     * @param {String} cols 
+     * @param {String} [sortBy] 
+     * @return {String}
+     */
     orderBy(cols, sortBy = '') {
         return ` ORDER BY ${cols} ${sortBy}`
     }
