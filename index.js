@@ -28,6 +28,8 @@ const customers = mysqlees.schema({
     timestamps: true
 });
 
+mysqlees.model('customers', customers);                
+
 const orders = mysqlees.schema({
     id: {
         dataType: mysqlees.dataType.int(),
@@ -35,22 +37,16 @@ const orders = mysqlees.schema({
         autoIncrement: true,
         renamedFrom: 'order_id'
     },
+    new: {
+        primaryKey: true,
+        dataType: mysqlees.dataType.int(),
+    },
     customer_id: {
         dataType: mysqlees.dataType.int(),
         ref: {
             to: 'customers',
             foreignField: 'id'
         },
-    },
-    text2: {
-        primaryKey: true,
-        dataType: mysqlees.dataType.int(),
-        renamedFrom: 'text'
-    },
-    new2: {
-        dataType: mysqlees.dataType.varchar(),
-        unique: false,
-        renamedFrom: 'new'
     },
 }, {
     timestamps: true
@@ -61,18 +57,4 @@ orders.index('text', 'text', {
     deprecated: true
 });
 
-
-
-const m = mysqlees.model('orders', orders);
-const m2 = mysqlees.model('customers', customers);                
-
-const dump = mysqlees.schema({
-    id: {
-        primaryKey: true,
-        autoIncrement: true,
-        dataType: mysqlees.dataType.int()
-    }
-}, {
-    timestamps: true
-});
-mysqlees.model('dump', dump);                
+mysqlees.model('orders', orders);
