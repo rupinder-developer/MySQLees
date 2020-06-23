@@ -13,10 +13,28 @@ module.exports =  class Model extends QueryBuilder {
     constructor(obj = {}) {
         super();
 
-        // Private Varibales
+        /**
+         * Private Variables
+         * 
+         * 1. _$schema {Object} 
+         * 
+         * 2. _$modelName {String}
+         * 
+         * 3. _$primaryKeys {Object} -> {
+         *          string: 'key1, key2', 
+         *          array: ['key1', 'key2'], 
+         *          object: { key1: 1, key2: 1 }
+         *    } 
+         * 
+         * 4. _$aiField {String} - AUTO_INCREMENT
+         * 
+         * 5. _$connection {Object} - MySQL Connection 
+         * 
+         */
         this._$schema      = () => null;
         this._$modelName   = () => null;
         this._$primaryKeys = () => null;
+        this._$aiField     = () => null; // AUTO_INCREMENT Field
         this._$connection  = () => Store.connection;
 
         // Map obj to Model
@@ -48,6 +66,7 @@ module.exports =  class Model extends QueryBuilder {
         model._$schema      = this._$schema;
         model._$modelName   = this._$modelName;
         model._$primaryKeys = this._$primaryKeys;
+        model._$aiField     = this._$aiField;
         model._$connection  = this._$connection;
 
         return model;
@@ -99,7 +118,7 @@ module.exports =  class Model extends QueryBuilder {
 
     
     /**
-     * Set & Parse Schema
+     * Set & Parse Schema (Generate Final Schema for Model)
      */
     set schema(schema) {
         const finalSchema = {};
@@ -110,15 +129,23 @@ module.exports =  class Model extends QueryBuilder {
         };
 
         for(let column in schema) {
+            // Skip if column is deprecated
             if (schema[column].deprecated) {
                 continue;
             }
 
+            // Save Primary Keys
             if (schema[column].primaryKey) {
                 primaryKeys.array.push(column);
                 primaryKeys.object[column] = 1;
             }
 
+            // Save AUTO_INCREMENT Field
+            if (schema[column].autoIncrement) {
+                this._$aiField = () => column;
+            }
+
+            // Save column if not deprecated
             finalSchema[column] = schema[column];
         }
 
