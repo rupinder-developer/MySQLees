@@ -16,7 +16,7 @@ module.exports = class QueryHelper {
                 if (Array.isArray(obj[i])) {
                     let and = [];
                     for (let k in obj[i]) {
-                        and.push(`${where(obj[i][k])}`);
+                        and.push(`${this.where(obj[i][k])}`);
                     }
 
                     final.push(`(${and.join(' AND ')})`);
@@ -25,7 +25,7 @@ module.exports = class QueryHelper {
                 if (Array.isArray(obj[i])) {
                     let or = [];
                     for (let j in obj[i]) {
-                        or.push(`${where(obj[i][j])}`);
+                        or.push(`${this.where(obj[i][j])}`);
                     }
 
                     final.push(`(${or.join(' OR ')})`);
@@ -68,8 +68,17 @@ module.exports = class QueryHelper {
             return '';
         }
         if (final.length > 1) {
-            return `WHERE (${final.join(' AND ')})`
+            return `(${final.join(' AND ')})`
         }      
-        return `WHERE ${final.join(' AND ')}`;
+        return `${final.join(' AND ')}`;
+    }
+
+    isObjectEmpty(obj) {
+        for(var key in obj) {
+            if(obj.hasOwnProperty(key)) {
+                return false;
+            }
+        }
+        return true;
     }
 }

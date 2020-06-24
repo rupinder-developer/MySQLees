@@ -60,12 +60,9 @@ orders.index('text', 'text', {
 const mO = mysqlees.model('orders', orders);
 
 
-mC.find({id: {$gt: 1}})
-  .project(['name'])
-  .orderBy('id', 'DESC')
-  .limit(1)
-  .exec(true)
-  .then(result => {
-    console.log(result);
-  })
-  .catch(err => console.log(err));
+mC.find({
+    $and : [
+        { $or : [ { id : 1 }, { id : 5 } ] },
+        { $or : [ { name : 'Raghav' }, { name : 'Avni' } ] }
+    ]
+}).exec().then(res => console.log(res)).catch(err => console.log(err));

@@ -137,7 +137,7 @@ module.exports =  class Model extends QueryHelper {
      */
     update(data, where = {}) {
         return new Promise((resolve, reject) => {
-            this._$connection().query(`UPDATE ${this._$modelName()} SET ? ${this.where(where)}`, [data], function(error, result) {
+            this._$connection().query(`UPDATE ${this._$modelName()} SET ? ${this.isObjectEmpty(where)?'':'WHERE'} ${this.where(where)}`, [data], function(error, result) {
                 if (error) reject(error);
 
                 resolve(result);
@@ -153,7 +153,7 @@ module.exports =  class Model extends QueryHelper {
      */
     delete(where = {}) {
         return new Promise((resolve, reject) => {
-            this._$connection().query(`DELETE FROM ${this._$modelName()} ${this.where(where)}`, function(error, result) {
+            this._$connection().query(`DELETE FROM ${this._$modelName()} ${this.isObjectEmpty(where)?'':'WHERE'} ${this.where(where)}`, function(error, result) {
                 if (error) reject(error);
 
                 resolve(result);
@@ -211,7 +211,7 @@ module.exports =  class Model extends QueryHelper {
      * @return {Model}
      */
     find(where = {}) {
-        this._$where = () => this.where(where);
+        this._$where = () => `WHERE ${this.where(where)}`;
         return this;
     }
 
