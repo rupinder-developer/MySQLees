@@ -30,12 +30,19 @@ module.exports =  class Model extends QueryBuilder {
          * 
          * 5. _$connection {Object} - MySQL Connection 
          * 
+         * 6. _$lean {Boolean} - Decide whether return instace of Model or simple JSON Object
+         * 
+         * 7. _$project {String} - Projection for SELECT QUERY
          */
-        this._$schema      = () => null;
-        this._$modelName   = () => null;
+
+            
+        this._$schema    = () => null;
+        this._$modelName = () => null;
+
         this._$primaryKeys = () => null;
         this._$aiField     = () => null; // AUTO_INCREMENT Field
-        this._$connection  = () => Store.connection;
+
+        this._$connection = () => Store.connection;
     }
 
     /**
@@ -63,7 +70,7 @@ module.exports =  class Model extends QueryBuilder {
     /**
      * Map one Model to another
      * 
-     * @param {Model} - Instance of Model 
+     * @param {Model} model - Instance of Model 
      */
     mapModel(model) {
         model._$schema      = this._$schema;
@@ -93,7 +100,7 @@ module.exports =  class Model extends QueryBuilder {
     }
 
     /**
-     * UPSERT data to database
+     * Upsert data to database
      * 
      * @return {Promise} - Model Instance
      */
@@ -112,6 +119,47 @@ module.exports =  class Model extends QueryBuilder {
     }
 
     /**
+     * Select data from database
+     * 
+     * @param {Object} obj  
+     * 
+     * @return {*} - Mixed 
+     */
+    find(obj = {}, project = []) {
+        return new Promise((resolve, reject) => {
+            this._$connection().query(`SELECT ${this.project(project)} FROM ${this._$modelName()} ${this.where(obj)}`, (error, result, fields) => {
+                if (error) reject(error);
+
+                if(result.length > 0) {
+                    const final = result.map((row) => {
+                        return this.create(row);
+                    });
+
+                    resolve(final);
+                } else {
+                    resolve(result);
+                }
+            });
+        });
+    }
+
+    /** 
+     * Set Projection for SELECT Query
+     * 
+     * @param {Array} arr
+     * 
+     * @return {String}
+     */
+    project(arr = []) {
+        if (arr.length > 0) {
+            const projection = new Set([...arr, ...(this._$primaryKeys().array)]);
+            return [...projection].join();
+        } else {
+            return '*';
+        }
+    }    
+
+    /**
      * Set new connection to Model
      * 
      * @param {Object} connection - MySQL Connection
@@ -121,14 +169,6 @@ module.exports =  class Model extends QueryBuilder {
     useConnection(connection) {
         this._$connection = () => connection;
         return this;
-    }
-
-    /**
-     * Release Pool Connection
-     */
-    releaseConnection() {
-        this._$connection().release();
-        this._$connection = () => Store.connection;
     }
 
     /**
@@ -150,6 +190,13 @@ module.exports =  class Model extends QueryBuilder {
         });
     }
 
+    /**
+     * Release Pool Connection
+     */
+    releaseConnection() {
+        this._$connection().release();
+        this._$connection = () => Store.connection;
+    }
     
     /**
      * Set & Parse Schema (Generate Final Schema for Model)

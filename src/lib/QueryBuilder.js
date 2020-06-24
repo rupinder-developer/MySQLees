@@ -59,7 +59,7 @@ module.exports = class QueryBuilder {
                         }
                     }
                 } else {
-                    final.push(`${Store.mysql.escapeId(i)}=${obj[i]}`);
+                    final.push(`${Store.mysql.escapeId(i)}=${Store.mysql.escape(obj[i])}`);
                 }
             }
         }

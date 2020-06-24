@@ -3,7 +3,7 @@ const mysqlees = require('./build/index');
 
 mysqlees.bind(mysql);
 
-mysqlees.connect({
+mysqlees.createPool({
     connectionLimit: 10,
     host: "localhost",
     user: "root",
@@ -12,7 +12,7 @@ mysqlees.connect({
 });
 
 mysqlees.options({
-    autoMigration: false
+    autoMigration: true
 });
 
 const customers = mysqlees.schema({
@@ -58,19 +58,3 @@ orders.index('text', 'text', {
 });
 
 const mO = mysqlees.model('orders', orders);
-
-
-const newCustomer =  mC.create({
-    name: 'Rupinder Singh'
-});
-
-// console.log(newCustomer._$schema());
-newCustomer.save().then(result => {
-    console.log(JSON.stringify(result));
-    result.name = "Rupinder Singh | Mod";
-
-    result.save();
-
-    console.log(JSON.stringify(result));
-}
-).catch(err => console.log(err));
