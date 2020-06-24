@@ -211,7 +211,9 @@ module.exports =  class Model extends QueryHelper {
      * @return {Model}
      */
     find(where = {}) {
-        this._$where = () => `WHERE ${this.where(where)}`;
+        if (!this.isObjectEmpty(where)) {
+            this._$where = () => `WHERE ${this.where(where)}`;
+        }
         return this;
     }
 
