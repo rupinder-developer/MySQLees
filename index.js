@@ -12,7 +12,7 @@ mysqlees.connect({
 });
 
 mysqlees.options({
-    autoMigration: true
+    autoMigration: false
 });
 
 const customers = mysqlees.schema({
@@ -28,7 +28,7 @@ const customers = mysqlees.schema({
     timestamps: true
 });
 
-mysqlees.model('customers', customers);                
+const mC = mysqlees.model('customers', customers);                
 
 const orders = mysqlees.schema({
     id: {
@@ -57,4 +57,20 @@ orders.index('text', 'text', {
     deprecated: true
 });
 
-mysqlees.model('orders', orders);
+const mO = mysqlees.model('orders', orders);
+
+
+const newCustomer =  mC.create({
+    name: 'Rupinder Singh'
+});
+
+// console.log(newCustomer._$schema());
+newCustomer.save().then(result => {
+    console.log(JSON.stringify(result));
+    result.name = "Rupinder Singh | Mod";
+
+    result.save();
+
+    console.log(JSON.stringify(result));
+}
+).catch(err => console.log(err));

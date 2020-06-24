@@ -10,7 +10,7 @@ module.exports =  class Model extends QueryBuilder {
      * 
      * @param {Object} obj 
      */
-    constructor(obj = {}) {
+    constructor() {
         super();
 
         /**
@@ -36,7 +36,14 @@ module.exports =  class Model extends QueryBuilder {
         this._$primaryKeys = () => null;
         this._$aiField     = () => null; // AUTO_INCREMENT Field
         this._$connection  = () => Store.connection;
+    }
 
+    /**
+     * Map data to Model
+     * 
+     * @param {Object} obj 
+     */
+    mapObject(obj) {
         // Map obj to Model
         for (let column in this._$schema()) {
             if (obj.hasOwnProperty(column)) {
@@ -54,6 +61,19 @@ module.exports =  class Model extends QueryBuilder {
     }
 
     /**
+     * Map one Model to another
+     * 
+     * @param {Model} - Instance of Model 
+     */
+    mapModel(model) {
+        model._$schema      = this._$schema;
+        model._$modelName   = this._$modelName;
+        model._$primaryKeys = this._$primaryKeys;
+        model._$aiField     = this._$aiField;
+        model._$connection  = this._$connection;
+    }
+
+    /**
      * Create new instace of Model
      * 
      * @param {Object} obj
@@ -61,13 +81,13 @@ module.exports =  class Model extends QueryBuilder {
      * @return {Model} - New Instance of Model
      */
     create(obj) {
-        const model = new Model(obj);
+        const model = new Model();
 
-        model._$schema      = this._$schema;
-        model._$modelName   = this._$modelName;
-        model._$primaryKeys = this._$primaryKeys;
-        model._$aiField     = this._$aiField;
-        model._$connection  = this._$connection;
+        // Map all private data to new instace of Model
+        this.mapModel(model);
+
+        // Map data to new instace of Model
+        model.mapObject(obj);
 
         return model;
     }
@@ -80,7 +100,13 @@ module.exports =  class Model extends QueryBuilder {
     save() {
         return new Promise((resolve, reject) => {
             this._$connection().query(`INSERT INTO ${this._$modelName()} SET ? ON DUPLICATE KEY UPDATE ?`, [this, this], (error, result)  => {
+                if (error) reject(error);
 
+                if (result && result.insertId) {
+                    this[this._$aiField()] = result.insertId;
+                }
+
+                resolve(this);
             });
         });   
     }
@@ -98,6 +124,14 @@ module.exports =  class Model extends QueryBuilder {
     }
 
     /**
+     * Release Pool Connection
+     */
+    releaseConnection() {
+        this._$connection().release();
+        this._$connection = () => Store.connection;
+    }
+
+    /**
      * Pull connection from MySQL Pool
      * 
      * @return {Promise} - Pool Connection
@@ -106,7 +140,7 @@ module.exports =  class Model extends QueryBuilder {
         return new Promise((resolve, reject) => {
             if (Store.isPool) {
                 Store.connection.getConnection((err, connection) => {
-                    if (err) resolve(err);
+                    if (err) reject(err);
 
                     resolve(connection);
                 });
