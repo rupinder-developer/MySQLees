@@ -129,13 +129,63 @@ module.exports =  class Model extends QueryHelper {
     }
 
     /**
+     * 
+     * @param {Object} data 
+     * @param {Object} where 
+     * 
+     * @return {Promise}
+     */
+    update(data, where = {}) {
+        return new Promise((resolve, reject) => {
+            this._$connection().query(`UPDATE ${this._$modelName()} SET ? ${this.where(where)}`, [data], function(error, result) {
+                if (error) reject(error);
+
+                resolve(result);
+            });
+        });
+    }
+
+    /**
+     * 
+     * @param {Object} where 
+     * 
+     * @return {Promise}
+     */
+    delete(where = {}) {
+        return new Promise((resolve, reject) => {
+            this._$connection().query(`DELETE FROM ${this._$modelName()} ${this.where(where)}`, function(error, result) {
+                if (error) reject(error);
+
+                resolve(result);
+            });
+        });
+    }
+
+    /**
+     * 
+     * @param {Array} cols 
+     * @param {Array} values 
+     * 
+     * @return {Promise}
+     */
+    insertMany(cols, values) {
+        return new Promise((resolve, reject) => {
+            this._$connection().query(`INSERT INTO ${this._$modelName()}(${cols.join()}) VALUES ?`, [values], function(error, result) {
+                if (error) reject(error);
+
+                resolve(result);
+            });
+        });
+    }
+
+    /**
      * Execute SELECT Query
      * 
      * @returns {Promise}
      */
     exec(lean = false) {
         const promise = new Promise((resolve, reject) => {
-            this._$connection().query(`SELECT ${this._$project()} FROM ${this._$modelName()} ${this._$where()} ${this._$orderBy()} ${this._$limit()}`, (error, result, fields) => {
+            this._$connection().query(`SELECT ${this._$project()} FROM ${this._$modelName()} ${this._$where()} ${this._$orderBy()} ${this._$limit()}`, (error, result) => {
                 if (error) reject(error);
 
                 if(result.length > 0 && !lean) {
@@ -160,8 +210,8 @@ module.exports =  class Model extends QueryHelper {
      * 
      * @return {Model}
      */
-    find(obj = {}) {
-        this._$where = () => this.where(obj);
+    find(where = {}) {
+        this._$where = () => this.where(where);
         return this;
     }
 
