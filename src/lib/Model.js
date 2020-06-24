@@ -1,10 +1,10 @@
 "use strict"
 
 // Classes
-import QueryBuilder from './QueryBuilder';
+import QueryHelper from './QueryHelper';
 import Store        from './Store';
 
-module.exports =  class Model extends QueryBuilder {
+module.exports =  class Model extends QueryHelper {
     /**
      * Model Constructor
      * 
@@ -30,9 +30,13 @@ module.exports =  class Model extends QueryBuilder {
          * 
          * 5. _$connection {Object} - MySQL Connection 
          * 
-         * 6. _$lean {Boolean} - Decide whether return instace of Model or simple JSON Object
+         * 6. _$where {String} - Projection for SELECT Query
          * 
-         * 7. _$project {String} - Projection for SELECT QUERY
+         * 7. _$project {String} - Projection for SELECT Query
+         * 
+         * 8. _$limit {String}
+         * 
+         * 9. _$orderBy {String}
          */
 
             
@@ -43,6 +47,12 @@ module.exports =  class Model extends QueryBuilder {
         this._$aiField     = () => null; // AUTO_INCREMENT Field
 
         this._$connection = () => Store.connection;
+
+        // Query Chunks
+        this._$where   = () => '';
+        this._$project = () => '*';
+        this._$limit   = () => '';
+        this._$orderBy = () => '';
     }
 
     /**
@@ -119,18 +129,16 @@ module.exports =  class Model extends QueryBuilder {
     }
 
     /**
-     * Select data from database
+     * Execute SELECT Query
      * 
-     * @param {Object} obj  
-     * 
-     * @return {*} - Mixed 
+     * @returns {Promise}
      */
-    find(obj = {}, project = []) {
-        return new Promise((resolve, reject) => {
-            this._$connection().query(`SELECT ${this.project(project)} FROM ${this._$modelName()} ${this.where(obj)}`, (error, result, fields) => {
+    exec(lean = false) {
+        const promise = new Promise((resolve, reject) => {
+            this._$connection().query(`SELECT ${this._$project()} FROM ${this._$modelName()} ${this._$where()} ${this._$orderBy()} ${this._$limit()}`, (error, result, fields) => {
                 if (error) reject(error);
 
-                if(result.length > 0) {
+                if(result.length > 0 && !lean) {
                     const final = result.map((row) => {
                         return this.create(row);
                     });
@@ -141,23 +149,73 @@ module.exports =  class Model extends QueryBuilder {
                 }
             });
         });
+        this.clearChunks(); // Clear Query Chunks
+        return promise;
+    }
+
+    /**
+     * Generate WEHRE Clause Statement
+     * 
+     * @param {Object} obj  
+     * 
+     * @return {Model}
+     */
+    find(obj = {}) {
+        this._$where = () => this.where(obj);
+        return this;
     }
 
     /** 
-     * Set Projection for SELECT Query
+     * Set projection for SELECT query
      * 
      * @param {Array} arr
      * 
-     * @return {String}
+     * @return {Model}
      */
     project(arr = []) {
         if (arr.length > 0) {
             const projection = new Set([...arr, ...(this._$primaryKeys().array)]);
-            return [...projection].join();
-        } else {
-            return '*';
+            this._$project = () => [...projection].join();
         }
-    }    
+        
+        return this;
+    }
+
+    /**
+     * Generate LIMIT Clause Statement
+     * 
+     * @param {Number} limit 
+     * @param {Number} [offset] 
+     * 
+     * @return {Model}
+     */
+    limit(limit, offset = null) {
+        this._$limit = () => `LIMIT ${offset ? `${offset}, ` : ''} ${limit}`;
+        return this;
+    }
+
+    /**
+     * Generate ORDER BY Clause Statement
+     * 
+     * @param {String} cols 
+     * @param {String} [sortBy] 
+     * 
+     * @return {Model}
+     */
+    orderBy(cols, sortBy = '') {
+        this._$orderBy = () => `ORDER BY ${cols} ${sortBy}`;
+        return this;
+    }
+
+    /**
+     * Clear Query Chunks
+     */
+    clearChunks() {
+        this._$where   = () => '';
+        this._$project = () => '*';
+        this._$limit   = () => '';
+        this._$orderBy = () => '';
+    }
 
     /**
      * Set new connection to Model

@@ -2,7 +2,7 @@
 
 import Store from './Store';
 
-module.exports = class QueryBuilder {
+module.exports = class QueryHelper {
     /**
      * Generate WHERE Clause Statement
      * 
@@ -71,27 +71,5 @@ module.exports = class QueryBuilder {
             return `WHERE (${final.join(' AND ')})`
         }      
         return `WHERE ${final.join(' AND ')}`;
-    }
-
-    /**
-     * Generate LIMIT Clause Statement
-     * 
-     * @param {Number} limit 
-     * @param {Number} [offset] 
-     * @return {String}
-     */
-    limit(limit, offset = null) {
-        return ` LIMIT ${offset ? `${offset}, ` : ''} ${limit}`;
-    }
-
-    /**
-     * Generate ORDER BY Clause Statement
-     * 
-     * @param {String} cols 
-     * @param {String} [sortBy] 
-     * @return {String}
-     */
-    orderBy(cols, sortBy = '') {
-        return ` ORDER BY ${cols} ${sortBy}`
     }
 }
