@@ -61,8 +61,9 @@ const mO = mysqlees.model('orders', orders);
 
 
 mC.find({
-    $and : [
-        { $or : [ { id : 1 }, { id : 5 } ] },
-        { $or : [ { name : 'Raghav' }, { name : 'Avni' } ] }
-    ]
+    id: {$gt: 2}
+}).lean().exec().then(res => console.log(res)).catch(err => console.log(err));
+
+mC.find({
+    id: {$gt: 2}
 }).exec().then(res => console.log(res)).catch(err => console.log(err));

@@ -37,6 +37,16 @@ module.exports =  class Model extends QueryHelper {
          * 8. _$limit {String}
          * 
          * 9. _$orderBy {String}
+         * 
+         * 10. _$populate {Array} -> [
+         *          {
+         *              col: 'column_name',
+         *              project: '*' 
+         *          },
+         *          ...
+         *    ]
+         * 
+         * 11. _$lean {Boolean} - Decide whether return instace of Model or simple JSON Object
          */
 
             
@@ -49,10 +59,12 @@ module.exports =  class Model extends QueryHelper {
         this._$connection = () => Store.connection;
 
         // Query Chunks
-        this._$where   = () => '';
-        this._$project = () => '*';
-        this._$limit   = () => '';
-        this._$orderBy = () => '';
+        this._$where    = () => '';
+        this._$project  = () => '*';
+        this._$limit    = () => '';
+        this._$orderBy  = () => '';
+        this._$populate = () => [];
+        this._$lean     = () => false;
     }
 
     /**
@@ -162,6 +174,7 @@ module.exports =  class Model extends QueryHelper {
     }
 
     /**
+     * Insert in Bulk
      * 
      * @param {Array} cols 
      * @param {Array} values 
@@ -183,17 +196,22 @@ module.exports =  class Model extends QueryHelper {
      * 
      * @returns {Promise}
      */
-    exec(lean = false) {
-        const promise = new Promise((resolve, reject) => {
+    exec() {
+        const lean     = this._$lean();
+        const populate = this._$populate();
+        const promise  = new Promise((resolve, reject) => {
             this._$connection().query(`SELECT ${this._$project()} FROM ${this._$modelName()} ${this._$where()} ${this._$orderBy()} ${this._$limit()}`, (error, result) => {
                 if (error) reject(error);
 
-                if(result.length > 0 && !lean) {
-                    const final = result.map((row) => {
-                        return this.create(row);
-                    });
-
-                    resolve(final);
+                if(result && result.length > 0 && !lean) {
+                    if (populate.length > 0) {
+                        
+                    } else {
+                        const final = result.map((row) => {
+                            return this.create(row);
+                        });
+                        resolve(final);
+                    }
                 } else {
                     resolve(result);
                 }
@@ -259,14 +277,42 @@ module.exports =  class Model extends QueryHelper {
         return this;
     }
 
+     /**
+     * Decide whether return instace of Model or simple JSON Object
+     * 
+     * @return {Model}
+     */
+    lean() {
+        this._$lean = () => true;
+        return this;
+    }
+
+    /**
+     * Populate Columns
+     * 
+     * @param {String} col 
+     * @param {String} project 
+     * 
+     * @return {Model}
+     */
+    populate(col, project = '*') {
+        let populate = this._$populate();
+        populate.push({col, project});
+        
+        this._$populate = () => populate;
+        return this;
+    }
+
     /**
      * Clear Query Chunks
      */
     clearChunks() {
-        this._$where   = () => '';
-        this._$project = () => '*';
-        this._$limit   = () => '';
-        this._$orderBy = () => '';
+        this._$where    = () => '';
+        this._$project  = () => '*';
+        this._$limit    = () => '';
+        this._$orderBy  = () => '';
+        this._$populate = () => [];
+        this._$lean     = () => false;
     }
 
     /**
