@@ -12,13 +12,17 @@ import DataTypes from './lib/DataTypes';
 class MySQLees {
     static bind(mysql) {
         // Initializing variables for schema implementation
+
         Store.pendingFkQueries   = []; // Pending Foreign Keys Queries
         Store.dropFkQueries      = ''; // This Variable contains the queries which helps to drop all the present Foreign Keys in the database while updating schema.
         Store.createdModels      = {};
         Store.implementedModels  = [];
+
         Schema.connectionTimeout = null;
         Schema.connection        = null; // Connection variable of schema implementation 
-
+        
+        Store.models = new Map();
+        
         // Binding official MySQL package
         Store.mysql = mysql; 
     }
@@ -73,8 +77,8 @@ class MySQLees {
                 schema.implementSchema(modelName);
             }
             const model = new Model();
-            model.schema = schema.schema;
             model.modelName = modelName;
+            model.schema = schema.schema;
             return model;
         }
         if (Store.isConnected && !Store.config.database) {

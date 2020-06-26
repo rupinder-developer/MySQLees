@@ -16,29 +16,19 @@ module.exports =  class Model extends QueryHelper {
         /**
          * Private Variables
          * 
-         * 1. _$schema {Object} 
+         * 1. _$modelName {String}
          * 
-         * 2. _$modelName {String}
+         * 2. _$connection {Object} - MySQL Connection 
          * 
-         * 3. _$primaryKeys {Object} -> {
-         *          string: 'key1, key2', 
-         *          array: ['key1', 'key2'], 
-         *          object: { key1: 1, key2: 1 }
-         *    } 
+         * 3. _$where {String} - Projection for SELECT Query
          * 
-         * 4. _$aiField {String} - AUTO_INCREMENT
+         * 4. _$project {String} - Projection for SELECT Query
          * 
-         * 5. _$connection {Object} - MySQL Connection 
+         * 5. _$limit {String}
          * 
-         * 6. _$where {String} - Projection for SELECT Query
+         * 6. _$orderBy {String}
          * 
-         * 7. _$project {String} - Projection for SELECT Query
-         * 
-         * 8. _$limit {String}
-         * 
-         * 9. _$orderBy {String}
-         * 
-         * 10. _$populate {Array} -> [
+         * 7. _$populate {Array} -> [
          *          {
          *              col: 'column_name',
          *              project: '*' 
@@ -46,16 +36,11 @@ module.exports =  class Model extends QueryHelper {
          *          ...
          *    ]
          * 
-         * 11. _$lean {Boolean} - Decide whether return instace of Model or simple JSON Object
+         * 8. _$lean {Boolean} - Decide whether return instace of Model or simple JSON Object
          */
 
             
-        this._$schema    = () => null;
-        this._$modelName = () => null;
-
-        this._$primaryKeys = () => null;
-        this._$aiField     = () => null; // AUTO_INCREMENT Field
-
+        this._$modelName  = () => null;
         this._$connection = () => Store.connection;
 
         // Query Chunks
@@ -74,7 +59,8 @@ module.exports =  class Model extends QueryHelper {
      */
     mapObject(obj) {
         // Map obj to Model
-        for (let column in this._$schema()) {
+        const schema = Store.models.get(this._$modelName()).schema;
+        for (let column in schema) {
             if (obj.hasOwnProperty(column)) {
                 this[column] = obj[column];
             }
@@ -95,10 +81,6 @@ module.exports =  class Model extends QueryHelper {
      * @param {Model} model - Instance of Model 
      */
     mapModel(model) {
-        model._$schema      = this._$schema;
-        model._$modelName   = this._$modelName;
-        model._$primaryKeys = this._$primaryKeys;
-        model._$aiField     = this._$aiField;
         model._$connection  = this._$connection;
     }
 
@@ -109,8 +91,11 @@ module.exports =  class Model extends QueryHelper {
      * 
      * @return {Model} - New Instance of Model
      */
-    create(obj) {
+    create(obj, modelName = null) {
         const model = new Model();
+
+        // Set Model Name
+        model.modelName = modelName ? modelName : this._$modelName();
 
         // Map all private data to new instace of Model
         this.mapModel(model);
@@ -128,11 +113,12 @@ module.exports =  class Model extends QueryHelper {
      */
     save() {
         return new Promise((resolve, reject) => {
-            this._$connection().query(`INSERT INTO ${this._$modelName()} SET ? ON DUPLICATE KEY UPDATE ?`, [this, this], (error, result)  => {
+            const modelName = this._$modelName();
+            this._$connection().query(`INSERT INTO ${modelName} SET ? ON DUPLICATE KEY UPDATE ?`, [this, this], (error, result)  => {
                 if (error) reject(error);
 
                 if (result && result.insertId) {
-                    this[this._$aiField()] = result.insertId;
+                    this[Store.models.get(modelName).aiField] = result.insertId;
                 }
 
                 resolve(this);
@@ -197,10 +183,11 @@ module.exports =  class Model extends QueryHelper {
      * @returns {Promise}
      */
     exec() {
-        const lean     = this._$lean();
-        const populate = this._$populate();
-        const promise  = new Promise((resolve, reject) => {
-            this._$connection().query(`SELECT ${this._$project()} FROM ${this._$modelName()} ${this._$where()} ${this._$orderBy()} ${this._$limit()}`, (error, result) => {
+        const lean      = this._$lean();
+        const populate  = this._$populate();
+        const modelName = this._$modelName();
+        const promise   = new Promise((resolve, reject) => {
+            this._$connection().query(`SELECT ${this._$project()} FROM ${modelName} ${this._$where()} ${this._$orderBy()} ${this._$limit()}`, (error, result) => {
                 if (error) reject(error);
 
                 if(result && result.length > 0 && !lean) {
@@ -208,7 +195,7 @@ module.exports =  class Model extends QueryHelper {
                         
                     } else {
                         const final = result.map((row) => {
-                            return this.create(row);
+                            return this.create(row, modelName);
                         });
                         resolve(final);
                     }
@@ -244,7 +231,8 @@ module.exports =  class Model extends QueryHelper {
      */
     project(arr = []) {
         if (arr.length > 0) {
-            const projection = new Set([...arr, ...(this._$primaryKeys().array)]);
+            const primaryKeys = Store.models.get(this._$modelName()).primaryKeys;
+            const projection = new Set([...arr, ...(primaryKeys.array)]);
             this._$project = () => [...projection].join();
         }
         
@@ -358,8 +346,9 @@ module.exports =  class Model extends QueryHelper {
      * Set & Parse Schema (Generate Final Schema for Model)
      */
     set schema(schema) {
-        const finalSchema = {};
-        const primaryKeys = {
+        let finalSchema = {};
+        let aiField     = ''; // AUTO_INCREMENT Field
+        let primaryKeys = {
             string: '',
             array: [],
             object: {} 
@@ -379,7 +368,7 @@ module.exports =  class Model extends QueryHelper {
 
             // Save AUTO_INCREMENT Field
             if (schema[column].autoIncrement) {
-                this._$aiField = () => column;
+                aiField = column;
             }
 
             // Save column if not deprecated
@@ -388,8 +377,8 @@ module.exports =  class Model extends QueryHelper {
 
         primaryKeys.string = primaryKeys.array.join();
 
-        this._$schema      = () => finalSchema;
-        this._$primaryKeys = () => primaryKeys;
+        // Saving Data into Store
+        Store.models.set(this._$modelName(), {primaryKeys, aiField, schema: finalSchema});
     }
 
     /**
