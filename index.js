@@ -68,6 +68,8 @@ const mO = mysqlees.model('orders', orders);
 //     id: {$gt: 2}
 // }).exec().then(res => console.log(res)).catch(err => console.log(err));
 
+console.time('p');
 mO.find().populate('customer_id').exec().then(res => {
-    console.log(JSON.stringify(res));
+    console.log(res);
+    console.timeEnd('p');
 }).catch(err =>  console.error(err));
