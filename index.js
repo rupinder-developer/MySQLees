@@ -37,9 +37,9 @@ const orders = mysqlees.schema({
         autoIncrement: true,
         renamedFrom: 'order_id'
     },
-    new: {
-        primaryKey: true,
-        dataType: mysqlees.dataType.int(),
+    data: {
+        dataType: mysqlees.dataType.varchar(),
+        renamedFrom: 'new'
     },
     customer_id: {
         dataType: mysqlees.dataType.int(),
@@ -60,10 +60,14 @@ orders.index('text', 'text', {
 const mO = mysqlees.model('orders', orders);
 
 
-mC.find({
-    id: {$gt: 2}
-}).lean().exec().then(res => console.log(res)).catch(err => console.log(err));
+// mC.find({
+//     id: {$gt: 2}
+// }).lean().exec().then(res => console.log(res)).catch(err => console.log(err));
 
-mC.find({
-    id: {$gt: 2}
-}).exec().then(res => console.log(res)).catch(err => console.log(err));
+// mC.find({
+//     id: {$gt: 2}
+// }).exec().then(res => console.log(res)).catch(err => console.log(err));
+
+mO.find().populate('customer_id').exec().then(res => {
+    console.log(JSON.stringify(res));
+}).catch(err =>  console.error(err));

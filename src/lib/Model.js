@@ -31,7 +31,7 @@ module.exports =  class Model extends QueryHelper {
          * 7. _$populate {Array} -> [
          *          {
          *              col: 'column_name',
-         *              project: '*' 
+         *              project: [] 
          *          },
          *          ...
          *    ]
@@ -187,12 +187,68 @@ module.exports =  class Model extends QueryHelper {
         const populate  = this._$populate();
         const modelName = this._$modelName();
         const promise   = new Promise((resolve, reject) => {
-            this._$connection().query(`SELECT ${this._$project()} FROM ${modelName} ${this._$where()} ${this._$orderBy()} ${this._$limit()}`, (error, result) => {
+            this._$connection().query(`SELECT ${this._$project()} FROM ${modelName} ${this._$where()} ${this._$orderBy()} ${this._$limit()}`, async (error, result) => {
                 if (error) reject(error);
 
                 if(result && result.length > 0 && !lean) {
                     if (populate.length > 0) {
-                        
+                        const schema = Store.models.get(modelName).schema;
+  
+                        for (let i in populate) {
+                            // Get colum details from schema
+                            if (schema.hasOwnProperty(populate[i].col))  {
+
+                                /**
+                                 * poplatedData {Object} -> {
+                                 *      col_value: {...},
+                                 *      ...
+                                 * }
+                                 */
+                                const populatedData = {};
+
+                                let shouldProceed = true; // Flag for population
+                                
+                                let column = schema[populate[i].col]; // Schema Column
+                                let project = populate[i].project; // Projection for populaion
+
+                                if (project.length > 0) {
+                                    project = [...project, column.ref.foreignField];
+                                }
+
+                                // Pull out distinct values for column (populate[i].col) from result
+                                let distinct = new Set();
+                                for(let k in result) {
+                                    if (result[k].hasOwnProperty(populate[i].col)) {
+                                        distinct.add(result[k][populate[i].col]);
+                                    } else {
+                                        shouldProceed = false;
+                                        break;
+                                    }
+                                }
+
+                                if(shouldProceed) {
+                                    try {
+                                        let populateResult = await this.populateQuery(column.ref.to, this.populateProject(project, column.ref.to), column.ref.foreignField, [...distinct]);
+                                        for (let j in populateResult) {
+                                            populatedData[populateResult[j][column.ref.foreignField]] = this.create(populateResult[j], column.ref.to);
+                                        }
+
+                                        for (let l in result) {
+                                            result[l][populate[i].col] = populatedData[result[l][populate[i].col]];
+                                        }
+                                    } catch(err) {
+                                        console.error(err);
+                                    }
+                                }
+
+                            }
+                        }
+
+                        const final = result.map((row) => {
+                            return this.create(row, modelName);
+                        });
+                        resolve(final);
+
                     } else {
                         const final = result.map((row) => {
                             return this.create(row, modelName);
@@ -226,6 +282,7 @@ module.exports =  class Model extends QueryHelper {
      * Set projection for SELECT query
      * 
      * @param {Array} arr
+     * @param {String} modelName
      * 
      * @return {Model}
      */
@@ -283,12 +340,47 @@ module.exports =  class Model extends QueryHelper {
      * 
      * @return {Model}
      */
-    populate(col, project = '*') {
+    populate(col, project = []) {
         let populate = this._$populate();
         populate.push({col, project});
         
         this._$populate = () => populate;
         return this;
+    }
+
+    /**
+     * Generate projection for populate query
+     * 
+     * @param {Array} arr 
+     * @param {String} modelName 
+     */
+    populateProject(arr = [], modelName) {
+        if (arr.length > 0) {
+            const primaryKeys = Store.models.get(modelName).primaryKeys;
+            const projection = new Set([...arr, ...(primaryKeys.array)]);
+            return [...projection].join();
+        }
+        return '*';
+    }
+
+    /**
+     * Generate query for populating data
+     * 
+     * @param {String} tableName 
+     * @param {String} project 
+     * @param {String} col 
+     * @param {Array} arr 
+     * 
+     * @return {Promise}
+     */
+    populateQuery(tableName, project, col, arr) {
+        return new Promise((resolve, reject) => {
+            this._$connection().query(`SELECT ${project} FROM ${tableName} WHERE ${Store.mysql.escapeId(col)} IN (?)`, [arr], (error, result) => {
+                if (error) reject(error);
+
+                resolve(result);
+            });
+        });
     }
 
     /**
@@ -386,5 +478,12 @@ module.exports =  class Model extends QueryHelper {
      */
     set modelName(modelName) {
         this._$modelName = () => modelName;
+    }
+
+    /**
+     * Get Model Name
+     */
+    get modelName() {
+        return this._$modelName();
     }
 }

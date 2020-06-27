@@ -1,5 +1,7 @@
 "use strict"
 
+import regeneratorRuntime from "regenerator-runtime";
+
 // Inbuilt Modules
 import cluster from 'cluster';
 
