@@ -1,5 +1,8 @@
 "use strict"
 
+// Dependencies
+import regeneratorRuntime from "./dependencies/runtime";
+
 // Inbuilt Modules
 import cluster from 'cluster';
 
