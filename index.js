@@ -41,13 +41,14 @@ const orders = mysqlees.schema({
         dataType: mysqlees.dataType.varchar(),
         renamedFrom: 'new'
     },
-    customer_id: {
+    customer: {
         dataType: mysqlees.dataType.int(),
         ref: {
             to: 'customers',
             foreignField: 'id'
         },
-        renamedFrom: 'customer'
+        renamedFrom: 'customer_id',
+        // deprecated: true
     },
 }, {
     timestamps: true

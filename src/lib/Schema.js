@@ -333,7 +333,15 @@ module.exports = class Schema {
                                         `;
                                         droppedFks[`${this.modelName}_${colName}`] = true;
                                     }
-                                    Store.pendingFkQueries.push({ ref: column.ref, query: `${alterTablePrefix} ADD CONSTRAINT \`${this.modelName}_${colName}\` FOREIGN KEY (\`${colName}\`) REFERENCES \`${column.ref.to}\`(\`${column.ref.foreignField}\`);` }); 
+                                    Store.pendingFkQueries.push({ ref: column.ref, query: `
+                                    set @var=if((SELECT true FROM information_schema.COLUMNS WHERE
+                                        TABLE_NAME        = '${this.modelName}' AND
+                                        COLUMN_NAME       = '${colName}' AND
+                                        TABLE_SCHEMA      = '${Store.config.database}') = true,'${alterTablePrefix} ADD CONSTRAINT \`${this.modelName}_${colName}\` FOREIGN KEY (\`${colName}\`) REFERENCES \`${column.ref.to}\`(\`${column.ref.foreignField}\`)','select 1');
+                            
+                                    prepare stmt from @var;
+                                    execute stmt;
+                                    deallocate prepare stmt;` }); 
                                 }
 
                             }
@@ -374,7 +382,15 @@ module.exports = class Schema {
 
                             // Adding Foreign Key
                             if (this.schema[column].ref && this.schema[column].ref.to && this.schema[column].ref.foreignField) {
-                                Store.pendingFkQueries.push({ ref: this.schema[column].ref, query: `${alterTablePrefix} ADD CONSTRAINT \`${this.modelName}_${column}\` FOREIGN KEY (\`${column}\`) REFERENCES \`${this.schema[column].ref.to}\`(\`${this.schema[column].ref.foreignField}\`);` });
+                                Store.pendingFkQueries.push({ ref: this.schema[column].ref, query: `
+                                    set @var=if((SELECT true FROM information_schema.COLUMNS WHERE
+                                        TABLE_NAME        = '${this.modelName}' AND
+                                        COLUMN_NAME       = '${column}' AND
+                                        TABLE_SCHEMA      = '${Store.config.database}') = true,'${alterTablePrefix} ADD CONSTRAINT \`${this.modelName}_${column}\` FOREIGN KEY (\`${column}\`) REFERENCES \`${this.schema[column].ref.to}\`(\`${this.schema[column].ref.foreignField}\`)','select 1');
+                            
+                                    prepare stmt from @var;
+                                    execute stmt;
+                                    deallocate prepare stmt;` });
                             }
 
                             // Set default value for column
