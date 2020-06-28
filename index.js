@@ -71,5 +71,7 @@ const mO = mysqlees.model('orders', orders);
 console.time('p');
 mO.find().populate('customer_id').exec().then(res => {
     console.log(res);
+    res[0].data = 'Data | Mode';
+    res[0].save().then(res => console.log(res)).catch(err => console.error(err));
     console.timeEnd('p');
 }).catch(err =>  console.error(err));

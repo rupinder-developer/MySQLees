@@ -115,7 +115,10 @@ module.exports =  class Model extends QueryHelper {
         return new Promise((resolve, reject) => {
             const modelName = this._$modelName();
             this._$connection().query(`INSERT INTO ${modelName} SET ? ON DUPLICATE KEY UPDATE ?`, [this, this], (error, result)  => {
-                if (error) reject(error);
+                if (error) {
+                    delete error.sql;
+                    reject(error);
+                }
 
                 if (result && result.insertId) {
                     this[Store.models.get(modelName).aiField] = result.insertId;
@@ -190,7 +193,7 @@ module.exports =  class Model extends QueryHelper {
             this._$connection().query(`SELECT ${this._$project()} FROM ${modelName} ${this._$where()} ${this._$orderBy()} ${this._$limit()}`, async (error, result) => {
                 if (error) reject(error);
 
-                if(result && result.length > 0 && !lean) {
+                if(result && result.length > 0) {
                     if (populate.length > 0) {
                         const schema = Store.models.get(modelName).schema;
   
@@ -230,7 +233,12 @@ module.exports =  class Model extends QueryHelper {
                                     try {
                                         let populateResult = await this.populateQuery(column.ref.to, this.populateProject(project, column.ref.to), column.ref.foreignField, [...distinct]);
                                         for (let j in populateResult) {
-                                            populatedData[populateResult[j][column.ref.foreignField]] = this.create(populateResult[j], column.ref.to);
+                                            if (lean) {
+                                                populatedData[populateResult[j][column.ref.foreignField]] = populateResult[j];
+                                            } else {
+                                                populatedData[populateResult[j][column.ref.foreignField]] = this.create(populateResult[j], column.ref.to);
+
+                                            }
                                         }
 
                                         for (let l in result) {
@@ -244,17 +252,17 @@ module.exports =  class Model extends QueryHelper {
                             }
                         }
 
-                        const final = result.map((row) => {
-                            return this.create(row, modelName);
-                        });
-                        resolve(final);
+                    }
 
+                    if (lean) {
+                        resolve(result);
                     } else {
                         const final = result.map((row) => {
                             return this.create(row, modelName);
                         });
-                        resolve(final);
+                        resolve(final);  
                     }
+
                 } else {
                     resolve(result);
                 }
