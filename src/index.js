@@ -105,7 +105,7 @@ class MySQLees {
                     resolve(connection);
                 });
             } else {
-                resolve(connection);
+                resolve(Store.connection);
             }
         });
     }
