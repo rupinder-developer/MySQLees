@@ -52,7 +52,6 @@ module.exports = class Schema {
                                 Schema.connection.end();   
                                 
                                 delete Store.pendingFkQueries; 
-                                 
                                 delete Store.createdModels;    
                                 delete Store.implementedModels;
                                 delete Schema.connection;
@@ -637,7 +636,6 @@ module.exports = class Schema {
             Schema.connection.end();
 
             delete Store.pendingFkQueries; 
-                
             delete Store.createdModels;    
             delete Store.implementedModels;
             delete Schema.connection;      
