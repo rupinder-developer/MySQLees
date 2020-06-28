@@ -70,10 +70,10 @@ const mO = mysqlees.model('orders', orders);
 //     id: {$gt: 2}
 // }).exec().then(res => console.log(res)).catch(err => console.log(err));
 
-// console.time('p');
-// mO.find().populate('customer_id').exec().then(res => {
-//     console.log(res);
-//     res[0].data = 'Data | Mode';
-//     res[0].save().then(res => console.log(res)).catch(err => console.error(err));
-//     console.timeEnd('p');
-// }).catch(err =>  console.error(err));
+console.time('p');
+mO.find().populate('customer').orderBy('data').exec().then(res => {
+    // console.log(res);
+    console.timeEnd('p');
+    // const used = process.memoryUsage().heapUsed / 1024 / 1024;
+    // console.log(`The script uses approximately ${Math.round(used * 100) / 100} MB`);
+}).catch(err =>  console.error(err));

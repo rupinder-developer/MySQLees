@@ -416,25 +416,6 @@ module.exports =  class Model extends QueryHelper {
     }
 
     /**
-     * Pull connection from MySQL Pool
-     * 
-     * @return {Promise} - Pool Connection
-     */
-    getConnection() {
-        return new Promise((resolve, reject) => {
-            if (Store.isPool) {
-                Store.connection.getConnection((err, connection) => {
-                    if (err) reject(err);
-
-                    resolve(connection);
-                });
-            } else {
-                resolve(connection);
-            }
-        });
-    }
-
-    /**
      * Release Pool Connection
      */
     releaseConnection() {

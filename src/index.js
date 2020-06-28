@@ -65,14 +65,6 @@ class MySQLees {
         return Store.connection;
     }
 
-    static connection() {
-        return Store.connection;
-    }
-
-    static mysql() {
-        return Store.mysql;
-    }
-
     static model(modelName, schema) {
         if (Store.isConnected && Store.config.database) {
             if (cluster.isMaster) {
@@ -97,6 +89,33 @@ class MySQLees {
 
     static options(options = {}) {
         Store.options = options;
+    }
+
+    /**
+    * Pull connection from MySQL Pool
+    * 
+    * @return {Promise} - Pool Connection
+    */
+    static getConnection() {
+        return new Promise((resolve, reject) => {
+            if (Store.isPool) {
+                Store.connection.getConnection((err, connection) => {
+                    if (err) reject(err);
+
+                    resolve(connection);
+                });
+            } else {
+                resolve(connection);
+            }
+        });
+    }
+
+    static connection() {
+        return Store.connection;
+    }
+
+    static mysql() {
+        return Store.mysql;
     }
 }
 
