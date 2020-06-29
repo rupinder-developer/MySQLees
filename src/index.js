@@ -29,7 +29,7 @@ class MySQLees {
         Store.mysql = mysql; 
     }
     
-    static connect(config) {
+    static createConnection(config) {
         if (!Store.mysql) {
             console.error('Error: Failed to bind MySQL!!');
             process.exit();
@@ -111,7 +111,17 @@ class MySQLees {
     }
 
     static connection() {
+        if (Store.isPool) {
+            return null;
+        }
         return Store.connection;
+    }
+
+    static pool() {
+        if (Store.isPool) {
+            return Store.connection;
+        }
+        return null;
     }
 
     static mysql() {
