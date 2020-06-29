@@ -95,6 +95,13 @@ mO.find().populate('customer', ['name']).populate('author', ['name']).limit(1).e
     console.log(res[0]);
 
     console.timeEnd('p');
-    // const used = process.memoryUsage().heapUsed / 1024 / 1024;
-    // console.log(`The script uses approximately ${Math.round(used * 100) / 100} MB`);
+    const used = process.memoryUsage().heapUsed / 1024 / 1024;
+    console.log(`The script uses approximately ${Math.round(used * 100) / 100} MB`);
 }).catch(err =>  console.error(err));
+
+
+// console.time('p');
+// mysqlees.pool().query('SELECT * FROM orders', [], function(err, result) {
+//     console.log(result.length);
+//     console.timeEnd('p');
+// })

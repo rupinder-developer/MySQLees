@@ -28,6 +28,32 @@ class MySQLees {
         // Binding official MySQL package
         Store.mysql = mysql; 
     }
+
+    static model(modelName, schema) {
+        if (Store.isConnected && Store.config.database) {
+            if (cluster.isMaster) {
+                schema.implementSchema(modelName);
+            }
+            const model = new Model();
+            model.modelName = modelName;
+            model.schema = schema.schema;
+            return model;
+        }
+        if (Store.isConnected && !Store.config.database) {
+            console.error('Error: Failed to connect to database!! (Database not found)');
+        } else {
+            console.error('Error: Failed to connect to database!!, Please use connect() method to establish database connectivity!!');
+        }
+        process.exit();
+    }
+
+    static schema(schema, options = {}) {
+        return new Schema(schema, options);
+    }
+
+    static options(options = {}) {
+        Store.options = options;
+    }
     
     static createConnection(config) {
         if (!Store.mysql) {
@@ -65,30 +91,19 @@ class MySQLees {
         return Store.connection;
     }
 
-    static model(modelName, schema) {
-        if (Store.isConnected && Store.config.database) {
-            if (cluster.isMaster) {
-                schema.implementSchema(modelName);
+    static getConnection() {
+        return new Promise((resolve, reject) => {
+            if (Store.isPool) {
+                // Pull connection from connection pool
+                Store.connection.getConnection((err, connection) => {
+                    if (err) reject(err);
+
+                    resolve(connection);
+                });
+            } else {
+                reject(new Error('Failed to get connection from pool, please use createPool() method for connection pooling.'));
             }
-            const model = new Model();
-            model.modelName = modelName;
-            model.schema = schema.schema;
-            return model;
-        }
-        if (Store.isConnected && !Store.config.database) {
-            console.error('Error: Failed to connect to database!! (Database not found)');
-        } else {
-            console.error('Error: Failed to connect to database!!, Please use connect() method to establish database connectivity!!');
-        }
-        process.exit();
-    }
-
-    static schema(schema, options = {}) {
-        return new Schema(schema, options);
-    }
-
-    static options(options = {}) {
-        Store.options = options;
+        });
     }
 
     static connection() {
@@ -108,23 +123,17 @@ class MySQLees {
     static mysql() {
         return Store.mysql;
     }
-    
-    /**
-    * Pull connection from MySQL Pool
-    * 
-    * @return {Promise} - Pool Connection
-    */
-    static getConnection() {
-        return new Promise((resolve, reject) => {
-            if (Store.isPool) {
-                Store.connection.getConnection((err, connection) => {
-                    if (err) reject(err);
 
-                    resolve(connection);
-                });
-            } else {
-                reject(new Error('Failed to get connection from pool, please use createPool() method for connection pooling.'));
+    static query(stmt, params = [], connection = null) {
+        return new Promise((resolve, reject) => {
+            if (!connection) {
+                connection = Store.connection;
             }
+            connection.query(stmt, params, (error, result) => {
+                if (error) reject(error);
+
+                resolve(result);
+            })
         });
     }
 }
