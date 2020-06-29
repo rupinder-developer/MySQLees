@@ -105,7 +105,7 @@ class MySQLees {
                     resolve(connection);
                 });
             } else {
-                resolve(Store.connection);
+                reject(new Error('Failed to get connection from pool, please use createPool() method for connection pooling.'));
             }
         });
     }

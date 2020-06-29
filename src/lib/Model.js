@@ -438,9 +438,7 @@ module.exports =  class Model extends QueryHelper {
      * Release Pool Connection
      */
     releaseConnection() {
-        if (Store.isPool) {
-            this._$connection().release();
-        }
+        this._$connection().release();
         this._$connection = () => Store.connection;
     }
     
