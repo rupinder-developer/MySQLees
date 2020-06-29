@@ -28,7 +28,22 @@ const customers = mysqlees.schema({
     timestamps: true
 });
 
-const mC = mysqlees.model('customers', customers);                
+const mC = mysqlees.model('customers', customers); 
+
+const a = mysqlees.schema({
+    id: {
+        primaryKey: true,
+        autoIncrement: true,
+        dataType: mysqlees.dataType.int()
+    },
+    name: {
+        dataType: mysqlees.dataType.varchar()
+    }
+}, {
+    timestamps: true
+});
+
+const mA = mysqlees.model('authors', a); 
 
 const orders = mysqlees.schema({
     id: {
@@ -46,10 +61,15 @@ const orders = mysqlees.schema({
         ref: {
             to: 'customers',
             foreignField: 'id'
-        },
-        renamedFrom: 'customer_id',
-        // deprecated: true
+        }
     },
+    author: {
+        dataType: mysqlees.dataType.int(),
+        ref: {
+            to: 'authors',
+            foreignField: 'id'
+        }
+    }
 }, {
     timestamps: true
 });
@@ -71,8 +91,9 @@ const mO = mysqlees.model('orders', orders);
 // }).exec().then(res => console.log(res)).catch(err => console.log(err));
 
 console.time('p');
-mO.find().populate('customer').orderBy('data').exec().then(res => {
-    console.log(res);
+mO.find().populate('customer', ['name']).populate('author', ['name']).limit(1).exec().then(res => {
+    console.log(res[0]);
+
     console.timeEnd('p');
     // const used = process.memoryUsage().heapUsed / 1024 / 1024;
     // console.log(`The script uses approximately ${Math.round(used * 100) / 100} MB`);
