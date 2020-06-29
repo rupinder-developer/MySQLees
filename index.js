@@ -72,7 +72,7 @@ const mO = mysqlees.model('orders', orders);
 
 console.time('p');
 mO.find().populate('customer').orderBy('data').exec().then(res => {
-    // console.log(res);
+    console.log(res);
     console.timeEnd('p');
     // const used = process.memoryUsage().heapUsed / 1024 / 1024;
     // console.log(`The script uses approximately ${Math.round(used * 100) / 100} MB`);
