@@ -37,12 +37,16 @@ module.exports =  class Model extends QueryHelper {
          *    ]
          * 
          * 8. _$lean {Boolean} - Decide whether return instace of Model or simple JSON Object
+         *
+         * 9. _$orginalColData {String} - Store orginal column data before populating, which in will further helps to run .save() on parent model
          */
 
             
         this._$modelName  = () => null;
         this._$connection = () => Store.connection;
 
+        this._$orginalColData = () => '';
+        
         // Query Chunks
         this._$where    = () => '';
         this._$project  = () => '*';
@@ -50,6 +54,8 @@ module.exports =  class Model extends QueryHelper {
         this._$orderBy  = () => '';
         this._$populate = () => [];
         this._$lean     = () => false;
+
+        
     }
 
     /**
@@ -114,6 +120,15 @@ module.exports =  class Model extends QueryHelper {
     save() {
         return new Promise((resolve, reject) => {
             const modelName = this._$modelName();
+            for (let i in this) {
+                if ((typeof this[i]) === 'function') {
+                    continue;
+                }
+
+                if (this[i] instanceof Model) {
+                    this[i] = this[i]._$orginalColData();
+                }
+            }
             this._$connection().query(`INSERT INTO ${modelName} SET ? ON DUPLICATE KEY UPDATE ?`, [this, this], (error, result)  => {
                 if (error) {
                     delete error.sql;
@@ -236,8 +251,12 @@ module.exports =  class Model extends QueryHelper {
                                             if (lean) {
                                                 populatedData[populateResult[j][column.ref.foreignField]] = populateResult[j];
                                             } else {
-                                                populatedData[populateResult[j][column.ref.foreignField]] = this.create(populateResult[j], column.ref.to);
+                                                const model = this.create(populateResult[j], column.ref.to);
+                                                
+                                                // Saving orignal column data
+                                                model._$orginalColData = () => populateResult[j][column.ref.foreignField];
 
+                                                populatedData[populateResult[j][column.ref.foreignField]] = model;
                                             }
                                         }
 
@@ -419,7 +438,9 @@ module.exports =  class Model extends QueryHelper {
      * Release Pool Connection
      */
     releaseConnection() {
-        this._$connection().release();
+        if (Store.isPool) {
+            this._$connection().release();
+        }
         this._$connection = () => Store.connection;
     }
     
