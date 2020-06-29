@@ -91,6 +91,24 @@ class MySQLees {
         Store.options = options;
     }
 
+    static connection() {
+        if (Store.isPool) {
+            return null;
+        }
+        return Store.connection;
+    }
+
+    static pool() {
+        if (Store.isPool) {
+            return Store.connection;
+        }
+        return null;
+    }
+
+    static mysql() {
+        return Store.mysql;
+    }
+    
     /**
     * Pull connection from MySQL Pool
     * 
@@ -108,24 +126,6 @@ class MySQLees {
                 reject(new Error('Failed to get connection from pool, please use createPool() method for connection pooling.'));
             }
         });
-    }
-
-    static connection() {
-        if (Store.isPool) {
-            return null;
-        }
-        return Store.connection;
-    }
-
-    static pool() {
-        if (Store.isPool) {
-            return Store.connection;
-        }
-        return null;
-    }
-
-    static mysql() {
-        return Store.mysql;
     }
 }
 
