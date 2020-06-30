@@ -42,7 +42,7 @@ class MySQLees {
         if (Store.isConnected && !Store.config.database) {
             console.error('Error: Failed to connect to database!! (Database not found)');
         } else {
-            console.error('Error: Failed to connect to database!!, Please use connect() method to establish database connectivity!!');
+            console.error('Error: Failed to connect to database!!, Please use createConnection() or createPool() method to establish database connectivity!!');
         }
         process.exit();
     }

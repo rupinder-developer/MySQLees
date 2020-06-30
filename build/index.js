@@ -57,7 +57,7 @@ var MySQLees = /*#__PURE__*/function () {
       if (_Store["default"].isConnected && !_Store["default"].config.database) {
         console.error('Error: Failed to connect to database!! (Database not found)');
       } else {
-        console.error('Error: Failed to connect to database!!, Please use connect() method to establish database connectivity!!');
+        console.error('Error: Failed to connect to database!!, Please use createConnection() or createPool() method to establish database connectivity!!');
       }
 
       process.exit();
