@@ -10,13 +10,13 @@
     "type": "git",
     "url": "git+https://github.com/rupinder-developer/MySQLees.git"
   },
-  "publishConfig": { "registry": "https://npm.pkg.github.com/rupinder-developer" },
+  "publishConfig": { "registry": "https://npm.pkg.github.com/" },
   "keywords": [
     "mysqlees",
     "mysql",
     "orm"
   ],
-  "author": "Rupinder Singh",
+  "author": "rupinder-developer",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/rupinder-developer/MySQLees/issues"
