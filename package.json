@@ -1,32 +1,31 @@
 {
   "name": "mysqlees",
   "version": "1.0.0",
-  "description": "ORM for MySQL and Node.js",
+  "description": "ORM for MySQL",
   "main": "index.js",
   "scripts": {
-    "build": "babel src -d build",
-    "start": "babel src -d build && node index.js"
+    "build": "babel src -d build"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rupinder-developer/MySQLees.git"
   },
   "keywords": [
-    "MySQLees"
+    "mysqlees",
+    "mysql",
+    "orm"
   ],
   "author": "Rupinder Singh",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/rupinder-developer/MySQLees/issues"
   },
   "homepage": "https://github.com/rupinder-developer/MySQLees#readme",
+  "main": "build/index.js",
   "devDependencies": {
     "@babel/cli": "^7.10.3",
     "@babel/core": "^7.10.3",
     "@babel/preset-env": "^7.10.3",
     "babel-plugin-transform-object-rest-spread": "^6.26.0"
-  },
-  "dependencies": {
-    "mysql": "^2.17.1"
   }
 }
