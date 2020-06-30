@@ -10,7 +10,7 @@
     "type": "git",
     "url": "git+https://github.com/rupinder-developer/MySQLees.git"
   },
-  "publishConfig": { "registry": "https://npm.pkg.github.com/" },
+  "publishConfig": { "registry": "https://npm.pkg.github.com/rupinder-developer" },
   "keywords": [
     "mysqlees",
     "mysql",
