@@ -34,36 +34,37 @@ module.exports = class Schema {
         if (`${modelName}`.trim()) {
             this.startConnection();
             Schema.connection.query(`SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'${modelName}' AND TABLE_SCHEMA='${Store.config.database}' LIMIT 1`, function (err, result) {
-                Store.createdModels[modelName] = 1;
-                if (result) {
-                    this.modelName = modelName;
-                    if (result[0].count === 0) {
-                        // Installing Schema
-                        this.parseIndexes();
-                        this.parseSchema();
-                        this.installSchema();
-                    } else if (Store.options.autoMigration) {
-                        // Updating Schema
-                        this.parseIndexes();
-                        this.updateSchema();
-                    } else {
-                        if (!Schema.connectionTimeout) {
-                            Schema.connectionTimeout = setTimeout(function(){
-                                Schema.connection.end();   
-                                
+                if (Schema.shouldProceed) {
+                    Store.createdModels[modelName] = 1;
+                    if (result) {
+                        this.modelName = modelName;
+                        if (result[0].count === 0) {
+                            // Installing Schema
+                            this.parseIndexes();
+                            this.parseSchema();
+                            this.installSchema();
+                        } else if (Store.options.autoMigration) {
+                            // Updating Schema
+                            this.parseIndexes();
+                            this.updateSchema();
+                        } else {
+                            Schema.connection.end(function(err) {
                                 delete Store.pendingFkQueries; 
                                 delete Store.createdModels;    
                                 delete Store.implementedModels;
                                 delete Schema.connection;
-                                delete Schema.connectionTimeout;
-
-                                delete this.schemaFiles;
-                                delete this.indexes;
-                                delete this.indexesObject;
-                            }, 30000);
+                            });
+                            delete this.schemaFiles;
+                            delete this.indexes;
+                            delete this.indexesObject;
+                            Schema.shouldProceed = false;   
                         }
                     }
-                }
+                } else {
+                    delete this.schemaFiles;
+                    delete this.indexes;
+                    delete this.indexesObject;
+                }     
             }.bind(this));
         }
     }
@@ -649,12 +650,12 @@ module.exports = class Schema {
         Store.implementedModels.push(this.modelName);
         if (Object.keys(Store.createdModels).length == Store.implementedModels.length && Store.implementedModels.length > 0) {
             // Close Schema Connection
-            Schema.connection.end();
-
-            delete Store.pendingFkQueries; 
-            delete Store.createdModels;    
-            delete Store.implementedModels;
-            delete Schema.connection;      
+            Schema.connection.end(function(err) {
+                delete Store.pendingFkQueries; 
+                delete Store.createdModels;    
+                delete Store.implementedModels;
+                delete Schema.connection;
+            });
         }
     }
 }

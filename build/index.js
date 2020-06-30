@@ -33,7 +33,7 @@ var MySQLees = /*#__PURE__*/function () {
 
       _Store["default"].createdModels = {};
       _Store["default"].implementedModels = [];
-      _Schema["default"].connectionTimeout = null;
+      _Schema["default"].shouldProceed = true;
       _Schema["default"].connection = null; // Connection variable of schema implementation 
 
       _Store["default"].models = new Map(); // Binding official MySQL package

@@ -16,12 +16,12 @@ class MySQLees {
     static bind(mysql) {
         // Initializing variables for schema implementation
 
-        Store.pendingFkQueries   = []; // Pending Foreign Keys Queries
-        Store.createdModels      = {};
-        Store.implementedModels  = [];
+        Store.pendingFkQueries  = []; // Pending Foreign Keys Queries
+        Store.createdModels     = {};
+        Store.implementedModels = [];
 
-        Schema.connectionTimeout = null;
-        Schema.connection        = null; // Connection variable of schema implementation 
+        Schema.shouldProceed = true;
+        Schema.connection    = null; // Connection variable of schema implementation 
         
         Store.models = new Map();
         
