@@ -1,6 +1,6 @@
 {
   "name": "mysqlees",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "ORM for MySQL",
   "main": "build/index.js",
   "scripts": {
