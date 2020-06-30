@@ -2,7 +2,7 @@
   "name": "mysqlees",
   "version": "1.0.0",
   "description": "ORM for MySQL",
-  "main": "index.js",
+  "main": "build/index.js",
   "scripts": {
     "build": "babel src -d build"
   },
@@ -21,7 +21,6 @@
     "url": "https://github.com/rupinder-developer/MySQLees/issues"
   },
   "homepage": "https://github.com/rupinder-developer/MySQLees#readme",
-  "main": "build/index.js",
   "devDependencies": {
     "@babel/cli": "^7.10.3",
     "@babel/core": "^7.10.3",
