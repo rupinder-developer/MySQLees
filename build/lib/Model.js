@@ -738,6 +738,19 @@ module.exports = /*#__PURE__*/function (_QueryHelper) {
       };
     }
     /**
+     * Destroy Pool Connection
+     */
+
+  }, {
+    key: "destroyConnection",
+    value: function destroyConnection() {
+      this._$connection().destroy();
+
+      this._$connection = function () {
+        return _Store["default"].connection;
+      };
+    }
+    /**
      * Set & Parse Schema (Generate Final Schema for Model)
      */
 
