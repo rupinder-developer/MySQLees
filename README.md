@@ -124,7 +124,7 @@ mysqlees.query('SELECT 1 + 1 AS solution')
         });
 ```
 
-This is a shortcut for the `mysqlees.getConnection()` -> `mysqlees.query()` -> `connection.release()` code flow. Using `mysqlees.getConnection()` is useful to share connection state for subsequent queries. This is because two calls to `pool.query()` may use two different connections and run in parallel. This is the basic structure:
+This is a shortcut for the `mysqlees.getConnection()` -> `mysqlees.query()` -> `connection.release()` code flow. Using `mysqlees.getConnection()` is useful to share connection state for subsequent queries. This is because two calls to `mysqlees.query()` may use two different connections and run in parallel. This is the basic structure:
 
 ```js
 const mysql    = require('mysql');
@@ -186,6 +186,8 @@ const pool = mysqlees.pool(); // Will return your the current MySQL pool
 ## Performing queries
 
 The most basic way to perform a query is to call the `mysqlees.query()` method.
+
+****Note:*** `mysqlees.query()` method automatically detects whether you're using createPool() or createConnection(). Which means if you're using createPool(), then it automatically run your query by using pool connection.*
 
 The simple form of `.query()` is `.query(sqlString)`, Where a SQL string is the first argument
 ```javascript
@@ -308,3 +310,52 @@ mysqlees.query('SELECT ?? FROM ?? WHERE id = ?', [columns, 'users', userId])
 ```
 
 **Please note that this character sequence is experimental and syntax might change**
+
+## escape() & escapeId()
+
+You can use `mysqlees.escape()` method for escaping values and `mysqlees.escapeId()` for identifiers.
+
+**mysqlees.escape()**
+
+```javascript
+let userId = 'some user provided value';
+let sql    = 'SELECT * FROM users WHERE id = '+ mysqlees.escape(userId)
+mysqlees.query(sql)
+        .then(result => {
+          // Your result
+        })
+        .catch(error => {
+          console.log(error);
+        });
+```
+
+**mysqlees.escapeId()**
+```js
+let sorter = 'date';
+let sql    = 'SELECT * FROM posts ORDER BY ' + mysqlees.escapeId(sorter);
+
+mysqlees.query(sql)
+        .then(result => {
+          // ...
+        })
+        .catch(error => {
+          console.log(error);
+        });
+```
+
+It also supports adding qualified identifiers. It will escape both parts.
+
+```js
+let sorter = 'date';
+let sql    = 'SELECT * FROM posts ORDER BY ' + mysqlees.escapeId('posts.' + sorter);
+// -> SELECT * FROM posts ORDER BY `posts`.`date`
+```
+
+If you do not want to treat `.` as qualified identifiers, you can set the second
+argument to `true` in order to keep the string as a literal identifier:
+
+```js
+var sorter = 'date.2';
+var sql    = 'SELECT * FROM posts ORDER BY ' + mysqlees.escapeId(sorter, true);
+// -> SELECT * FROM posts ORDER BY `date.2`
+```
