@@ -241,7 +241,7 @@ mysqlees.getConnection()
 In order to avoid SQL Injection attacks, you should always escape any user provided data before using it inside a SQL query. You can use `?` characters as placeholder for values and `??` character as placeholder for identifiers.
 
 ```javascript
-const userId = 'some user provided value';
+let userId = 'some user provided value';
 
 mysqlees.query('SELECT * FROM users WHERE id = ?', [userId])
         .then(result => {
@@ -281,7 +281,7 @@ Different value types are escaped differently, here is how:
 This escaping allows you to do neat things like this:
 
 ```js
-const post  = {id: 1, title: 'Hello MySQL'};
+let post  = {id: 1, title: 'Hello MySQL'};
 mysqlees.query('INSERT INTO posts SET ?', post)
         .then(result => {
           // Your Result
@@ -298,8 +298,8 @@ mysqlees.query('INSERT INTO posts SET ?', post)
 You can use ?? characters as placeholders for identifiers you would like to have escaped like this:
 
 ```javascript
-const userId = 1;
-const columns = ['username', 'email'];
+let userId = 1;
+let columns = ['username', 'email'];
 mysqlees.query('SELECT ?? FROM ?? WHERE id = ?', [columns, 'users', userId])
         .then(result => {
           // Your Result
@@ -356,7 +356,7 @@ If you do not want to treat `.` as qualified identifiers, you can set the second
 argument to `true` in order to keep the string as a literal identifier:
 
 ```js
-var sorter = 'date.2';
-var sql    = 'SELECT * FROM posts ORDER BY ' + mysqlees.escapeId(sorter, true);
+let sorter = 'date.2';
+let sql    = 'SELECT * FROM posts ORDER BY ' + mysqlees.escapeId(sorter, true);
 // -> SELECT * FROM posts ORDER BY `date.2`
 ```
