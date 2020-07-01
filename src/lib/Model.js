@@ -443,6 +443,14 @@ module.exports =  class Model extends QueryHelper {
         this._$connection().release();
         this._$connection = () => Store.connection;
     }
+
+    /**
+     * Destroy Pool Connection
+     */
+    destroyConnection() {
+        this._$connection().destroy();
+        this._$connection = () => Store.connection;
+    }
     
     /**
      * Set & Parse Schema (Generate Final Schema for Model)

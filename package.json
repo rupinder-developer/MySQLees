@@ -1,7 +1,7 @@
 {
   "name": "mysqlees",
   "version": "1.0.1",
-  "description": "ORM for MySQL",
+  "description": "MySQLees is a promise-based Node.js ORM for MySQL.",
   "main": "build/index.js",
   "scripts": {
     "build": "babel src -d build"
