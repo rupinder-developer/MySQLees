@@ -74,6 +74,8 @@ module.exports = /*#__PURE__*/function () {
                 delete this.indexes;
                 delete this.indexesObject;
                 Schema.shouldProceed = false;
+
+                _Store["default"].eventEmitter.emit('ready');
               }
             }
           } else {
@@ -641,6 +643,8 @@ module.exports = /*#__PURE__*/function () {
           delete _Store["default"].implementedModels;
           delete Schema.connection;
         });
+
+        _Store["default"].eventEmitter.emit('ready');
       }
     }
   }]);

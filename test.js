@@ -86,24 +86,13 @@ const mO = mysqlees.model('orders', orders);
 //     id: {$gt: 2}
 // }).lean().exec().then(res => console.log(res)).catch(err => console.log(err));
 
-// mC.find({
-//     id: {$gt: 2}
-// }).exec().then(res => console.log(res)).catch(err => console.log(err));
-
-// console.time('p');
-// mO.find().populate('customer', ['name']).populate('author', ['name']).limit(1).exec().then(res => {
-//     // console.log(res[0]);
-
-//     console.timeEnd('p');
-//     const used = process.memoryUsage().heapUsed / 1024 / 1024;
-//     console.log(`The script uses approximately ${Math.round(used * 100) / 100} MB`);
-// }).catch(err =>  console.error(err));
-
-
-// // console.time('p');
-// // mysqlees.pool().query('SELECT * FROM orders', [], function(err, result) {
-// //     console.log(result.length);
-// //     console.timeEnd('p');
-// // })
-
-mysqlees.connection().end();
+console.time('p');
+mysqlees.on('ready', () =>{
+    mO.find({
+        id: {$gt: 1, $lte:2}
+    }).populate('customer').populate('author').exec().then(res => {
+        console.log(res);
+        console.timeEnd('p');
+    }).catch(err => console.log(err));
+    // mysqlees.connection().end();
+})

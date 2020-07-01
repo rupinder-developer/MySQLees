@@ -261,7 +261,9 @@ module.exports =  class Model extends QueryHelper {
                                         }
 
                                         for (let l in result) {
-                                            result[l][populate[i].col] = populatedData[result[l][populate[i].col]];
+                                            if (populatedData.hasOwnProperty(result[l][populate[i].col])) {
+                                                result[l][populate[i].col] = populatedData[result[l][populate[i].col]];
+                                            }
                                         }
                                     } catch(err) {
                                         console.error(err);

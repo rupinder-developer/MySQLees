@@ -433,7 +433,9 @@ module.exports = /*#__PURE__*/function (_QueryHelper) {
                                         }
 
                                         for (l in result) {
-                                          result[l][populate[i].col] = populatedData[result[l][populate[i].col]];
+                                          if (populatedData.hasOwnProperty(result[l][populate[i].col])) {
+                                            result[l][populate[i].col] = populatedData[result[l][populate[i].col]];
+                                          }
                                         }
 
                                       case 6:

@@ -4,18 +4,18 @@
 import regeneratorRuntime from "./dependencies/runtime";
 
 // Inbuilt Modules
-import cluster from 'cluster';
+import cluster      from 'cluster';
+import EventEmitter from 'events';
 
 // Classes
-import Model  from './lib/Model';
-import Store  from './lib/Store';
-import Schema from './lib/Schema';
+import Model     from './lib/Model';
+import Store     from './lib/Store';
+import Schema    from './lib/Schema';
 import DataTypes from './lib/DataTypes';
 
 class MySQLees {
     static bind(mysql) {
         // Initializing variables for schema implementation
-
         Store.pendingFkQueries  = []; // Pending Foreign Keys Queries
         Store.createdModels     = {};
         Store.implementedModels = [];
@@ -24,6 +24,9 @@ class MySQLees {
         Schema.connection    = null; // Connection variable of schema implementation 
         
         Store.models = new Map();
+
+        // Initializing Emit
+        Store.eventEmitter = new EventEmitter(); 
         
         // Binding official MySQL package
         Store.mysql = mysql; 
@@ -135,6 +138,10 @@ class MySQLees {
                 resolve(result);
             })
         });
+    }
+
+    static on(event, callback) {
+        Store.eventEmitter.on(event, callback);
     }
 }
 

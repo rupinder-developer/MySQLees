@@ -57,7 +57,8 @@ module.exports = class Schema {
                             delete this.schemaFiles;
                             delete this.indexes;
                             delete this.indexesObject;
-                            Schema.shouldProceed = false;   
+                            Schema.shouldProceed = false;  
+                            Store.eventEmitter.emit('ready'); 
                         }
                     }
                 } else {
@@ -656,6 +657,7 @@ module.exports = class Schema {
                 delete Store.implementedModels;
                 delete Schema.connection;
             });
+            Store.eventEmitter.emit('ready');
         }
     }
 }

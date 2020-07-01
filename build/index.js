@@ -4,6 +4,8 @@ var _runtime = _interopRequireDefault(require("./dependencies/runtime"));
 
 var _cluster = _interopRequireDefault(require("cluster"));
 
+var _events = _interopRequireDefault(require("events"));
+
 var _Model = _interopRequireDefault(require("./lib/Model"));
 
 var _Store = _interopRequireDefault(require("./lib/Store"));
@@ -36,7 +38,9 @@ var MySQLees = /*#__PURE__*/function () {
       _Schema["default"].shouldProceed = true;
       _Schema["default"].connection = null; // Connection variable of schema implementation 
 
-      _Store["default"].models = new Map(); // Binding official MySQL package
+      _Store["default"].models = new Map(); // Initializing Emit
+
+      _Store["default"].eventEmitter = new _events["default"](); // Binding official MySQL package
 
       _Store["default"].mysql = mysql;
     }
@@ -165,6 +169,11 @@ var MySQLees = /*#__PURE__*/function () {
           resolve(result);
         });
       });
+    }
+  }, {
+    key: "on",
+    value: function on(event, callback) {
+      _Store["default"].eventEmitter.on(event, callback);
     }
   }]);
 
