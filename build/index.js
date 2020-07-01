@@ -162,6 +162,12 @@ var MySQLees = /*#__PURE__*/function () {
   }, {
     key: "escapeId",
     value: function escapeId(value) {
+      var param = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+
+      if (param) {
+        return _Store["default"].mysql.escapeId(value, param);
+      }
+
       return _Store["default"].mysql.escapeId(value);
     }
   }, {
