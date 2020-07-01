@@ -155,6 +155,16 @@ var MySQLees = /*#__PURE__*/function () {
       return _Store["default"].mysql;
     }
   }, {
+    key: "escape",
+    value: function escape(value) {
+      return _Store["default"].mysql.escape(value);
+    }
+  }, {
+    key: "escapeId",
+    value: function escapeId(value) {
+      return _Store["default"].mysql.escapeId(value);
+    }
+  }, {
     key: "query",
     value: function query(stmt) {
       var params = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];

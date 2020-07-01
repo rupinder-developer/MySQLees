@@ -127,6 +127,14 @@ class MySQLees {
         return Store.mysql;
     }
 
+    static escape(value) {
+        return Store.mysql.escape(value);
+    }
+
+    static escapeId(value) {
+        return Store.mysql.escapeId(value);
+    }
+
     static query(stmt, params = [], connection = null) {
         return new Promise((resolve, reject) => {
             if (!connection) {

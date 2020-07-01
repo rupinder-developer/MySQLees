@@ -45,6 +45,9 @@ After all these steps you are ready to go. So let's take a deep dive into the do
     + [Connection options](#connection-options)
 2. [Terminating connections](#terminating-connections)
 3. [Pooling connections](#pooling-connections)
+4. [Performing queries](#performing-queries)
+5. [Escaping query values](#escaping-query-values)
+6. [Escaping query identifiers](#escaping-query-identifiers)
 
 ## Establishing connections
 
@@ -164,3 +167,144 @@ Connections are lazily created by the pool. If you configure the pool to allow u
 When a previous connection is retrieved from the pool, a ping packet is sent to the server to check if the connection is still good.
 
 **For more details about connection pooling, you can visit official MySQL Package [Documentation](https://github.com/mysqljs/mysql/blob/master/Readme.md#pool-options).**
+
+You can also use `mysqlees.pool()` method to get your MySQL pool that you had created by using createPool().
+
+```javascript
+
+mysqlees.createPool({
+  connectionLimit : 10,
+  host            : 'localhost',
+  user            : 'root',
+  password        : '',
+  database        : 'test'
+});
+
+const pool = mysqlees.pool(); // Will return your the current MySQL pool
+```
+
+## Performing queries
+
+The most basic way to perform a query is to call the `mysqlees.query()` method.
+
+The simple form of `.query()` is `.query(sqlString)`, Where a SQL string is the first argument
+```javascript
+mysqlees.query('SELECT * FROM `books` WHERE `author` = "David"')
+        .then(result => {
+            // results will contain the results of the query
+        })
+        .catch(error => {
+          console.log(error);
+        });
+```
+
+The second form `.query(sqlString, values)` comes when using placeholder values (see [escaping query values](#escaping-query-values)):
+
+```javascript
+mysqlees.query('SELECT * FROM `books` WHERE `author` = ?', ['David'])
+        .then(result => {
+            // results will contain the results of the query
+        })
+        .catch(error => {
+          console.log(error);
+        });
+```
+
+The third form `.query(sqlString, values, connection)` comes when you're using connection pooling. Here the third param is your mysql connection, you need to pass third param only if you're using `mysqlees.getConnection()` method.
+
+```javascript
+mysqlees.getConnection()
+        .then(connection => {
+            // Use the connection 
+
+            mysqlees.query('SELECT * FROM `books` WHERE `author` = ?', ['David'], connection)
+                    .then(result => {
+                         // When done with the connection, release it.
+                         connection.release();
+                    })
+                    .catch(error => {
+                      console.log(error);
+                    })
+
+        })
+        .catch(error => {
+          // not connected!
+          console.log(error);
+        })
+```
+
+## Escaping query values
+
+In order to avoid SQL Injection attacks, you should always escape any user provided data before using it inside a SQL query. You can use `?` characters as placeholder for values and `??` character as placeholder for identifiers.
+
+```javascript
+const userId = 'some user provided value';
+
+mysqlees.query('SELECT * FROM users WHERE id = ?', [userId])
+        .then(result => {
+          // Your result
+        })
+        .catch(error => {
+          console.log(error);
+        });
+```
+
+Multiple placeholders are mapped to values in the same order as passed. For example, in the following query foo equals a, bar equals b, baz equals c, and id will be userId:
+
+```javascript
+mysqlees.query('UPDATE users SET foo = ?, bar = ?, baz = ? WHERE id = ?', ['a', 'b', 'c', userId])
+        .then(result => {
+            // Your result
+        })
+        .catch(error => {
+          console.log(error);
+        });
+```
+
+Different value types are escaped differently, here is how:
+
+* Numbers are left untouched
+* Booleans are converted to `true` / `false`
+* Date objects are converted to `'YYYY-mm-dd HH:ii:ss'` strings
+* Buffers are converted to hex strings, e.g. `X'0fa5'`
+* Strings are safely escaped
+* Arrays are turned into list, e.g. `['a', 'b']` turns into `'a', 'b'`
+* Nested arrays are turned into grouped lists (for bulk inserts), e.g. `[['a','b'], ['c', 'd']]` turns into `('a', 'b'), ('c', 'd')`
+* Objects that have a `toSqlString` method will have `.toSqlString()` called and the returned value is used as the raw SQL.
+* Objects are turned into `key = 'val'` pairs for each enumerable property on the object. If the property's value is a function, it is skipped; if the property's value is an object, toString() is called on it and the returned value is used.
+* `undefined` / `null` are converted to `NULL`
+* `NaN` / `Infinity` are left as-is. MySQL does not support these, and trying to insert them as values will trigger MySQL errors until they implement support.
+
+This escaping allows you to do neat things like this:
+
+```js
+const post  = {id: 1, title: 'Hello MySQL'};
+mysqlees.query('INSERT INTO posts SET ?', post)
+        .then(result => {
+          // Your Result
+        })
+        .catch(error => {
+          console.log(error)
+        });
+
+// INSERT INTO posts SET `id` = 1, `title` = 'Hello MySQL'
+```
+
+## Escaping query identifiers
+
+You can use ?? characters as placeholders for identifiers you would like to have escaped like this:
+
+```javascript
+const userId = 1;
+const columns = ['username', 'email'];
+mysqlees.query('SELECT ?? FROM ?? WHERE id = ?', [columns, 'users', userId])
+        .then(result => {
+          // Your Result
+        })
+        .catch(error => {
+          console.log(error);
+        }); 
+// SELECT `username`, `email` FROM `users` WHERE id = 1
+```
+
+**Please note that this character sequence is experimental and syntax might change**
