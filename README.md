@@ -48,6 +48,7 @@ After all these steps you are ready to go. So let's take a deep dive into the do
 4. [Performing queries](#performing-queries)
 5. [Escaping query values](#escaping-query-values)
 6. [Escaping query identifiers](#escaping-query-identifiers)
+7. [escape() & escapeId()](#escape--escapeid)
 
 ## Establishing connections
 
