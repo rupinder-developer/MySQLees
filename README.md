@@ -19,15 +19,15 @@ const mysqlees = require('mysqlees');
 
 ## Bind MySQLees
 
-The very first step for using MySQLees is that you need to bind MySQLees with the official [MySQL Package](https://www.npmjs.com/package/mysql).
+The very first step for using MySQLees is that you need to bind MySQLees with the official <a href="https://www.npmjs.com/package/mysql" target="_blank">MySQL Package</a>.
 
-First, we need to install official [MySQL Package](https://www.npmjs.com/package/mysql).
+First, we need to install official <a href="https://www.npmjs.com/package/mysql" target="_blank">MySQL Package</a>.
 
 ```sh
 $ npm install --save mysql
 ```
 
-After installing [MySQL](https://www.npmjs.com/package/mysql), we have to bind that with MySQLees.
+After installing <a href="https://www.npmjs.com/package/mysql" target="_blank">MySQL Package</a>, we have to bind that with MySQLees.
 
 ```javascript
 const mysql    = require('mysql');
@@ -72,7 +72,7 @@ When establishing a connection, you can set the following options:
 * `password`: The password of that MySQL user.
 * `database`: Name of the database to use for this connection.
 
-For more details about the connection configuration, you can visit [here](https://github.com/mysqljs/mysql/blob/master/Readme.md#connection-options).
+For more details about the connection configuration, you can visit <a href="https://github.com/mysqljs/mysql/blob/master/Readme.md#connection-options)" target="_blank">here</a> (Official MySQL Package).
 
 ## Terminating connections
 
@@ -98,7 +98,7 @@ Unlike `end()` the `destroy()` method does not take a callback argument.
 
 ## Pooling connections
 
-Rather than creating and managing connections one-by-one, this module also provides built-in connection pooling using `mysql.createPool(config)`. [Read more about connection pooling](https://en.wikipedia.org/wiki/Connection_pool).
+Rather than creating and managing connections one-by-one, this module also provides built-in connection pooling using `mysql.createPool(config)`. <a href="https://en.wikipedia.org/wiki/Connection_pool" target="_blank">Read more about connection pooling.</a>
 
 Create a pool and use it directly:
 
@@ -167,7 +167,7 @@ Connections are lazily created by the pool. If you configure the pool to allow u
 
 When a previous connection is retrieved from the pool, a ping packet is sent to the server to check if the connection is still good.
 
-**For more details about connection pooling, you can visit official MySQL Package [Documentation](https://github.com/mysqljs/mysql/blob/master/Readme.md#pool-options).**
+**For more details about connection pooling, you can visit official MySQL Package <a href="https://github.com/mysqljs/mysql/blob/master/Readme.md#pool-options" target="_blank">Documentation</a>.**
 
 You can also use `mysqlees.pool()` method to get your MySQL pool that you had created by using createPool().
 
