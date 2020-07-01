@@ -131,7 +131,10 @@ class MySQLees {
         return Store.mysql.escape(value);
     }
 
-    static escapeId(value) {
+    static escapeId(value, param = null) {
+        if (param) {
+            return Store.mysql.escapeId(value, param);
+        }
         return Store.mysql.escapeId(value);
     }
 
