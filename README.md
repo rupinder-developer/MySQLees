@@ -49,6 +49,12 @@ After all these steps you are ready to go. So let's take a deep dive into the do
 5. [Escaping query values](#escaping-query-values)
 6. [Escaping query identifiers](#escaping-query-identifiers)
 7. [escape() & escapeId()](#escape--escapeid)
+8. [Model & Schema](#model--schema)
+    + [Defining your schema](#defining-your-schema)
+    + [Schema Data Types & Constraints](#schema-data-types--constraints)
+        + [Data Types](#data-types)
+        + [Constraints](#constraints)
+    + [Compiling your model](#compiling-your-first-model)
 
 ## Establishing connections
 
@@ -371,21 +377,21 @@ const mysqlees = require('mysqlees');
 
 const customerSchema = mysqlees.schema({
     customer_id: {
-      primaryKey: true,
-      autoIncrement: true,
-      dataType: mysqlees.dataType.int(11)
+      primaryKey    : true,
+      autoIncrement : true,
+      dataType      : mysqlees.dataType.int(11)
     },
     full_name: {
-      dataType: mysqlees.dataType.varchar(50),
+      dataType : mysqlees.dataType.varchar(50),
     },
     email: {
-      dataType: mysqlees.dataType.varchar(), // VARCHAR(255) 
-      unique: true,
-      notNull: true
+      dataType : mysqlees.dataType.varchar(), // VARCHAR(255) 
+      unique   : true,
+      notNull  : true
     },
     is_active: {
-      dataType: mysqlees.dataType.tinyint(), // TINYINT(4)
-      defaultValue: 1
+      dataType     : mysqlees.dataType.tinyint(), // TINYINT(4)
+      defaultValue : 1
     }
 }, {
   timestamps: true
@@ -451,17 +457,30 @@ const schema = mysqlees.schema({
 const schema = mysqlees.schema({
   column_1: {
     dataType      : mysqlees.dataType.int(),
+
     primaryKey    : true,    // Primary Key Constraint
     autoIncrement : true,    // Auto Increment Constraint
   },
   column_2: {
     dataType     : mysqlees.dataType.varchar(),
+
     defaultValue : 'value',      // Default Value Constraint
     notNull      : true,         // Not Null Constraint
     unique       : true,         // Unique Constraint
+  },
+  column_3: {
+    dataType: mysqlees.dataType.int(),
+
+    ref: {
+      to: 'tableName',            // Table Name
+      foreignField: 'column_name' // Column Name of Target Table
+    }
+
   }
 })
 ```
+
+Here `ref` is used for Foreign Key and helps to [populate](#) the column.  
 
 
 ## Compiling your first model
