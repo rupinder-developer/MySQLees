@@ -2,10 +2,6 @@
 
 var _runtime = _interopRequireDefault(require("./dependencies/runtime"));
 
-var _cluster = _interopRequireDefault(require("cluster"));
-
-var _events = _interopRequireDefault(require("events"));
-
 var _Model = _interopRequireDefault(require("./lib/Model"));
 
 var _Store = _interopRequireDefault(require("./lib/Store"));
@@ -35,12 +31,11 @@ var MySQLees = /*#__PURE__*/function () {
 
       _Store["default"].createdModels = {};
       _Store["default"].implementedModels = [];
-      _Schema["default"].shouldProceed = true;
+      _Store["default"].options = {};
+      _Store["default"].migrate = false;
       _Schema["default"].connection = null; // Connection variable of schema implementation 
 
-      _Store["default"].models = new Map(); // Initializing Emit
-
-      _Store["default"].eventEmitter = new _events["default"](); // Binding official MySQL package
+      _Store["default"].models = new Map(); // Binding official MySQL package
 
       _Store["default"].mysql = mysql;
     }
@@ -48,7 +43,7 @@ var MySQLees = /*#__PURE__*/function () {
     key: "model",
     value: function model(modelName, schema) {
       if (_Store["default"].isConnected && _Store["default"].config.database) {
-        if (_cluster["default"].isMaster) {
+        if (_Store["default"].migrate) {
           schema.implementSchema(modelName);
         }
 
@@ -90,7 +85,6 @@ var MySQLees = /*#__PURE__*/function () {
 
       _Store["default"].isConnected = true;
       _Store["default"].isPool = false;
-      _Store["default"].options = {};
       _Store["default"].config = config;
       _Store["default"].connection = _Store["default"].mysql.createConnection(config);
 
@@ -111,7 +105,6 @@ var MySQLees = /*#__PURE__*/function () {
 
       _Store["default"].isConnected = true;
       _Store["default"].isPool = true;
-      _Store["default"].options = {};
       _Store["default"].config = config;
       _Store["default"].connection = _Store["default"].mysql.createPool(config);
       return _Store["default"].connection;
@@ -185,11 +178,6 @@ var MySQLees = /*#__PURE__*/function () {
           resolve(result);
         });
       });
-    }
-  }, {
-    key: "on",
-    value: function on(event, callback) {
-      _Store["default"].eventEmitter.on(event, callback);
     }
   }]);
 

@@ -11,10 +11,6 @@ mysqlees.createConnection({
     database: "test"
 });
 
-mysqlees.options({
-    autoMigration: false
-});
-
 const customers = mysqlees.schema({
     id: {
         primaryKey: true,
@@ -86,13 +82,14 @@ const mO = mysqlees.model('orders', orders);
 //     id: {$gt: 2}
 // }).lean().exec().then(res => console.log(res)).catch(err => console.log(err));
 
+// mysqlees.on('ready', () =>{
+    //     // mysqlees.connection().end();
+    // })
+    
 console.time('p');
-mysqlees.on('ready', () =>{
-    mO.find({
-        id: {$gt: 1, $lte:2}
-    }).populate('customer').populate('author').exec().then(res => {
-        console.log(res);
-        console.timeEnd('p');
-    }).catch(err => console.log(err));
-    // mysqlees.connection().end();
-})
+mO.find({
+    id: {$gt: 1, $lte:2}
+}).populate('customer').populate('author').exec().then(res => {
+    console.log(res);
+    console.timeEnd('p');
+}).catch(err => console.log(err));

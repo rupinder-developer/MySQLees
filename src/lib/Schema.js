@@ -34,38 +34,20 @@ module.exports = class Schema {
         if (`${modelName}`.trim()) {
             this.startConnection();
             Schema.connection.query(`SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'${modelName}' AND TABLE_SCHEMA='${Store.config.database}' LIMIT 1`, function (err, result) {
-                if (Schema.shouldProceed) {
-                    Store.createdModels[modelName] = 1;
-                    if (result) {
-                        this.modelName = modelName;
-                        if (result[0].count === 0) {
-                            // Installing Schema
-                            this.parseIndexes();
-                            this.parseSchema();
-                            this.installSchema();
-                        } else if (Store.options.autoMigration) {
-                            // Updating Schema
-                            this.parseIndexes();
-                            this.updateSchema();
-                        } else {
-                            Schema.connection.end(function(err) {
-                                delete Store.pendingFkQueries; 
-                                delete Store.createdModels;    
-                                delete Store.implementedModels;
-                                delete Schema.connection;
-                            });
-                            delete this.schemaFiles;
-                            delete this.indexes;
-                            delete this.indexesObject;
-                            Schema.shouldProceed = false;  
-                            Store.eventEmitter.emit('ready'); 
-                        }
+                Store.createdModels[modelName] = 1;
+                if (result) {
+                    this.modelName = modelName;
+                    if (result[0].count === 0) {
+                        // Installing Schema
+                        this.parseIndexes();
+                        this.parseSchema();
+                        this.installSchema();
+                    } else {
+                        // Updating Schema
+                        this.parseIndexes();
+                        this.updateSchema();
                     }
-                } else {
-                    delete this.schemaFiles;
-                    delete this.indexes;
-                    delete this.indexesObject;
-                }     
+                }   
             }.bind(this));
         }
     }
@@ -644,6 +626,7 @@ module.exports = class Schema {
                 database: Store.config.database,
                 multipleStatements: true
             });
+            console.log('Migrating....');
         }
     }
 
@@ -656,8 +639,9 @@ module.exports = class Schema {
                 delete Store.createdModels;    
                 delete Store.implementedModels;
                 delete Schema.connection;
-            });
-            Store.eventEmitter.emit('ready');
+                console.log('Migration Completed!!');
+                process.exit();
+            });   
         }
     }
 }

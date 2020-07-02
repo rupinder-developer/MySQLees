@@ -48,40 +48,21 @@ module.exports = /*#__PURE__*/function () {
       if ("".concat(modelName).trim()) {
         this.startConnection();
         Schema.connection.query("SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'".concat(modelName, "' AND TABLE_SCHEMA='").concat(_Store["default"].config.database, "' LIMIT 1"), function (err, result) {
-          if (Schema.shouldProceed) {
-            _Store["default"].createdModels[modelName] = 1;
+          _Store["default"].createdModels[modelName] = 1;
 
-            if (result) {
-              this.modelName = modelName;
+          if (result) {
+            this.modelName = modelName;
 
-              if (result[0].count === 0) {
-                // Installing Schema
-                this.parseIndexes();
-                this.parseSchema();
-                this.installSchema();
-              } else if (_Store["default"].options.autoMigration) {
-                // Updating Schema
-                this.parseIndexes();
-                this.updateSchema();
-              } else {
-                Schema.connection.end(function (err) {
-                  delete _Store["default"].pendingFkQueries;
-                  delete _Store["default"].createdModels;
-                  delete _Store["default"].implementedModels;
-                  delete Schema.connection;
-                });
-                delete this.schemaFiles;
-                delete this.indexes;
-                delete this.indexesObject;
-                Schema.shouldProceed = false;
-
-                _Store["default"].eventEmitter.emit('ready');
-              }
+            if (result[0].count === 0) {
+              // Installing Schema
+              this.parseIndexes();
+              this.parseSchema();
+              this.installSchema();
+            } else {
+              // Updating Schema
+              this.parseIndexes();
+              this.updateSchema();
             }
-          } else {
-            delete this.schemaFiles;
-            delete this.indexes;
-            delete this.indexesObject;
           }
         }.bind(this));
       }
@@ -628,6 +609,7 @@ module.exports = /*#__PURE__*/function () {
           database: _Store["default"].config.database,
           multipleStatements: true
         });
+        console.log('Migrating....');
       }
     }
   }, {
@@ -642,9 +624,9 @@ module.exports = /*#__PURE__*/function () {
           delete _Store["default"].createdModels;
           delete _Store["default"].implementedModels;
           delete Schema.connection;
+          console.log('Migration Completed!!');
+          process.exit();
         });
-
-        _Store["default"].eventEmitter.emit('ready');
       }
     }
   }]);
