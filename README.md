@@ -56,21 +56,21 @@ After all these steps you are ready to go. So let's take a deep dive into the do
         + [Constraints](#constraints)
     + [Indexes](#indexes)
     + [Compiling your model](#compiling-your-first-model)
-9. Insert Data
+9. [Migrations](#migrations)
+10. Insert Data
     + Model.create()
     + Model.insertMany()
-10. Select Data
+11. Select Data
     + Model.find()
         + project()
         + populate()
         + limit()
         + orderBy()
         + lean()
-11. Updata Data
+12. Updata Data
     + Model.update()
-12. Delete Data
+13. Delete Data
     + Model.delete()
-13. Auto Migration
 14. Manage Connection Pool in Model
     + Model.useConnection()
     + Model.releaseConnection()
@@ -104,7 +104,7 @@ For more details about the connection configuration, you can visit [here](https:
 
 There are two ways to end a connection. Terminating a connection gracefully is done by calling the `end()` method:
 
-```js
+```javascript
 const connection = mysqlees.connection(); // Will return your the current MySQL connection
 
 connection.end(function(err) {
@@ -509,11 +509,46 @@ schema.index('indexName', 'columnName', {
 
 Models are fancy constructors compiled from Schema definitions. Models are responsible for creating and reading data from the underlying MySQL database.
 
-When you call `mysqlees.model(tableName, schema)` on a schema, MySQLees compiles a model for you.
+When you call `mysqlees.model(tableName, schema)` on a schema, MySQLees compiles a model for you. Now let's create one model **./models/customer.js**
 
 ```javascript
-const Customer = mysqlees.model('customers', customerSchema); // Will return the new instance of MySQLees Model
+// customer.js 
+
+const mysqlees = require('mysqlees');
+
+const schema = mysqlees.schema(...);
+
+module.exports = mysqlees.model('customers', schema); // Will return the new instance of MySQLees Model
 ```
+
+## Migrations
+
+Migrations are typically used to build/modify your application's database schema. For migrations in MySQLees, you need to create one configuration file named `mysqlees.json` in the root directory of your Node.js application.
+
+```javascript
+// mysqlees.json
+{
+  "migration": {
+    "models": ["./path/model1", "./path/model2"],
+    "connection": {
+      "host": "localhost",
+      "user": "root",
+      "password": "",
+      "database": "test"
+    }
+  }
+}
+```
+
+Here `migration.models` is an array of all the models that you have created. And `migration.connection` is the connection configuration that is use to make a connection with your database for this migration.
+
+To build your schema first time or to modify your schema you need to run migration by using the following command.
+
+```sh
+$ mysqlees --migrate
+```
+
+MySQLees automatically detects all the changes in your model's schema and change database structure accordingly. But for **deletion** and **rename** of columns, we need to use `deprecated` and `renamedFrom` option respectively.
 
 ## Data Types Reference
 
