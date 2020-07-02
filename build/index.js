@@ -27,13 +27,16 @@ var MySQLees = /*#__PURE__*/function () {
     key: "bind",
     value: function bind(mysql) {
       // Initializing variables for schema implementation
-      _Store["default"].pendingFkQueries = []; // Pending Foreign Keys Queries
+      _Schema["default"].pendingFkQueries = []; // Pending Foreign Keys Queries
 
-      _Store["default"].createdModels = {};
-      _Store["default"].implementedModels = [];
-      _Store["default"].options = {};
+      _Schema["default"].createdModels = {};
+      _Schema["default"].implementedModels = [];
+      _Schema["default"].config = null; // Connection Configuration for schema implementation
+
       _Schema["default"].connection = null; // Connection variable of schema implementation 
 
+      _Schema["default"].migrate = false;
+      _Store["default"].options = {};
       _Store["default"].models = new Map(); // Binding official MySQL package
 
       _Store["default"].mysql = mysql;
@@ -42,7 +45,7 @@ var MySQLees = /*#__PURE__*/function () {
     key: "model",
     value: function model(modelName, schema) {
       if (_Store["default"].isConnected && _Store["default"].config.database) {
-        if (_Store["default"].migrate) {
+        if (_Schema["default"].migrate) {
           schema.implementSchema(modelName);
         }
 
@@ -180,9 +183,9 @@ var MySQLees = /*#__PURE__*/function () {
     }
   }, {
     key: "migrate",
-    value: function migrate() {
-      var bool = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
-      _Store["default"].migrate = bool;
+    value: function migrate(bool, connection) {
+      _Schema["default"].config = connection;
+      _Schema["default"].migrate = bool;
     }
   }]);
 

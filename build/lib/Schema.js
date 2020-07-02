@@ -47,8 +47,8 @@ module.exports = /*#__PURE__*/function () {
     value: function implementSchema(modelName) {
       if ("".concat(modelName).trim()) {
         this.startConnection();
-        Schema.connection.query("SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'".concat(modelName, "' AND TABLE_SCHEMA='").concat(_Store["default"].config.database, "' LIMIT 1"), function (err, result) {
-          _Store["default"].createdModels[modelName] = 1;
+        Schema.connection.query("SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'".concat(modelName, "' AND TABLE_SCHEMA='").concat(Schema.config.database, "' LIMIT 1"), function (err, result) {
+          Schema.createdModels[modelName] = 1;
 
           if (result) {
             this.modelName = modelName;
@@ -139,7 +139,7 @@ module.exports = /*#__PURE__*/function () {
 
 
               if (ref && ref.to && ref.foreignField) {
-                _Store["default"].pendingFkQueries.push({
+                Schema.pendingFkQueries.push({
                   ref: ref,
                   query: "".concat(alterTablePrefix, " ADD CONSTRAINT `").concat(this.modelName, "_").concat(column, "` FOREIGN KEY (`").concat(column, "`) REFERENCES `").concat(ref.to, "`(`").concat(ref.foreignField, "`);")
                 });
@@ -190,11 +190,11 @@ module.exports = /*#__PURE__*/function () {
       if (_fs["default"].existsSync(this.schemaFiles.createTable) && _fs["default"].existsSync(this.schemaFiles.alterTable)) {
         var fkQueries = '';
 
-        if (_Store["default"].pendingFkQueries.length > 0) {
-          for (var fk in _Store["default"].pendingFkQueries) {
-            if (_Store["default"].createdModels[_Store["default"].pendingFkQueries[fk].ref.to]) {
-              fkQueries += _Store["default"].pendingFkQueries[fk].query;
-              delete _Store["default"].pendingFkQueries[fk];
+        if (Schema.pendingFkQueries.length > 0) {
+          for (var fk in Schema.pendingFkQueries) {
+            if (Schema.createdModels[Schema.pendingFkQueries[fk].ref.to]) {
+              fkQueries += Schema.pendingFkQueries[fk].query;
+              delete Schema.pendingFkQueries[fk];
             }
           }
         }
@@ -348,9 +348,9 @@ module.exports = /*#__PURE__*/function () {
                       droppedFks["".concat(this.modelName, "_").concat(colName)] = true;
                     }
 
-                    _Store["default"].pendingFkQueries.push({
+                    Schema.pendingFkQueries.push({
                       ref: column.ref,
-                      query: "\n                                    set @var=if((SELECT true FROM information_schema.COLUMNS WHERE\n                                        TABLE_NAME        = '".concat(this.modelName, "' AND\n                                        COLUMN_NAME       = '").concat(colName, "' AND\n                                        TABLE_SCHEMA      = '").concat(_Store["default"].config.database, "') = true,'").concat(alterTablePrefix, " ADD CONSTRAINT `").concat(this.modelName, "_").concat(colName, "` FOREIGN KEY (`").concat(colName, "`) REFERENCES `").concat(column.ref.to, "`(`").concat(column.ref.foreignField, "`)','select 1');\n                            \n                                    prepare stmt from @var;\n                                    execute stmt;\n                                    deallocate prepare stmt;")
+                      query: "\n                                    set @var=if((SELECT true FROM information_schema.COLUMNS WHERE\n                                        TABLE_NAME        = '".concat(this.modelName, "' AND\n                                        COLUMN_NAME       = '").concat(colName, "' AND\n                                        TABLE_SCHEMA      = '").concat(Schema.config.database, "') = true,'").concat(alterTablePrefix, " ADD CONSTRAINT `").concat(this.modelName, "_").concat(colName, "` FOREIGN KEY (`").concat(colName, "`) REFERENCES `").concat(column.ref.to, "`(`").concat(column.ref.foreignField, "`)','select 1');\n                            \n                                    prepare stmt from @var;\n                                    execute stmt;\n                                    deallocate prepare stmt;")
                     });
                   }
                 } // Adding Column to the list of Updated Columns
@@ -400,9 +400,9 @@ module.exports = /*#__PURE__*/function () {
 
 
                 if (this.schema[column].ref && this.schema[column].ref.to && this.schema[column].ref.foreignField) {
-                  _Store["default"].pendingFkQueries.push({
+                  Schema.pendingFkQueries.push({
                     ref: this.schema[column].ref,
-                    query: "\n                                    set @var=if((SELECT true FROM information_schema.COLUMNS WHERE\n                                        TABLE_NAME        = '".concat(this.modelName, "' AND\n                                        COLUMN_NAME       = '").concat(column, "' AND\n                                        TABLE_SCHEMA      = '").concat(_Store["default"].config.database, "') = true,'").concat(alterTablePrefix, " ADD CONSTRAINT `").concat(this.modelName, "_").concat(column, "` FOREIGN KEY (`").concat(column, "`) REFERENCES `").concat(this.schema[column].ref.to, "`(`").concat(this.schema[column].ref.foreignField, "`)','select 1');\n                            \n                                    prepare stmt from @var;\n                                    execute stmt;\n                                    deallocate prepare stmt;")
+                    query: "\n                                    set @var=if((SELECT true FROM information_schema.COLUMNS WHERE\n                                        TABLE_NAME        = '".concat(this.modelName, "' AND\n                                        COLUMN_NAME       = '").concat(column, "' AND\n                                        TABLE_SCHEMA      = '").concat(Schema.config.database, "') = true,'").concat(alterTablePrefix, " ADD CONSTRAINT `").concat(this.modelName, "_").concat(column, "` FOREIGN KEY (`").concat(column, "`) REFERENCES `").concat(this.schema[column].ref.to, "`(`").concat(this.schema[column].ref.foreignField, "`)','select 1');\n                            \n                                    prepare stmt from @var;\n                                    execute stmt;\n                                    deallocate prepare stmt;")
                   });
                 } // Set default value for column
 
@@ -417,22 +417,22 @@ module.exports = /*#__PURE__*/function () {
                 } // Rename Column
 
 
-                _fs["default"].appendFileSync(renameColumn, "\n                            SET @preparedStatement = (SELECT IF(\n                                (\n                                  SELECT true FROM INFORMATION_SCHEMA.COLUMNS\n                                  WHERE\n                                    (TABLE_NAME = '".concat(this.modelName, "') AND \n                                    (TABLE_SCHEMA = '").concat(_Store["default"].config.database, "') AND\n                                    (COLUMN_NAME = '").concat(this.schema[column].renamedFrom, "')\n                                ) = true,\n                                \"").concat(alterTablePrefix, " CHANGE COLUMN `").concat(this.schema[column].renamedFrom, "` `").concat(column, "` ").concat(this.schema[column].dataType, "\",\n                                \"SELECT 1\"\n                              ));\n    \n                              PREPARE alterIfNotExists FROM @preparedStatement;\n                              EXECUTE alterIfNotExists;\n                              DEALLOCATE PREPARE alterIfNotExists;\n                            "), 'utf8');
+                _fs["default"].appendFileSync(renameColumn, "\n                            SET @preparedStatement = (SELECT IF(\n                                (\n                                  SELECT true FROM INFORMATION_SCHEMA.COLUMNS\n                                  WHERE\n                                    (TABLE_NAME = '".concat(this.modelName, "') AND \n                                    (TABLE_SCHEMA = '").concat(Schema.config.database, "') AND\n                                    (COLUMN_NAME = '").concat(this.schema[column].renamedFrom, "')\n                                ) = true,\n                                \"").concat(alterTablePrefix, " CHANGE COLUMN `").concat(this.schema[column].renamedFrom, "` `").concat(column, "` ").concat(this.schema[column].dataType, "\",\n                                \"SELECT 1\"\n                              ));\n    \n                              PREPARE alterIfNotExists FROM @preparedStatement;\n                              EXECUTE alterIfNotExists;\n                              DEALLOCATE PREPARE alterIfNotExists;\n                            "), 'utf8');
               }
             } // Adding || Removing Timestamps
 
 
             if (this.options.timestamps) {
               // Adding Timestamps
-              _fs["default"].appendFileSync(alterTable, "\n                        SET @preparedStatement = (SELECT IF(\n                            (\n                              SELECT true FROM INFORMATION_SCHEMA.COLUMNS\n                              WHERE\n                                (TABLE_NAME = '".concat(this.modelName, "') AND \n                                (TABLE_SCHEMA = '").concat(_Store["default"].config.database, "') AND\n                                (COLUMN_NAME = 'created_at')\n                            ) = true,\n                            \"SELECT 1\",\n                            CONCAT(\"").concat(alterTablePrefix, " ADD `created_at` timestamp NOT NULL DEFAULT current_timestamp();\")\n                          ));\n\n                          PREPARE alterIfNotExists FROM @preparedStatement;\n                          EXECUTE alterIfNotExists;\n                          DEALLOCATE PREPARE alterIfNotExists;\n                          \n                          SET @preparedStatement = (SELECT IF(\n                            (\n                              SELECT true FROM INFORMATION_SCHEMA.COLUMNS\n                              WHERE\n                                (TABLE_NAME = '").concat(this.modelName, "') AND \n                                (TABLE_SCHEMA = '").concat(_Store["default"].config.database, "') AND\n                                (COLUMN_NAME = 'updated_at')\n                            ) = true,\n                            \"SELECT 1\",\n                            CONCAT(\"").concat(alterTablePrefix, " ADD `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE CURRENT_TIMESTAMP;\")\n                          ));\n                          PREPARE alterIfNotExists FROM @preparedStatement;\n                          EXECUTE alterIfNotExists;\n                          DEALLOCATE PREPARE alterIfNotExists;\n                        "), 'utf8');
+              _fs["default"].appendFileSync(alterTable, "\n                        SET @preparedStatement = (SELECT IF(\n                            (\n                              SELECT true FROM INFORMATION_SCHEMA.COLUMNS\n                              WHERE\n                                (TABLE_NAME = '".concat(this.modelName, "') AND \n                                (TABLE_SCHEMA = '").concat(Schema.config.database, "') AND\n                                (COLUMN_NAME = 'created_at')\n                            ) = true,\n                            \"SELECT 1\",\n                            CONCAT(\"").concat(alterTablePrefix, " ADD `created_at` timestamp NOT NULL DEFAULT current_timestamp();\")\n                          ));\n\n                          PREPARE alterIfNotExists FROM @preparedStatement;\n                          EXECUTE alterIfNotExists;\n                          DEALLOCATE PREPARE alterIfNotExists;\n                          \n                          SET @preparedStatement = (SELECT IF(\n                            (\n                              SELECT true FROM INFORMATION_SCHEMA.COLUMNS\n                              WHERE\n                                (TABLE_NAME = '").concat(this.modelName, "') AND \n                                (TABLE_SCHEMA = '").concat(Schema.config.database, "') AND\n                                (COLUMN_NAME = 'updated_at')\n                            ) = true,\n                            \"SELECT 1\",\n                            CONCAT(\"").concat(alterTablePrefix, " ADD `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE CURRENT_TIMESTAMP;\")\n                          ));\n                          PREPARE alterIfNotExists FROM @preparedStatement;\n                          EXECUTE alterIfNotExists;\n                          DEALLOCATE PREPARE alterIfNotExists;\n                        "), 'utf8');
             } else {
               // Removing Timestamps 
               if (!this.schema['created_at']) {
-                _fs["default"].appendFileSync(alterTable, "\n                            SET @preparedStatement = (SELECT IF(\n                                (\n                                  SELECT true FROM INFORMATION_SCHEMA.COLUMNS\n                                  WHERE\n                                    (TABLE_NAME = '".concat(this.modelName, "') AND \n                                    (TABLE_SCHEMA = '").concat(_Store["default"].config.database, "') AND\n                                    (COLUMN_NAME = 'created_at')\n                                ) = true,\n                                \"").concat(alterTablePrefix, " DROP COLUMN `created_at`;\",\n                                \"SELECT 1\"\n                              ));\n    \n                              PREPARE alterIfNotExists FROM @preparedStatement;\n                              EXECUTE alterIfNotExists;\n                              DEALLOCATE PREPARE alterIfNotExists;\n                            "), 'utf8');
+                _fs["default"].appendFileSync(alterTable, "\n                            SET @preparedStatement = (SELECT IF(\n                                (\n                                  SELECT true FROM INFORMATION_SCHEMA.COLUMNS\n                                  WHERE\n                                    (TABLE_NAME = '".concat(this.modelName, "') AND \n                                    (TABLE_SCHEMA = '").concat(Schema.config.database, "') AND\n                                    (COLUMN_NAME = 'created_at')\n                                ) = true,\n                                \"").concat(alterTablePrefix, " DROP COLUMN `created_at`;\",\n                                \"SELECT 1\"\n                              ));\n    \n                              PREPARE alterIfNotExists FROM @preparedStatement;\n                              EXECUTE alterIfNotExists;\n                              DEALLOCATE PREPARE alterIfNotExists;\n                            "), 'utf8');
               }
 
               if (!this.schema['updated_at']) {
-                _fs["default"].appendFileSync(alterTable, "\n                              SET @preparedStatement = (SELECT IF(\n                                (\n                                  SELECT true FROM INFORMATION_SCHEMA.COLUMNS\n                                  WHERE\n                                    (TABLE_NAME = '".concat(this.modelName, "') AND \n                                    (TABLE_SCHEMA = '").concat(_Store["default"].config.database, "') AND\n                                    (COLUMN_NAME = 'updated_at')\n                                ) = true,\n                                \"").concat(alterTablePrefix, " DROP COLUMN `updated_at`;\",\n                                \"SELECT 1\"\n                              ));\n                              PREPARE alterIfNotExists FROM @preparedStatement;\n                              EXECUTE alterIfNotExists;\n                              DEALLOCATE PREPARE alterIfNotExists;\n                            "), 'utf8');
+                _fs["default"].appendFileSync(alterTable, "\n                              SET @preparedStatement = (SELECT IF(\n                                (\n                                  SELECT true FROM INFORMATION_SCHEMA.COLUMNS\n                                  WHERE\n                                    (TABLE_NAME = '".concat(this.modelName, "') AND \n                                    (TABLE_SCHEMA = '").concat(Schema.config.database, "') AND\n                                    (COLUMN_NAME = 'updated_at')\n                                ) = true,\n                                \"").concat(alterTablePrefix, " DROP COLUMN `updated_at`;\",\n                                \"SELECT 1\"\n                              ));\n                              PREPARE alterIfNotExists FROM @preparedStatement;\n                              EXECUTE alterIfNotExists;\n                              DEALLOCATE PREPARE alterIfNotExists;\n                            "), 'utf8');
               }
             }
 
@@ -464,7 +464,7 @@ module.exports = /*#__PURE__*/function () {
           } // Removing all Foreign Keys
 
 
-          Schema.connection.query("SELECT TABLE_NAME, CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS T WHERE CONSTRAINT_SCHEMA = '".concat(_Store["default"].config.database, "' AND CONSTRAINT_TYPE='FOREIGN KEY'"), function (err, result) {
+          Schema.connection.query("SELECT TABLE_NAME, CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS T WHERE CONSTRAINT_SCHEMA = '".concat(Schema.config.database, "' AND CONSTRAINT_TYPE='FOREIGN KEY'"), function (err, result) {
             if (!err) {
               var _iterator2 = _createForOfIteratorHelper(result),
                   _step2;
@@ -486,15 +486,15 @@ module.exports = /*#__PURE__*/function () {
 
               var fkQueries = '';
 
-              if (_Store["default"].pendingFkQueries.length > 0) {
-                var _iterator3 = _createForOfIteratorHelper(_Store["default"].pendingFkQueries),
+              if (Schema.pendingFkQueries.length > 0) {
+                var _iterator3 = _createForOfIteratorHelper(Schema.pendingFkQueries),
                     _step3;
 
                 try {
                   for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
                     var fk = _step3.value;
 
-                    if (_Store["default"].createdModels[fk.ref.to]) {
+                    if (Schema.createdModels[fk.ref.to]) {
                       fkQueries += fk.query;
                     }
                   }
@@ -603,10 +603,10 @@ module.exports = /*#__PURE__*/function () {
     value: function startConnection() {
       if (!Schema.connection) {
         Schema.connection = _Store["default"].mysql.createConnection({
-          host: _Store["default"].config.host,
-          user: _Store["default"].config.user,
-          password: _Store["default"].config.password,
-          database: _Store["default"].config.database,
+          host: Schema.config.host,
+          user: Schema.config.user,
+          password: Schema.config.password,
+          database: Schema.config.database,
           multipleStatements: true
         });
         console.log('Migrating....');
@@ -615,15 +615,17 @@ module.exports = /*#__PURE__*/function () {
   }, {
     key: "endConnection",
     value: function endConnection() {
-      _Store["default"].implementedModels.push(this.modelName);
+      Schema.implementedModels.push(this.modelName);
 
-      if (Object.keys(_Store["default"].createdModels).length == _Store["default"].implementedModels.length && _Store["default"].implementedModels.length > 0) {
+      if (Object.keys(Schema.createdModels).length == Schema.implementedModels.length && Schema.implementedModels.length > 0) {
         // Close Schema Connection
         Schema.connection.end(function (err) {
-          delete _Store["default"].pendingFkQueries;
-          delete _Store["default"].createdModels;
-          delete _Store["default"].implementedModels;
+          delete Schema.pendingFkQueries;
+          delete Schema.createdModels;
+          delete Schema.implementedModels;
           delete Schema.connection;
+          delete Schema.config;
+          delete Schema.migrate;
           console.log('Migration Completed!!');
           process.exit();
         });
