@@ -433,9 +433,7 @@ const schema = mysqlees.schema({
   column_2: {
     dataType     : mysqlees.dataType.varchar(),
 
-    defaultValue : 'value',   // Default Value Constraint
-    notNull      : true,      // Not Null Constraint
-    unique       : true,      // Unique Constraint
+    defaultValue : 'value', // Default Value Constraint
   },
   column_3: {
     dataType : mysqlees.dataType.int(),
