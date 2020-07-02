@@ -55,22 +55,26 @@ After all these steps you are ready to go. So let's take a deep dive into the do
         + [Data Types](#data-types)
         + [Constraints](#constraints)
     + Indexes
-    + [Compiling your model](#compiling-your-first-model) 
-9. Insert Data
+    + [Compiling your model](#compiling-your-first-model)
+9. Manage Connection Pool in Model
+    + Model.useConnection()
+    + Model.releaseConnection()
+    + Model.destroyConnection()
+10. Insert Data
     + Model.create()
     + Model.insertMany()
-10. Select Data
+11. Select Data
     + Model.find()
         + project()
         + populate()
         + limit()
         + orderBy()
         + lean()
-11. Updata Data
+12. Updata Data
     + Model.update()
-12. Delete Data
+13. Delete Data
     + Model.delete()
-13. Auto Migration
+14. Auto Migration
 
 ## Establishing connections
 
