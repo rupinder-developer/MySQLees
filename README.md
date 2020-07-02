@@ -54,7 +54,8 @@ After all these steps you are ready to go. So let's take a deep dive into the do
     + [Schema Data Types & Constraints](#schema-data-types--constraints)
         + [Data Types](#data-types)
         + [Constraints](#constraints)
-    + [Compiling your model](#compiling-your-first-model)
+    + Indexes
+    + [Compiling your model](#compiling-your-first-model) 
 9. Insert Data
     + Model.create()
     + Model.insertMany()
@@ -69,6 +70,7 @@ After all these steps you are ready to go. So let's take a deep dive into the do
     + Model.update()
 12. Delete Data
     + Model.delete()
+13. Auto Migration
 
 ## Establishing connections
 
