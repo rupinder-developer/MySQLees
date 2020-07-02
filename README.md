@@ -377,21 +377,21 @@ const mysqlees = require('mysqlees');
 
 const customerSchema = mysqlees.schema({
     customer_id: {
-      primaryKey    : true,
-      autoIncrement : true,
-      dataType      : mysqlees.dataType.int(11)
+      primaryKey: true,
+      autoIncrement: true,
+      dataType: mysqlees.dataType.int(11)
     },
     full_name: {
-      dataType : mysqlees.dataType.varchar(50),
+      dataType: mysqlees.dataType.varchar(50),
     },
     email: {
-      dataType : mysqlees.dataType.varchar(), // VARCHAR(255) 
-      unique   : true,
-      notNull  : true
+      dataType: mysqlees.dataType.varchar(), // VARCHAR(255) 
+      unique: true,
+      notNull: true
     },
     is_active: {
-      dataType     : mysqlees.dataType.tinyint(), // TINYINT(4)
-      defaultValue : 1
+      dataType: mysqlees.dataType.tinyint(), // TINYINT(4)
+      defaultValue: 1
     }
 }, {
   timestamps: true
@@ -425,21 +425,21 @@ const schema = mysqlees.schema({
 ```javascript
 const schema = mysqlees.schema({
   column_1: {
-    dataType      : mysqlees.dataType.int(),
+    dataType: mysqlees.dataType.int(),
 
-    primaryKey    : true,    // Primary Key Constraint
-    autoIncrement : true,    // Auto Increment Constraint
+    primaryKey: true,    // Primary Key Constraint
+    autoIncrement: true,    // Auto Increment Constraint
   },
   column_2: {
-    dataType     : mysqlees.dataType.varchar(),
+    dataType: mysqlees.dataType.varchar(),
 
-    defaultValue : 'value', // Default Value Constraint
+    defaultValue: 'value', // Default Value Constraint
   },
   column_3: {
-    dataType : mysqlees.dataType.int(),
+    dataType: mysqlees.dataType.int(),
 
-    notNull  : true,    // Not Null Constraint
-    unique   : true,    // Unique Constraint
+    notNull: true,    // Not Null Constraint
+    unique: true,    // Unique Constraint
   },
   column_4: {
     dataType: mysqlees.dataType.int(),
