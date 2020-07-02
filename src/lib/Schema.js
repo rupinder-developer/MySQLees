@@ -30,8 +30,9 @@ module.exports = class Schema {
         return this;
     }
 
-    implementSchema(modelName) {
+    implementSchema(modelName, config) {
         if (`${modelName}`.trim()) {
+            Schema.config = config; // Connection Configuration for schema implementation
             this.startConnection();
             Schema.connection.query(`SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'${modelName}' AND TABLE_SCHEMA='${Schema.config.database}' LIMIT 1`, function (err, result) {
                 Schema.createdModels[modelName] = 1;
@@ -619,6 +620,12 @@ module.exports = class Schema {
 
     startConnection() {
         if (!Schema.connection) {
+            // Initializing variables for schema implementation
+            Schema.pendingFkQueries  = []; // Pending Foreign Keys Queries
+            Schema.createdModels     = {};
+            Schema.implementedModels = [];
+
+
             Schema.connection = Store.mysql.createConnection({
                 host: Schema.config.host,
                 user: Schema.config.user,

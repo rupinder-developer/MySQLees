@@ -10,7 +10,7 @@ module.exports =  class Model extends QueryHelper {
      * 
      * @param {Object} obj 
      */
-    constructor() {
+    constructor(schema) {
         super();
 
         /**
@@ -39,6 +39,8 @@ module.exports =  class Model extends QueryHelper {
          * 8. _$lean {Boolean} - Decide whether return instace of Model or simple JSON Object
          *
          * 9. _$orginalColData {String} - Store orginal column data before populating, which in will further helps to run .save() on parent model
+         *
+         * 10. _$schema {Schema} - Instance of Schema (Only used in migration)
          */
 
             
@@ -55,7 +57,8 @@ module.exports =  class Model extends QueryHelper {
         this._$populate = () => [];
         this._$lean     = () => false;
 
-        
+
+        this._$schema = () => schema; // Only used in migration
     }
 
     /**

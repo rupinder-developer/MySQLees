@@ -60,18 +60,17 @@ const cli = () => {
             mysql = require('mysql');
             mysqlees.bind(mysql);
             
-            if (json.migration.connection && json.migration.connection.host !== undefined && 
-                json.migration.connection.user !== undefined && json.migration.connection.password !== undefined &&
-                json.migration.connection.database !== undefined) {
-                mysqlees.migrate(args.migrate, json.migration.connection);
-            } else {
-                console.log(`Error: Invalid connection configuration for migration. Please visit official documentation (https://github.com/rupinder-developer/MySQLees) for reference.`);
-                process.exit();
+            if (!json.migration.connection && json.migration.connection.host === undefined && 
+                json.migration.connection.user === undefined && json.migration.connection.password === undefined &&
+                json.migration.connection.database === undefined) {
+                    console.log(`Error: Invalid connection configuration for migration. Please visit official documentation (https://github.com/rupinder-developer/MySQLees) for reference.`);
+                    process.exit();
             }
     
             for(let value of json.migration.models) {
                 if (fs.existsSync(path.join(value+'.js'))) {
-                    require(path.join(cwd, value));
+                    const model = require(path.join(cwd, value));
+                    model._$schema().implementSchema(model.modelName);
                 } else {
                     console.log(`Error: Model not found!! (Invalid Path: ${value})`);
                 }

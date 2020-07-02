@@ -11,15 +11,6 @@ import DataTypes from './lib/DataTypes';
 
 class MySQLees {
     static bind(mysql) {
-        // Initializing variables for schema implementation
-        Schema.pendingFkQueries  = []; // Pending Foreign Keys Queries
-        Schema.createdModels     = {};
-        Schema.implementedModels = [];
-        
-        Schema.config     = null; // Connection Configuration for schema implementation
-        Schema.connection = null; // Connection variable of schema implementation 
-        Schema.migrate    = false;
-        
         Store.options = {};
         Store.models  = new Map(); 
         
@@ -28,23 +19,11 @@ class MySQLees {
     }
 
     static model(modelName, schema) {
-        if (Schema.migrate) {
-            schema.implementSchema(modelName);
-        } else {
-            if (Store.isConnected && Store.config.database) {
-                const model = new Model();
-                model.modelName = modelName;
-                model.schema = schema.schema;
-                return model;
-            }
-            if (Store.isConnected && !Store.config.database) {
-                console.error('Error: Failed to connect to database!! (Database not found)');
-            } else {
-                console.error('Error: Failed to connect to database!!, Please use createConnection() or createPool() method to establish database connectivity!!');
-            }
-            process.exit(); 
-        }
-        
+        // schema.implementSchema(modelName);
+        const model = new Model(schema);
+        model.modelName = modelName;
+        model.schema = schema.schema;
+        return model;
     }
 
     static schema(schema, options = {}) {
@@ -144,11 +123,6 @@ class MySQLees {
                 resolve(result);
             })
         });
-    }
-
-    static migrate(bool, connection) {
-        Schema.config  = connection; 
-        Schema.migrate = bool;
     }
 }
 
