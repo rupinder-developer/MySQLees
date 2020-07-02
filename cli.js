@@ -70,7 +70,8 @@ const cli = () => {
             for(let value of json.migration.models) {
                 if (fs.existsSync(path.join(value+'.js'))) {
                     const model = require(path.join(cwd, value));
-                    model._$schema().implementSchema(model.modelName);
+                    model._$schema().implementSchema(model.modelName, json.migration.connection);
+                    // model._$schema() -> This is Instance of Schema
                 } else {
                     console.log(`Error: Model not found!! (Invalid Path: ${value})`);
                 }

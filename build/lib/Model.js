@@ -54,7 +54,7 @@ module.exports = /*#__PURE__*/function (_QueryHelper) {
    * 
    * @param {Object} obj 
    */
-  function Model() {
+  function Model(schema) {
     var _this;
 
     _classCallCheck(this, Model);
@@ -86,6 +86,8 @@ module.exports = /*#__PURE__*/function (_QueryHelper) {
      * 8. _$lean {Boolean} - Decide whether return instace of Model or simple JSON Object
      *
      * 9. _$orginalColData {String} - Store orginal column data before populating, which in will further helps to run .save() on parent model
+     *
+     * 10. _$schema {Schema} - Instance of Schema (Only used in migration)
      */
 
     _this._$modelName = function () {
@@ -124,6 +126,11 @@ module.exports = /*#__PURE__*/function (_QueryHelper) {
     _this._$lean = function () {
       return false;
     };
+
+    _this._$schema = function () {
+      return schema;
+    }; // Only used in migration
+
 
     return _this;
   }

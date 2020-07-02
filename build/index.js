@@ -26,16 +26,6 @@ var MySQLees = /*#__PURE__*/function () {
   _createClass(MySQLees, null, [{
     key: "bind",
     value: function bind(mysql) {
-      // Initializing variables for schema implementation
-      _Schema["default"].pendingFkQueries = []; // Pending Foreign Keys Queries
-
-      _Schema["default"].createdModels = {};
-      _Schema["default"].implementedModels = [];
-      _Schema["default"].config = null; // Connection Configuration for schema implementation
-
-      _Schema["default"].connection = null; // Connection variable of schema implementation 
-
-      _Schema["default"].migrate = false;
       _Store["default"].options = {};
       _Store["default"].models = new Map(); // Binding official MySQL package
 
@@ -44,24 +34,11 @@ var MySQLees = /*#__PURE__*/function () {
   }, {
     key: "model",
     value: function model(modelName, schema) {
-      if (_Schema["default"].migrate) {
-        schema.implementSchema(modelName);
-      } else {
-        if (_Store["default"].isConnected && _Store["default"].config.database) {
-          var model = new _Model["default"]();
-          model.modelName = modelName;
-          model.schema = schema.schema;
-          return model;
-        }
-
-        if (_Store["default"].isConnected && !_Store["default"].config.database) {
-          console.error('Error: Failed to connect to database!! (Database not found)');
-        } else {
-          console.error('Error: Failed to connect to database!!, Please use createConnection() or createPool() method to establish database connectivity!!');
-        }
-
-        process.exit();
-      }
+      // schema.implementSchema(modelName);
+      var model = new _Model["default"](schema);
+      model.modelName = modelName;
+      model.schema = schema.schema;
+      return model;
     }
   }, {
     key: "schema",
@@ -180,13 +157,6 @@ var MySQLees = /*#__PURE__*/function () {
           resolve(result);
         });
       });
-    }
-  }, {
-    key: "migrate",
-    value: function migrate(bool, connection) {
-      console.log(bool);
-      _Schema["default"].config = connection;
-      _Schema["default"].migrate = bool;
     }
   }]);
 
