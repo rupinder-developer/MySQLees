@@ -184,12 +184,6 @@ var MySQLees = /*#__PURE__*/function () {
       var bool = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
       _Store["default"].migrate = bool;
     }
-  }, {
-    key: "check",
-    value: function check() {
-      console.log("Rupinder");
-      console.log(_Store["default"].migrate);
-    }
   }]);
 
   return MySQLees;
