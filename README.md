@@ -54,27 +54,27 @@ After all these steps you are ready to go. So let's take a deep dive into the do
     + [Schema Data Types & Constraints](#schema-data-types--constraints)
         + [Data Types](#data-types)
         + [Constraints](#constraints)
-    + Indexes
+    + [Indexes](#indexes)
     + [Compiling your model](#compiling-your-first-model)
-9. Manage Connection Pool in Model
-    + Model.useConnection()
-    + Model.releaseConnection()
-    + Model.destroyConnection()
-10. Insert Data
+9. Insert Data
     + Model.create()
     + Model.insertMany()
-11. Select Data
+10. Select Data
     + Model.find()
         + project()
         + populate()
         + limit()
         + orderBy()
         + lean()
-12. Updata Data
+11. Updata Data
     + Model.update()
-13. Delete Data
+12. Delete Data
     + Model.delete()
-14. Auto Migration
+13. Auto Migration
+14. Manage Connection Pool in Model
+    + Model.useConnection()
+    + Model.releaseConnection()
+    + Model.destroyConnection()
 
 ## Establishing connections
 
@@ -474,6 +474,36 @@ const schema = mysqlees.schema({
 ```
 
 Here `ref` is used for Foreign Key and helps to [populate](#) the column.  
+
+## Indexes
+
+Indexes are used to retrieve data from the database more quickly than otherwise. The users cannot see the indexes, they are just used to speed up searches/queries.
+
+You can use `schema.index(indexName, columns, options)` method to create index in your database.
+
+```javascript
+const mysqlees = require('mysqlees');
+
+// Your Schema
+const schema = mysqless.schema(...);
+
+// Indexing
+schema.index('indexName', 'columnName');
+
+/**
+ * Indexing on multiple columns
+ * 
+ * schema.index('indexName', 'column1, column2', ...);
+ */
+```
+
+To create a unique index (duplicate values are not allowed) on a table, you need to set unique = true in the `options` parameter as given below. 
+
+```javascript
+schema.index('indexName', 'columnName', {
+  unique: true
+})
+```
 
 ## Compiling your first model
 
