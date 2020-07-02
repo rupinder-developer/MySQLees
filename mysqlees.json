@@ -1,0 +1,11 @@
+{
+    "migration": {
+        "models": ["./path/modelName", "./path/modelName"],
+        "connection": {
+            "host": "localhost",
+            "user": "root",
+            "password": "",
+            "database": "test"
+        }
+    }
+}

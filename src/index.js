@@ -12,14 +12,16 @@ import DataTypes from './lib/DataTypes';
 class MySQLees {
     static bind(mysql) {
         // Initializing variables for schema implementation
-        Store.pendingFkQueries  = []; // Pending Foreign Keys Queries
-        Store.createdModels     = {};
-        Store.implementedModels = [];
-        Store.options           = {};
-
-        Schema.connection    = null; // Connection variable of schema implementation 
+        Schema.pendingFkQueries  = []; // Pending Foreign Keys Queries
+        Schema.createdModels     = {};
+        Schema.implementedModels = [];
         
-        Store.models = new Map(); 
+        Schema.config     = null; // Connection Configuration for schema implementation
+        Schema.connection = null; // Connection variable of schema implementation 
+        Schema.migrate    = false;
+        
+        Store.options = {};
+        Store.models  = new Map(); 
         
         // Binding official MySQL package
         Store.mysql = mysql; 
@@ -27,7 +29,7 @@ class MySQLees {
 
     static model(modelName, schema) {
         if (Store.isConnected && Store.config.database) {
-            if (Store.migrate) {
+            if (Schema.migrate) {
                 schema.implementSchema(modelName);
             }
             const model = new Model();
@@ -142,8 +144,9 @@ class MySQLees {
         });
     }
 
-    static migrate(bool = false) {
-        Store.migrate = bool;
+    static migrate(bool, connection) {
+        Schema.config  = connection; 
+        Schema.migrate = bool;
     }
 }
 

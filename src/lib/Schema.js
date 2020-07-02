@@ -33,8 +33,8 @@ module.exports = class Schema {
     implementSchema(modelName) {
         if (`${modelName}`.trim()) {
             this.startConnection();
-            Schema.connection.query(`SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'${modelName}' AND TABLE_SCHEMA='${Store.config.database}' LIMIT 1`, function (err, result) {
-                Store.createdModels[modelName] = 1;
+            Schema.connection.query(`SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'${modelName}' AND TABLE_SCHEMA='${Schema.config.database}' LIMIT 1`, function (err, result) {
+                Schema.createdModels[modelName] = 1;
                 if (result) {
                     this.modelName = modelName;
                     if (result[0].count === 0) {
@@ -123,7 +123,7 @@ module.exports = class Schema {
 
                         // Adding Foreign Key
                         if (ref && ref.to && ref.foreignField) {
-                            Store.pendingFkQueries.push({ ref, query: `${alterTablePrefix} ADD CONSTRAINT \`${this.modelName}_${column}\` FOREIGN KEY (\`${column}\`) REFERENCES \`${ref.to}\`(\`${ref.foreignField}\`);` });
+                            Schema.pendingFkQueries.push({ ref, query: `${alterTablePrefix} ADD CONSTRAINT \`${this.modelName}_${column}\` FOREIGN KEY (\`${column}\`) REFERENCES \`${ref.to}\`(\`${ref.foreignField}\`);` });
                         }
 
                         // Set default value for column
@@ -169,11 +169,11 @@ module.exports = class Schema {
     installSchema() {
         if (fs.existsSync(this.schemaFiles.createTable) && fs.existsSync(this.schemaFiles.alterTable)) {
             let fkQueries = '';
-            if (Store.pendingFkQueries.length > 0) {
-                for (const fk in Store.pendingFkQueries) {
-                    if (Store.createdModels[Store.pendingFkQueries[fk].ref.to]) {
-                        fkQueries += Store.pendingFkQueries[fk].query;
-                        delete Store.pendingFkQueries[fk];
+            if (Schema.pendingFkQueries.length > 0) {
+                for (const fk in Schema.pendingFkQueries) {
+                    if (Schema.createdModels[Schema.pendingFkQueries[fk].ref.to]) {
+                        fkQueries += Schema.pendingFkQueries[fk].query;
+                        delete Schema.pendingFkQueries[fk];
                     }
                 }
             }
@@ -317,11 +317,11 @@ module.exports = class Schema {
                                         `;
                                         droppedFks[`${this.modelName}_${colName}`] = true;
                                     }
-                                    Store.pendingFkQueries.push({ ref: column.ref, query: `
+                                    Schema.pendingFkQueries.push({ ref: column.ref, query: `
                                     set @var=if((SELECT true FROM information_schema.COLUMNS WHERE
                                         TABLE_NAME        = '${this.modelName}' AND
                                         COLUMN_NAME       = '${colName}' AND
-                                        TABLE_SCHEMA      = '${Store.config.database}') = true,'${alterTablePrefix} ADD CONSTRAINT \`${this.modelName}_${colName}\` FOREIGN KEY (\`${colName}\`) REFERENCES \`${column.ref.to}\`(\`${column.ref.foreignField}\`)','select 1');
+                                        TABLE_SCHEMA      = '${Schema.config.database}') = true,'${alterTablePrefix} ADD CONSTRAINT \`${this.modelName}_${colName}\` FOREIGN KEY (\`${colName}\`) REFERENCES \`${column.ref.to}\`(\`${column.ref.foreignField}\`)','select 1');
                             
                                     prepare stmt from @var;
                                     execute stmt;
@@ -366,11 +366,11 @@ module.exports = class Schema {
 
                             // Adding Foreign Key
                             if (this.schema[column].ref && this.schema[column].ref.to && this.schema[column].ref.foreignField) {
-                                Store.pendingFkQueries.push({ ref: this.schema[column].ref, query: `
+                                Schema.pendingFkQueries.push({ ref: this.schema[column].ref, query: `
                                     set @var=if((SELECT true FROM information_schema.COLUMNS WHERE
                                         TABLE_NAME        = '${this.modelName}' AND
                                         COLUMN_NAME       = '${column}' AND
-                                        TABLE_SCHEMA      = '${Store.config.database}') = true,'${alterTablePrefix} ADD CONSTRAINT \`${this.modelName}_${column}\` FOREIGN KEY (\`${column}\`) REFERENCES \`${this.schema[column].ref.to}\`(\`${this.schema[column].ref.foreignField}\`)','select 1');
+                                        TABLE_SCHEMA      = '${Schema.config.database}') = true,'${alterTablePrefix} ADD CONSTRAINT \`${this.modelName}_${column}\` FOREIGN KEY (\`${column}\`) REFERENCES \`${this.schema[column].ref.to}\`(\`${this.schema[column].ref.foreignField}\`)','select 1');
                             
                                     prepare stmt from @var;
                                     execute stmt;
@@ -394,7 +394,7 @@ module.exports = class Schema {
                                   SELECT true FROM INFORMATION_SCHEMA.COLUMNS
                                   WHERE
                                     (TABLE_NAME = '${this.modelName}') AND 
-                                    (TABLE_SCHEMA = '${Store.config.database}') AND
+                                    (TABLE_SCHEMA = '${Schema.config.database}') AND
                                     (COLUMN_NAME = '${this.schema[column].renamedFrom}')
                                 ) = true,
                                 "${alterTablePrefix} CHANGE COLUMN \`${this.schema[column].renamedFrom}\` \`${column}\` ${this.schema[column].dataType}",
@@ -421,7 +421,7 @@ module.exports = class Schema {
                               SELECT true FROM INFORMATION_SCHEMA.COLUMNS
                               WHERE
                                 (TABLE_NAME = '${this.modelName}') AND 
-                                (TABLE_SCHEMA = '${Store.config.database}') AND
+                                (TABLE_SCHEMA = '${Schema.config.database}') AND
                                 (COLUMN_NAME = 'created_at')
                             ) = true,
                             "SELECT 1",
@@ -437,7 +437,7 @@ module.exports = class Schema {
                               SELECT true FROM INFORMATION_SCHEMA.COLUMNS
                               WHERE
                                 (TABLE_NAME = '${this.modelName}') AND 
-                                (TABLE_SCHEMA = '${Store.config.database}') AND
+                                (TABLE_SCHEMA = '${Schema.config.database}') AND
                                 (COLUMN_NAME = 'updated_at')
                             ) = true,
                             "SELECT 1",
@@ -456,7 +456,7 @@ module.exports = class Schema {
                                   SELECT true FROM INFORMATION_SCHEMA.COLUMNS
                                   WHERE
                                     (TABLE_NAME = '${this.modelName}') AND 
-                                    (TABLE_SCHEMA = '${Store.config.database}') AND
+                                    (TABLE_SCHEMA = '${Schema.config.database}') AND
                                     (COLUMN_NAME = 'created_at')
                                 ) = true,
                                 "${alterTablePrefix} DROP COLUMN \`created_at\`;",
@@ -476,7 +476,7 @@ module.exports = class Schema {
                                   SELECT true FROM INFORMATION_SCHEMA.COLUMNS
                                   WHERE
                                     (TABLE_NAME = '${this.modelName}') AND 
-                                    (TABLE_SCHEMA = '${Store.config.database}') AND
+                                    (TABLE_SCHEMA = '${Schema.config.database}') AND
                                     (COLUMN_NAME = 'updated_at')
                                 ) = true,
                                 "${alterTablePrefix} DROP COLUMN \`updated_at\`;",
@@ -514,7 +514,7 @@ module.exports = class Schema {
                 }
 
                 // Removing all Foreign Keys
-                Schema.connection.query(`SELECT TABLE_NAME, CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS T WHERE CONSTRAINT_SCHEMA = '${Store.config.database}' AND CONSTRAINT_TYPE='FOREIGN KEY'`, function (err, result) {
+                Schema.connection.query(`SELECT TABLE_NAME, CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS T WHERE CONSTRAINT_SCHEMA = '${Schema.config.database}' AND CONSTRAINT_TYPE='FOREIGN KEY'`, function (err, result) {
                     if (!err) {
                         for (let item of result) {
                             if (!droppedFks[item['CONSTRAINT_NAME']]) {
@@ -535,9 +535,9 @@ module.exports = class Schema {
                         }
 
                         let fkQueries = '';
-                        if (Store.pendingFkQueries.length > 0) {
-                            for (const fk of Store.pendingFkQueries) {
-                                if (Store.createdModels[fk.ref.to]) {
+                        if (Schema.pendingFkQueries.length > 0) {
+                            for (const fk of Schema.pendingFkQueries) {
+                                if (Schema.createdModels[fk.ref.to]) {
                                     fkQueries += fk.query;
                                 }
                             }
@@ -620,10 +620,10 @@ module.exports = class Schema {
     startConnection() {
         if (!Schema.connection) {
             Schema.connection = Store.mysql.createConnection({
-                host: Store.config.host,
-                user: Store.config.user,
-                password: Store.config.password,
-                database: Store.config.database,
+                host: Schema.config.host,
+                user: Schema.config.user,
+                password: Schema.config.password,
+                database: Schema.config.database,
                 multipleStatements: true
             });
             console.log('Migrating....');
@@ -631,14 +631,16 @@ module.exports = class Schema {
     }
 
     endConnection() {
-        Store.implementedModels.push(this.modelName);
-        if (Object.keys(Store.createdModels).length == Store.implementedModels.length && Store.implementedModels.length > 0) {
+        Schema.implementedModels.push(this.modelName);
+        if (Object.keys(Schema.createdModels).length == Schema.implementedModels.length && Schema.implementedModels.length > 0) {
             // Close Schema Connection
             Schema.connection.end(function(err) {
-                delete Store.pendingFkQueries; 
-                delete Store.createdModels;    
-                delete Store.implementedModels;
+                delete Schema.pendingFkQueries; 
+                delete Schema.createdModels;    
+                delete Schema.implementedModels;
                 delete Schema.connection;
+                delete Schema.config;
+                delete Schema.migrate;
                 console.log('Migration Completed!!');
                 process.exit();
             });   
