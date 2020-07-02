@@ -31,22 +31,25 @@ parser.addArgument(
 
 const args = parser.parseArgs();
 
-let mysql;
+let mysql, sleep = false;
 try {
     mysql = require('mysql');
 } catch(err) {
+    sleep = true;
     console.log('Installing MySQL Package (https://www.npmjs.com/package/mysql)...');
     execSync('npm install --save mysql');
     console.log('MySQL Package Installed Successfully!!');
 }
 
-setTimeout(() => {
+const cli = () => {
     if (args.migrate) {
-        const cwd    = process.cwd();
-        const config = args.config ? args.config : 'mysqlees.json'; 
-        const path   = path.join(cwd, config);
-        if (fs.existsSync(path)) {
-            const json = JSON.parse(fs.readFileSync(path));
+        
+        const cwd        = process.cwd();
+        const config     = args.config ? args.config : 'mysqlees.json'; 
+        const configPath = path.join(cwd, config);
+        
+        if (fs.existsSync(configPath)) {
+            const json = JSON.parse(fs.readFileSync(configPath));
     
             mysql = require('mysql');
             mysqlees.bind(mysql);
@@ -56,13 +59,19 @@ setTimeout(() => {
                 if (fs.existsSync(value)) {
                     require(value);
                 } else {
-                    console.log(`Error: Model not found!! (${value})`);
+                    console.log(`Error: Model not found!! (Invalid Path: ${value})`);
                 }
             }
         } else {
-            console.log(`Error: ${config} not found!! (${path.join(cwd, config)})`);
+            console.log(`Error: ${config} not found!! (Invalid Path: ${path.join(cwd, config)})`);
         }
     }
-}, 2000);
+}
+
+if (sleep) {
+    setTimeout(cli, 2000);
+} else {
+    cli();
+}
 
 
