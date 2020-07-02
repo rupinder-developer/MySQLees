@@ -542,7 +542,7 @@ Migrations are typically used to build/modify your application's database schema
 
 Here `migration.models` is an array of all the models that you have created. And `migration.connection` is the connection configuration that is use to make a connection with your database for this migration.
 
-To build your schema first time or to modify your schema you need to run migration by using the following command.
+To build your schema first time or to modify your schema you need to run migration by using the following command:
 
 ```sh
 $ mysqlees --migrate
