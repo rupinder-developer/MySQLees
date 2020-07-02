@@ -28,21 +28,23 @@ class MySQLees {
     }
 
     static model(modelName, schema) {
-        if (Store.isConnected && Store.config.database) {
-            if (Schema.migrate) {
-                schema.implementSchema(modelName);
-            }
-            const model = new Model();
-            model.modelName = modelName;
-            model.schema = schema.schema;
-            return model;
-        }
-        if (Store.isConnected && !Store.config.database) {
-            console.error('Error: Failed to connect to database!! (Database not found)');
+        if (Schema.migrate) {
+            schema.implementSchema(modelName);
         } else {
-            console.error('Error: Failed to connect to database!!, Please use createConnection() or createPool() method to establish database connectivity!!');
+            if (Store.isConnected && Store.config.database) {
+                const model = new Model();
+                model.modelName = modelName;
+                model.schema = schema.schema;
+                return model;
+            }
+            if (Store.isConnected && !Store.config.database) {
+                console.error('Error: Failed to connect to database!! (Database not found)');
+            } else {
+                console.error('Error: Failed to connect to database!!, Please use createConnection() or createPool() method to establish database connectivity!!');
+            }
+            process.exit(); 
         }
-        process.exit();
+        
     }
 
     static schema(schema, options = {}) {

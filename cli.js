@@ -70,8 +70,8 @@ const cli = () => {
             }
     
             for(let value of json.migration.models) {
-                if (fs.existsSync(value)) {
-                    require(value);
+                if (fs.existsSync(path.join(value+'.js'))) {
+                    require(path.join(cwd, value));
                 } else {
                     console.log(`Error: Model not found!! (Invalid Path: ${value})`);
                 }

@@ -44,24 +44,24 @@ var MySQLees = /*#__PURE__*/function () {
   }, {
     key: "model",
     value: function model(modelName, schema) {
-      if (_Store["default"].isConnected && _Store["default"].config.database) {
-        if (_Schema["default"].migrate) {
-          schema.implementSchema(modelName);
+      if (_Schema["default"].migrate) {
+        schema.implementSchema(modelName);
+      } else {
+        if (_Store["default"].isConnected && _Store["default"].config.database) {
+          var model = new _Model["default"]();
+          model.modelName = modelName;
+          model.schema = schema.schema;
+          return model;
         }
 
-        var model = new _Model["default"]();
-        model.modelName = modelName;
-        model.schema = schema.schema;
-        return model;
-      }
+        if (_Store["default"].isConnected && !_Store["default"].config.database) {
+          console.error('Error: Failed to connect to database!! (Database not found)');
+        } else {
+          console.error('Error: Failed to connect to database!!, Please use createConnection() or createPool() method to establish database connectivity!!');
+        }
 
-      if (_Store["default"].isConnected && !_Store["default"].config.database) {
-        console.error('Error: Failed to connect to database!! (Database not found)');
-      } else {
-        console.error('Error: Failed to connect to database!!, Please use createConnection() or createPool() method to establish database connectivity!!');
+        process.exit();
       }
-
-      process.exit();
     }
   }, {
     key: "schema",
@@ -184,6 +184,7 @@ var MySQLees = /*#__PURE__*/function () {
   }, {
     key: "migrate",
     value: function migrate(bool, connection) {
+      console.log(bool);
       _Schema["default"].config = connection;
       _Schema["default"].migrate = bool;
     }
