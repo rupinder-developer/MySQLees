@@ -32,7 +32,6 @@ var MySQLees = /*#__PURE__*/function () {
       _Store["default"].createdModels = {};
       _Store["default"].implementedModels = [];
       _Store["default"].options = {};
-      _Store["default"].migrate = false;
       _Schema["default"].connection = null; // Connection variable of schema implementation 
 
       _Store["default"].models = new Map(); // Binding official MySQL package
@@ -178,6 +177,18 @@ var MySQLees = /*#__PURE__*/function () {
           resolve(result);
         });
       });
+    }
+  }, {
+    key: "migrate",
+    value: function migrate() {
+      var bool = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+      _Store["default"].migrate = bool;
+    }
+  }, {
+    key: "check",
+    value: function check() {
+      console.log("Rupinder");
+      console.log(_Store["default"].migrate);
     }
   }]);
 

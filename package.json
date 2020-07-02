@@ -3,6 +3,9 @@
   "version": "1.1.0",
   "description": "MySQLees is a promise-based Node.js ORM for MySQL.",
   "main": "build/index.js",
+  "bin": {
+    "mysqlees": "cli.js"
+  },
   "scripts": {
     "build": "babel src -d build"
   },
@@ -26,5 +29,8 @@
     "@babel/core": "^7.10.3",
     "@babel/preset-env": "^7.10.3",
     "babel-plugin-transform-object-rest-spread": "^6.26.0"
+  },
+  "dependencies": {
+    "argparse": "^1.0.10"
   }
 }

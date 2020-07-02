@@ -16,7 +16,6 @@ class MySQLees {
         Store.createdModels     = {};
         Store.implementedModels = [];
         Store.options           = {};
-        Store.migrate           = false;
 
         Schema.connection    = null; // Connection variable of schema implementation 
         
@@ -141,6 +140,10 @@ class MySQLees {
                 resolve(result);
             })
         });
+    }
+
+    static migrate(bool = false) {
+        Store.migrate = bool;
     }
 }
 
