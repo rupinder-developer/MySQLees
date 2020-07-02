@@ -404,7 +404,7 @@ Here **customer_id**, **full_name**, **email**, and **is_active** are the column
 
 ### Data Types
 
-You can use `mysqlees.dataType` variable to assign data type to your column.
+You can use `mysqlees.dataType` variable to assign data type to your column. [Click here](#data-types-reference) for the reference.
 
 ```javascript
 const schema = mysqlees.schema({
@@ -419,37 +419,6 @@ const schema = mysqlees.schema({
   }
 })
 ```
-
-| MySQLees Datatypes                 | Description                                       |
-|------------------------------------|---------------------------------------------------|
-| mysqlees.dataType.varchar(size)    | VARCHAR(SIZE)       [Default Size = 255]          |
-| mysqlees.dataType.char(size)       | CHAR(SIZE)          [Default Size = 1]            |
-| mysqlees.dataType.binary(size)     | BINARY(SIZE)        [Default Size = 1]            |
-| mysqlees.dataType.varbinary(size)  | VARBINARY(SIZE)     [Default Size = 10]           |
-| mysqlees.dataType.tinyblob()       | TINYBLOB                                          |
-| mysqlees.dataType.blob()           | BLOB                                              |
-| mysqlees.dataType.longblob()       | LONGBLOB                                          |
-| mysqlees.dataType.tinytext()       | TINYTEXT                                          |
-| mysqlees.dataType.mediumtext()     | MEDIUMTEXT                                        |
-| mysqlees.dataType.text()           | TEXT                                              |
-| mysqlees.dataType.longtext()       | LONGTEXT                                          |
-| mysqlees.dataType.bit(size)        | BIT(SIZE)           [Default Size = 1]            |
-| mysqlees.dataType.tinyint(size)    | TINYINT(SIZE)       [Default Size = 4]            |
-| mysqlees.dataType.smallint(size)   | SMALLINT(SIZE)      [Default Size = 6]            |
-| mysqlees.dataType.mediumint(size)  | MEDIUMINT(SIZE)     [Default Size = 9]            |
-| mysqlees.dataType.int(size)        | INT(SIZE)           [Default Size = 11]           |
-| mysqlees.dataType.bigint(size)     | BIGINT(SIZE)        [Default Size = 20]           |
-| mysqlees.dataType.float()          | FLOAT                                             |
-| mysqlees.dataType.double()         | DOUBLE                                            |
-| mysqlees.dataType.decimal(size, d) | DECIMAL(SIZE, D)    [Default Size = 10, D = 0]    |
-| mysqlees.dataType.datetime()       | DATETIME                                          |
-| mysqlees.dataType.timestamp()      | TIMESTAMP                                         |
-| mysqlees.dataType.date()           | DATE                                              |
-| mysqlees.dataType.time()           | TIME                                              |
-| mysqlees.dataType.year()           | YEAR                                              |
-| mysqlees.dataType.enum(...args)    | ENUM("value1", "value2",...)                      |
-| mysqlees.dataType.set(...args)     | SET("value1", "value2",...)                       |
-
 
 ### Constraints
 
@@ -482,7 +451,6 @@ const schema = mysqlees.schema({
 
 Here `ref` is used for Foreign Key and helps to [populate](#) the column.  
 
-
 ## Compiling your first model
 
 Models are fancy constructors compiled from Schema definitions. Models are responsible for creating and reading data from the underlying MySQL database.
@@ -493,3 +461,34 @@ When you call `mysqlees.model(tableName, schema)` on a schema, MySQLees compiles
 const Customer = mysqlees.model('customers', customerSchema); // Will return the new instance of MySQLees Model
 ```
 
+## Data Types Reference
+
+| MySQLees Datatypes                 | Description                                       |
+|------------------------------------|---------------------------------------------------|
+| mysqlees.dataType.varchar(size)    | VARCHAR(SIZE)       [Default Size = 255]          |
+| mysqlees.dataType.char(size)       | CHAR(SIZE)          [Default Size = 1]            |
+| mysqlees.dataType.binary(size)     | BINARY(SIZE)        [Default Size = 1]            |
+| mysqlees.dataType.varbinary(size)  | VARBINARY(SIZE)     [Default Size = 10]           |
+| mysqlees.dataType.tinyblob()       | TINYBLOB                                          |
+| mysqlees.dataType.blob()           | BLOB                                              |
+| mysqlees.dataType.longblob()       | LONGBLOB                                          |
+| mysqlees.dataType.tinytext()       | TINYTEXT                                          |
+| mysqlees.dataType.mediumtext()     | MEDIUMTEXT                                        |
+| mysqlees.dataType.text()           | TEXT                                              |
+| mysqlees.dataType.longtext()       | LONGTEXT                                          |
+| mysqlees.dataType.bit(size)        | BIT(SIZE)           [Default Size = 1]            |
+| mysqlees.dataType.tinyint(size)    | TINYINT(SIZE)       [Default Size = 4]            |
+| mysqlees.dataType.smallint(size)   | SMALLINT(SIZE)      [Default Size = 6]            |
+| mysqlees.dataType.mediumint(size)  | MEDIUMINT(SIZE)     [Default Size = 9]            |
+| mysqlees.dataType.int(size)        | INT(SIZE)           [Default Size = 11]           |
+| mysqlees.dataType.bigint(size)     | BIGINT(SIZE)        [Default Size = 20]           |
+| mysqlees.dataType.float()          | FLOAT                                             |
+| mysqlees.dataType.double()         | DOUBLE                                            |
+| mysqlees.dataType.decimal(size, d) | DECIMAL(SIZE, D)    [Default Size = 10, D = 0]    |
+| mysqlees.dataType.datetime()       | DATETIME                                          |
+| mysqlees.dataType.timestamp()      | TIMESTAMP                                         |
+| mysqlees.dataType.date()           | DATE                                              |
+| mysqlees.dataType.time()           | TIME                                              |
+| mysqlees.dataType.year()           | YEAR                                              |
+| mysqlees.dataType.enum(...args)    | ENUM("value1", "value2",...)                      |
+| mysqlees.dataType.set(...args)     | SET("value1", "value2",...)                       |
