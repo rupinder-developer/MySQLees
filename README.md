@@ -433,15 +433,21 @@ const schema = mysqlees.schema({
   column_2: {
     dataType     : mysqlees.dataType.varchar(),
 
-    defaultValue : 'value',      // Default Value Constraint
-    notNull      : true,         // Not Null Constraint
-    unique       : true,         // Unique Constraint
+    defaultValue : 'value',   // Default Value Constraint
+    notNull      : true,      // Not Null Constraint
+    unique       : true,      // Unique Constraint
   },
   column_3: {
+    dataType : mysqlees.dataType.int(),
+
+    notNull  : true,    // Not Null Constraint
+    unique   : true,    // Unique Constraint
+  },
+  column_4: {
     dataType: mysqlees.dataType.int(),
 
     ref: {
-      to: 'tableName',            // Table Name
+      to: 'tableName',            // Target Table Name
       foreignField: 'column_name' // Column Name of Target Table
     }
 
