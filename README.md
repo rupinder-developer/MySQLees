@@ -428,7 +428,7 @@ const schema = mysqlees.schema({
     dataType: mysqlees.dataType.int(),
 
     primaryKey: true,    // Primary Key Constraint
-    autoIncrement: true,    // Auto Increment Constraint
+    autoIncrement: true, // Auto Increment Constraint
   },
   column_2: {
     dataType: mysqlees.dataType.varchar(),
@@ -467,32 +467,32 @@ const Customer = mysqlees.model('customers', customerSchema); // Will return the
 
 ## Data Types Reference
 
-| MySQLees Datatypes                 | Description                                       |
-|------------------------------------|---------------------------------------------------|
-| mysqlees.dataType.varchar(size)    | VARCHAR(SIZE)       [Default Size = 255]          |
-| mysqlees.dataType.char(size)       | CHAR(SIZE)          [Default Size = 1]            |
-| mysqlees.dataType.binary(size)     | BINARY(SIZE)        [Default Size = 1]            |
-| mysqlees.dataType.varbinary(size)  | VARBINARY(SIZE)     [Default Size = 10]           |
-| mysqlees.dataType.tinyblob()       | TINYBLOB                                          |
-| mysqlees.dataType.blob()           | BLOB                                              |
-| mysqlees.dataType.longblob()       | LONGBLOB                                          |
-| mysqlees.dataType.tinytext()       | TINYTEXT                                          |
-| mysqlees.dataType.mediumtext()     | MEDIUMTEXT                                        |
-| mysqlees.dataType.text()           | TEXT                                              |
-| mysqlees.dataType.longtext()       | LONGTEXT                                          |
-| mysqlees.dataType.bit(size)        | BIT(SIZE)           [Default Size = 1]            |
-| mysqlees.dataType.tinyint(size)    | TINYINT(SIZE)       [Default Size = 4]            |
-| mysqlees.dataType.smallint(size)   | SMALLINT(SIZE)      [Default Size = 6]            |
-| mysqlees.dataType.mediumint(size)  | MEDIUMINT(SIZE)     [Default Size = 9]            |
-| mysqlees.dataType.int(size)        | INT(SIZE)           [Default Size = 11]           |
-| mysqlees.dataType.bigint(size)     | BIGINT(SIZE)        [Default Size = 20]           |
-| mysqlees.dataType.float()          | FLOAT                                             |
-| mysqlees.dataType.double()         | DOUBLE                                            |
-| mysqlees.dataType.decimal(size, d) | DECIMAL(SIZE, D)    [Default Size = 10, D = 0]    |
-| mysqlees.dataType.datetime()       | DATETIME                                          |
-| mysqlees.dataType.timestamp()      | TIMESTAMP                                         |
-| mysqlees.dataType.date()           | DATE                                              |
-| mysqlees.dataType.time()           | TIME                                              |
-| mysqlees.dataType.year()           | YEAR                                              |
-| mysqlees.dataType.enum(...args)    | ENUM("value1", "value2",...)                      |
-| mysqlees.dataType.set(...args)     | SET("value1", "value2",...)                       |
+| MySQLees Datatypes                 | Description                   | Default Values       |
+|------------------------------------|-------------------------------|----------------------|
+| mysqlees.dataType.varchar(size)    | VARCHAR(SIZE)                 | SIZE = 255           |
+| mysqlees.dataType.char(size)       | CHAR(SIZE)                    | SIZE = 1             |
+| mysqlees.dataType.binary(size)     | BINARY(SIZE)                  | SIZE = 1             |
+| mysqlees.dataType.varbinary(size)  | VARBINARY(SIZE)               | SIZE = 10            |
+| mysqlees.dataType.tinyblob()       | TINYBLOB                      |                      |
+| mysqlees.dataType.blob()           | BLOB                          |                      |
+| mysqlees.dataType.longblob()       | LONGBLOB                      |                      |
+| mysqlees.dataType.tinytext()       | TINYTEXT                      |                      |
+| mysqlees.dataType.mediumtext()     | MEDIUMTEXT                    |                      |
+| mysqlees.dataType.text()           | TEXT                          |                      |
+| mysqlees.dataType.longtext()       | LONGTEXT                      |                      |
+| mysqlees.dataType.bit(size)        | BIT(SIZE)                     | SIZE = 1             |
+| mysqlees.dataType.tinyint(size)    | TINYINT(SIZE)                 | SIZE = 4             |
+| mysqlees.dataType.smallint(size)   | SMALLINT(SIZE)                | SIZE = 6             |
+| mysqlees.dataType.mediumint(size)  | MEDIUMINT(SIZE)               | SIZE = 9             |
+| mysqlees.dataType.int(size)        | INT(SIZE)                     | SIZE = 11            |
+| mysqlees.dataType.bigint(size)     | BIGINT(SIZE)                  | SIZE = 20            |
+| mysqlees.dataType.float()          | FLOAT                         |                      |
+| mysqlees.dataType.double()         | DOUBLE                        |                      |
+| mysqlees.dataType.decimal(size, d) | DECIMAL(SIZE, D)              | SIZE = 10, D = 0     |
+| mysqlees.dataType.datetime()       | DATETIME                      |                      |
+| mysqlees.dataType.timestamp()      | TIMESTAMP                     |                      |
+| mysqlees.dataType.date()           | DATE                          |                      |
+| mysqlees.dataType.time()           | TIME                          |                      |
+| mysqlees.dataType.year()           | YEAR                          |                      |
+| mysqlees.dataType.enum(...args)    | ENUM("value1", "value2",...)  |                      |
+| mysqlees.dataType.set(...args)     | SET("value1", "value2",...)   |                      |
