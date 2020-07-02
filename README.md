@@ -55,6 +55,20 @@ After all these steps you are ready to go. So let's take a deep dive into the do
         + [Data Types](#data-types)
         + [Constraints](#constraints)
     + [Compiling your model](#compiling-your-first-model)
+9. Insert Data
+    + Model.create()
+    + Model.insertMany()
+10. Select Data
+    + Model.find()
+        + project()
+        + populate()
+        + limit()
+        + orderBy()
+        + lean()
+11. Updata Data
+    + Model.update()
+12. Delete Data
+    + Model.delete()
 
 ## Establishing connections
 
@@ -400,7 +414,7 @@ const customerSchema = mysqlees.schema({
 
 Here **customer_id**, **full_name**, **email**, and **is_active** are the columns of your MySQL table. And the option `timestamps` will create extra two columns `created_at` and `updated_at` in your MySQL table. 
 
-### Schema Data Types & Constraints
+## Schema Data Types & Constraints
 
 ### Data Types
 

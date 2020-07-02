@@ -158,5 +158,6 @@ class MySQLees {
 
 // Satic Variables for MySQLess
 MySQLees.dataType = DataTypes;
+MySQLees.Model    = Model;
 
 module.exports = MySQLees;

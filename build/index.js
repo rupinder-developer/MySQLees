@@ -198,4 +198,5 @@ var MySQLees = /*#__PURE__*/function () {
 
 
 MySQLees.dataType = _DataTypes["default"];
+MySQLees.Model = _Model["default"];
 module.exports = MySQLees;
