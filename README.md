@@ -359,3 +359,118 @@ let sorter = 'date.2';
 let sql    = 'SELECT * FROM posts ORDER BY ' + mysqlees.escapeId(sorter, true);
 // -> SELECT * FROM posts ORDER BY `date.2`
 ```
+
+## Model & Schema
+
+## Defining your schema
+
+Each schema maps to a MySQL and defines the structure of the database within that table. You can create MySQLees Schema by using `mysqlees.schema(tableStructure, options)` method. Here the second parameter (options) is optional.
+
+```javascript
+const mysqlees = require('mysqlees');
+
+const customerSchema = mysqlees.schema({
+    customer_id: {
+      primaryKey: true,
+      autoIncrement: true,
+      dataType: mysqlees.dataType.int(11)
+    },
+    full_name: {
+      dataType: mysqlees.dataType.varchar(50),
+    },
+    email: {
+      dataType: mysqlees.dataType.varchar(), // VARCHAR(255) 
+      unique: true,
+      notNull: true
+    },
+    is_active: {
+      dataType: mysqlees.dataType.tinyint(), // TINYINT(4)
+      defaultValue: 1
+    }
+}, {
+  timestamps: true
+});
+```
+
+Here **customer_id**, **full_name**, **email**, and **is_active** are the columns of your MySQL table. And the option `timestamps` will create extra two columns `created_at` and `updated_at` in your MySQL table. 
+
+### Schema Data Types & Constraints
+
+### Data Types
+
+You can use `mysqlees.dataType` variable to assign data type to your column.
+
+```javascript
+const schema = mysqlees.schema({
+  column_1: {
+    dataType: mysqlees.dataType.int(), // Recommended 
+  },
+  column_2: {
+    dataType: 'INT(11)', // This is also valid
+  },
+  colum_3: {
+    dataType: mysqlees.dataType.enum("value1", "value2")
+  }
+})
+```
+
+| MySQLees Datatypes                 | Description                                       |
+|------------------------------------|---------------------------------------------------|
+| mysqlees.dataType.varchar(size)    | VARCHAR(SIZE)       [Default Size = 255]          |
+| mysqlees.dataType.char(size)       | CHAR(SIZE)          [Default Size = 1]            |
+| mysqlees.dataType.binary(size)     | BINARY(SIZE)        [Default Size = 1]            |
+| mysqlees.dataType.varbinary(size)  | VARBINARY(SIZE)     [Default Size = 10]           |
+| mysqlees.dataType.tinyblob()       | TINYBLOB                                          |
+| mysqlees.dataType.blob()           | BLOB                                              |
+| mysqlees.dataType.longblob()       | LONGBLOB                                          |
+| mysqlees.dataType.tinytext()       | TINYTEXT                                          |
+| mysqlees.dataType.mediumtext()     | MEDIUMTEXT                                        |
+| mysqlees.dataType.text()           | TEXT                                              |
+| mysqlees.dataType.longtext()       | LONGTEXT                                          |
+| mysqlees.dataType.bit(size)        | BIT(SIZE)           [Default Size = 1]            |
+| mysqlees.dataType.tinyint(size)    | TINYINT(SIZE)       [Default Size = 4]            |
+| mysqlees.dataType.smallint(size)   | SMALLINT(SIZE)      [Default Size = 6]            |
+| mysqlees.dataType.mediumint(size)  | MEDIUMINT(SIZE)     [Default Size = 9]            |
+| mysqlees.dataType.int(size)        | INT(SIZE)           [Default Size = 11]           |
+| mysqlees.dataType.bigint(size)     | BIGINT(SIZE)        [Default Size = 20]           |
+| mysqlees.dataType.float()          | FLOAT                                             |
+| mysqlees.dataType.double()         | DOUBLE                                            |
+| mysqlees.dataType.decimal(size, d) | DECIMAL(SIZE, D)    [Default Size = 10, D = 0]    |
+| mysqlees.dataType.datetime()       | DATETIME                                          |
+| mysqlees.dataType.timestamp()      | TIMESTAMP                                         |
+| mysqlees.dataType.date()           | DATE                                              |
+| mysqlees.dataType.time()           | TIME                                              |
+| mysqlees.dataType.year()           | YEAR                                              |
+| mysqlees.dataType.enum(...args)    | ENUM("value1", "value2",...)                      |
+| mysqlees.dataType.set(...args)     | SET("value1", "value2",...)                       |
+
+
+### Constraints
+
+```javascript
+const schema = mysqlees.schema({
+  column_1: {
+    dataType      : mysqlees.dataType.int(),
+    primaryKey    : true,    // Primary Key Constraint
+    autoIncrement : true,    // Auto Increment Constraint
+  },
+  column_2: {
+    dataType     : mysqlees.dataType.varchar(),
+    defaultValue : 'value',      // Default Value Constraint
+    notNull      : true,         // Not Null Constraint
+    unique       : true,         // Unique Constraint
+  }
+})
+```
+
+
+## Compiling your first model
+
+Models are fancy constructors compiled from Schema definitions. Models are responsible for creating and reading data from the underlying MySQL database.
+
+When you call `mysqlees.model(tableName, schema)` on a schema, MySQLees compiles a model for you.
+
+```javascript
+const Customer = mysqlees.model('customers', customerSchema); // Will return the new instance of MySQLees Model
+```
+
