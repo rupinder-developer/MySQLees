@@ -49,11 +49,25 @@ const cli = () => {
         const configPath = path.join(cwd, config);
         
         if (fs.existsSync(configPath)) {
-            const json = JSON.parse(fs.readFileSync(configPath));
+            let json;
+            try {
+                json = JSON.parse(fs.readFileSync(configPath));
+            } catch(err) {
+                console.log(`Error: Faild to parse configuration file (${config})`);
+                process.exit();
+            }
     
             mysql = require('mysql');
             mysqlees.bind(mysql);
-            mysqlees.migrate(args.migrate, json.migration.connection);
+            
+            if (json.migration.connection && json.migration.connection.host !== undefined && 
+                json.migration.connection.user !== undefined && json.migration.connection.password !== undefined &&
+                json.migration.connection.database !== undefined) {
+                mysqlees.migrate(args.migrate, json.migration.connection);
+            } else {
+                console.log(`Error: Invalid connection configuration for migration. Please visit official documentation (https://github.com/rupinder-developer/MySQLees) for reference.`);
+                process.exit();
+            }
     
             for(let value of json.migration.models) {
                 if (fs.existsSync(value)) {
@@ -64,6 +78,7 @@ const cli = () => {
             }
         } else {
             console.log(`Error: ${config} not found!! (Invalid Path: ${path.join(cwd, config)})`);
+            process.exit();
         }
     }
 }
