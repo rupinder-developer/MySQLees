@@ -548,7 +548,83 @@ To build your schema first time or to modify your schema you need to run migrati
 $ mysqlees --migrate
 ```
 
+You can also create a configuration file of some other name. But for that, you need to mention the name of your configuration file in the command as given below:
+
+```sh
+$ mysqlees --migrate --config filename.json
+```
+
 MySQLees automatically detects all the changes in your model's schema and change database structure accordingly. But for **deletion** and **rename** of columns, we need to use `deprecated` and `renamedFrom` option respectively.
+
+### Delete Columns
+
+If you want to delete any column from your schema, then you need to use `drepracted: true` option as given below.
+
+**./models/users.js**
+```javascript
+const mysqlees = require('mysqlees');
+
+const schema = mysqlees.schema({
+  id: {
+    dataType: mysqlees.dataType.int(),
+    primaryKey: true,
+    autoIncrement: true
+  },
+  name: {
+    dataType: mysqlees.dataType.varchar()
+  },
+  email: {
+    dataType: mysqlees.dataType.varchar(),
+    unique: true
+  },
+  height: {
+    dataType: mysqlees.dataType.varchar(),
+    deprecated: true // Delete `height` column from `users` table
+  }
+});
+
+module.exports = mysqlees.model('users', schema);
+```
+### Rename Columns
+
+To rename a column, we need to use `renamedFrom` option. In this example, we are renaming the column `name` to `full_name`. 
+
+**./models/users.js**
+```javascript
+const mysqlees = require('mysqlees');
+
+const schema = mysqlees.schema({
+  id: {
+    dataType: mysqlees.dataType.int(),
+    primaryKey: true,
+    autoIncrement: true
+  },
+  full_name: {
+    dataType: mysqlees.dataType.varchar(),
+    renamedFrom: 'name' // Rename `name` -> `full_name`
+  },
+  email: {
+    dataType: mysqlees.dataType.varchar(),
+    unique: true
+  },
+  height: {
+    dataType: mysqlees.dataType.varchar(),
+    deprecated: true // Delete `height` column from `users` table
+  }
+});
+
+module.exports = mysqlees.model('users', schema);
+```
+
+### Delete Indexes
+
+We can delete our indexes in the same way in which we are deleting our columns. We need to use `deprecated: true` option.
+
+```javascript
+schame.index('indexName', 'columnName', {
+  deprecated: true
+});
+```
 
 ## Data Types Reference
 
