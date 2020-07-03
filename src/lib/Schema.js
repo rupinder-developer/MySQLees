@@ -633,7 +633,15 @@ module.exports = class Schema {
                 database: Schema.config.database,
                 multipleStatements: true
             });
-            console.log('Migrating....');
+            
+            Schema.connection.connect(function(err) {
+                if (err) {
+                    console.error(err);
+                    process.exit();
+                } else {
+                    console.log('Migrating....');
+                }
+            }); 
         }
     }
 
