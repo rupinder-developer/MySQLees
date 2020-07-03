@@ -609,6 +609,99 @@ schame.index('indexName', 'columnName', {
 });
 ```
 
+## Insert Data
+
+You can use `Model.create()` and `Model.insertMany()` methods to insert data into your database.  
+
+For better understanding, let's create one Model named `users`. 
+
+**./models/users.js**
+
+```javascript
+const mysqlees = require('mysqlees');
+
+const schema = mysqlees.schema({
+  user_id: {
+    dataType: mysqlees.dataType.int(),
+    primaryKey: true,
+    autoIncrement: true
+  },
+  full_name: {
+    dataType: mysqlees.dataType.varchar(50),
+    notNull: true
+  },
+  email: {
+    dataType: mysqlees.dataType.varchar(), // Default size for varchar is 255
+    unique: true,
+    notNull: true
+  },
+  age: {
+    dataType: mysqlees.dataType.int()
+  }
+},{
+  timestamps: true
+});
+
+module.exports = mysqlees.model('users', schema);
+```
+
+### Model.create()
+
+`Model.create()` method is used to insert single row in your MySQL table. 
+
+```javascript
+const User = require('./models/users');
+
+const newUser = User.create({
+    full_name: 'Rupinder Singh',
+    email: 'me@rupindersingh.com',
+    age: 21;
+});
+
+newUser.save()
+       .then(user => {
+         console.log(user instanceof mysqlees.Model); // Output: true
+         console.log(user); // Output: {user_id: 'Inserted Id', full_name: "Rupider Singh", age: 21}
+       })
+       .catch(error => {
+         console.log(error);
+       });
+
+```
+
+### Model.insertMany()
+
+To insert data in bulk, you need to use `Model.insertMany()` method.
+
+```javascript
+const colums = ['full_name', 'email', 'age'];
+const value  =  [
+    ['John', 'john@example.com', 22],
+    ['Peter', 'peter@example.com', 23],
+    ['Amy', 'amy@example.com', 21]
+];
+User.insertMany(column, values)
+    .then(result => {
+      console.log(result instanceof mysqlees.Model); // false
+      console.log(result); 
+      /*
+        Output: {
+          fieldCount: 0,
+          affectedRows: 3,
+          insertId: 0,
+          serverStatus: 2,
+          warningCount: 0,
+          message: '\'Records:3  Duplicated: 0  Warnings: 0',
+          protocol41: true,
+          changedRows: 0
+        }
+       */
+    })
+    .catch(error => {
+      console.log(error);
+    });
+```
+
 ## Data Types Reference
 
 | MySQLees Datatypes                 | Description                   | Default Values       |
