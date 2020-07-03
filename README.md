@@ -36,9 +36,9 @@ const mysqlees = require('mysqlees');
     + [Indexes](#indexes)
     + [Compiling your model](#compiling-your-first-model)
 9. [Migrations](#migrations)
-10. Insert Data
-    + Model.create()
-    + Model.insertMany()
+10. [Insert Data](#insert-data)
+    + [Model.create()](#modelcreate)
+    + [Model.insertMany()](#modelinsertmany)
 11. Select Data
     + Model.find()
         + project()
