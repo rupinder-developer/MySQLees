@@ -2,6 +2,7 @@
 
 // Dependencies
 import regeneratorRuntime from "./dependencies/runtime";
+import mysql              from 'mysql';
 
 // Classes
 import Model     from './lib/Model';
@@ -10,12 +11,20 @@ import Schema    from './lib/Schema';
 import DataTypes from './lib/DataTypes';
 
 class MySQLees {
-    static bind(mysql) {
-        Store.options = {};
-        Store.models  = new Map(); 
-        
-        // Binding official MySQL package
-        Store.mysql = mysql; 
+    static init() {
+        if (!Store.init) {
+            Store.init    = true;
+            Store.options = {};
+            Store.models  = new Map(); 
+    
+            // Satic Variables for MySQLess
+            MySQLees.dataType = DataTypes;
+            MySQLees.Model    = Model;
+    
+            // Binding official MySQL package
+            Store.mysql = mysql; 
+        }
+
     }
 
     static model(modelName, schema) {
@@ -126,8 +135,6 @@ class MySQLees {
     }
 }
 
-// Satic Variables for MySQLess
-MySQLees.dataType = DataTypes;
-MySQLees.Model    = Model;
+MySQLees.init();
 
 module.exports = MySQLees;

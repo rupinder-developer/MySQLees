@@ -1,7 +1,4 @@
-const mysql = require('mysql');
 const mysqlees = require('./build/index');
-
-mysqlees.bind(mysql);
 
 mysqlees.createConnection({
     connectionLimit: 10,

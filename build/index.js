@@ -2,6 +2,8 @@
 
 var _runtime = _interopRequireDefault(require("./dependencies/runtime"));
 
+var _mysql = _interopRequireDefault(require("mysql"));
+
 var _Model = _interopRequireDefault(require("./lib/Model"));
 
 var _Store = _interopRequireDefault(require("./lib/Store"));
@@ -24,12 +26,18 @@ var MySQLees = /*#__PURE__*/function () {
   }
 
   _createClass(MySQLees, null, [{
-    key: "bind",
-    value: function bind(mysql) {
-      _Store["default"].options = {};
-      _Store["default"].models = new Map(); // Binding official MySQL package
+    key: "init",
+    value: function init() {
+      if (!_Store["default"].init) {
+        _Store["default"].init = true;
+        _Store["default"].options = {};
+        _Store["default"].models = new Map(); // Satic Variables for MySQLess
 
-      _Store["default"].mysql = mysql;
+        MySQLees.dataType = _DataTypes["default"];
+        MySQLees.Model = _Model["default"]; // Binding official MySQL package
+
+        _Store["default"].mysql = _mysql["default"];
+      }
     }
   }, {
     key: "model",
@@ -161,9 +169,7 @@ var MySQLees = /*#__PURE__*/function () {
   }]);
 
   return MySQLees;
-}(); // Satic Variables for MySQLess
+}();
 
-
-MySQLees.dataType = _DataTypes["default"];
-MySQLees.Model = _Model["default"];
+MySQLees.init();
 module.exports = MySQLees;
