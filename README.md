@@ -17,27 +17,6 @@ $ npm install --save mysqlees
 const mysqlees = require('mysqlees');
 ```
 
-## Bind MySQLees
-
-The very first step for using MySQLees is that you need to bind MySQLees with the official [MySQL Package](https://www.npmjs.com/package/mysql).
-
-First, we need to install official [MySQL Package](https://www.npmjs.com/package/mysql).
-
-```sh
-$ npm install --save mysql
-```
-
-After installing [MySQL](https://www.npmjs.com/package/mysql), we have to bind that with MySQLees.
-
-```javascript
-const mysql    = require('mysql');
-const mysqlees = require('mysqlees');
-
-mysqlees.bind(mysql); // Bind MySQLees with MySQL
-```
-
-After all these steps you are ready to go. So let's take a deep dive into the documentation.
-
 ## Documentation
 
 ## Table of Contents
@@ -129,10 +108,7 @@ Rather than creating and managing connections one-by-one, this module also provi
 Create a pool and use it directly:
 
 ```js
-const mysql    = require('mysql');
 const mysqlees = require('mysqlees');
-
-mysqlees.bind(mysql); // Bind MySQLees with MySQL
 
 mysqlees.createPool({
   connectionLimit : 10,
@@ -154,10 +130,7 @@ mysqlees.query('SELECT 1 + 1 AS solution')
 This is a shortcut for the `mysqlees.getConnection()` -> `mysqlees.query()` -> `connection.release()` code flow. Using `mysqlees.getConnection()` is useful to share connection state for subsequent queries. This is because two calls to `mysqlees.query()` may use two different connections and run in parallel. This is the basic structure:
 
 ```js
-const mysql    = require('mysql');
 const mysqlees = require('mysqlees');
-
-mysqlees.bind(mysql); // Bind MySQLees with MySQL
 
 mysqlees.createPool({
   connectionLimit : 10,
