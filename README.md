@@ -494,11 +494,13 @@ const schema = mysqlees.schema(...);
 module.exports = mysqlees.model('customers', schema); // Will return the new instance of MySQLees Model
 ```
 
+**Note: Always create a sperate file for each model and use `module.exports` to export the instance of your model.**
+
 ## Migrations
 
 Migrations are typically used to build/modify your application's database schema. For migrations in MySQLees, you need to create one configuration file named `mysqlees.json` in the root directory of your Node.js application.
 
-But before that you need to install [MySQLees CLI](#https://github.com/rupinder-developer/mysqlees-cli).
+But before that you need to install [MySQLees CLI](https://github.com/rupinder-developer/mysqlees-cli).
 
 ```sh
 $ npm install -g mysqlees-cli
