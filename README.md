@@ -446,7 +446,7 @@ const schema = mysqlees.schema({
 })
 ```
 
-Here `ref` is used for Foreign Key and helps to [populate](#) the column.  
+Here `ref` helps to [populate](#) the column.  
 
 ## Indexes
 
