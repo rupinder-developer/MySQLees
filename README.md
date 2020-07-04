@@ -59,6 +59,7 @@ const mysqlees = require('mysqlees');
     + [Model.populate()](#modelpopulate)
     + [Model.lean()](#modellean)
 12. Updata Data
+    + Model.save()
     + Model.update()
 13. Delete Data
     + Model.delete()
@@ -1170,8 +1171,8 @@ Model.find()
 The lean option tells MySQLees to skip hydrating the result. This makes queries faster and less memory intensive, but the result is an array of RowDataPacket (MySQL Default Result Set), not MySQLees Model. 
 
 ```javascript
-const normal = await Model.find();
-const lean = await Model.find().lean();
+const normal = await Model.find().exec();
+const lean = await Model.find().lean().exec();
 
 console.log(normal instanceof mysqlees.Model); // true
 
@@ -1180,6 +1181,99 @@ console.log(lean instanceof mysqlees.Model); // false
 
 The downside of enabling lean is that lean result set don't have:
   * `save()`
+
+
+## Update Data
+
+### Model.save()
+
+MySQLees Models track changes. You can modify data by using `Model.save()` method. Let's take an example for that.
+
+```javascript
+const result = await Model.find().limit(1).exec();
+console.log(result[0] instance of mysqlees.Model); // true
+
+// Updating Data
+result[0].name = 'Rupinder Singh';
+await result.save(); // `name` updated to 'Rupinder Singh'
+```
+
+### Model.update()
+
+You can also use `Model.update(data, filter)` method to update your data. 
+
+```javascript
+let data = {
+  name: 'Rupinder Singh'
+}
+
+let filter = {
+  id: 10
+}
+
+Model.update(data, filter)
+     .then(result => {
+       console.log(result);
+       /*
+       Output:
+        {
+          fieldCount: 0,
+          affectedRows: 1,
+          insertId: 0,
+          serverStatus: 34,
+          warningCount: 0,
+          message: '(Rows matched: 1 Changed: 1 Warnings: 0',
+          protocol41: true,
+          changedRows: 1
+        }
+       */
+     })
+     .catch(error => {
+       console.log(error);
+     })
+
+// Generated SQL: UPDATE tableName SET name='Rupinder Singh' WHERE id=10;
+```
+
+***Note**: Please refer to the ["Filter your query"](#filter-your-query) section for the second parameter of Model.update() method.*
+
+
+## Delete Data
+
+### Model.update()
+
+You can use `Model.delete(filter)` method to update your data. 
+
+```javascript
+let filter = {
+  id: 10
+}
+
+Model.delete(filter)
+     .then(result => {
+       console.log(result);
+       /*
+       Output:
+        {
+          fieldCount: 0,
+          affectedRows: 1,
+          insertId: 0,
+          serverStatus: 34,
+          warningCount: 0,
+          message: '',
+          protocol41: true,
+          changedRows: 0
+        }
+       */
+     })
+     .catch(error => {
+       console.log(error);
+     })
+
+// Generated SQL: DELETE FROM tableName WHERE id=10;
+```
+
+***Note**: Please refer to the ["Filter your query"](#filter-your-query) section for the first parameter of Model.delete() method.*
 
 ## Data Types Reference
 
