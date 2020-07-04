@@ -551,7 +551,7 @@ MySQLees automatically detects all the changes in your model's schema and change
 
 ### Delete Columns
 
-If you want to delete any column from your schema, then you need to use `drepracted: true` option as given below.
+If you want to delete any column from your schema, then you need to use `deprecated: true` option as given below.
 
 **./models/users.js**
 ```javascript
@@ -853,11 +853,11 @@ let filter = {
 let filter = {
     $and: [
         { $or: [ { qty: { $lt : 10 } }, { qty : { $gt: 50 } } ] },
-        { $or: [ { sale: true }, { price : { $lt : 5 } } ] }
+        { $or: [ { sale: 1 }, { price : { $lt : 5 } } ] }
     ]
 };
 
-// Generated SQL: SELECT * FROM tableName WHERE ((qty<10 OR qty>50) AND (sale=true OR price<5))
+// Generated SQL: SELECT * FROM tableName WHERE ((qty<10 OR qty>50) AND (sale=1 OR price<5))
 ```
 
 ### $gt (>)
