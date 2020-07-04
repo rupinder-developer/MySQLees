@@ -402,7 +402,7 @@ module.exports = /*#__PURE__*/function (_QueryHelper) {
 
                             case 17:
                               if (!shouldProceed) {
-                                _context2.next = 25;
+                                _context2.next = 24;
                                 break;
                               }
 
@@ -454,15 +454,14 @@ module.exports = /*#__PURE__*/function (_QueryHelper) {
                               })(), "t2", 20);
 
                             case 20:
-                              _context2.next = 25;
+                              _context2.next = 24;
                               break;
 
                             case 22:
                               _context2.prev = 22;
                               _context2.t3 = _context2["catch"](18);
-                              console.error("Error: Failed to populate ".concat(populate[i].col));
 
-                            case 25:
+                            case 24:
                             case "end":
                               return _context2.stop();
                           }
