@@ -208,21 +208,16 @@ module.exports = /*#__PURE__*/function () {
                 errno = err.errno,
                 sqlState = err.sqlState,
                 sqlMessage = err.sqlMessage;
-            var mysqleesError = '';
 
             if (err.errno == 1064) {
-              mysqleesError = 'Failed to parse Data Type;';
-              sqlMessage = 'You have an error in your SQL syntax;';
-            } else {
-              mysqleesError = 'Failed to generate schema;';
+              sqlMessage = 'Failed to parse Data Type; You have an error in your SQL syntax;';
             }
 
             console.error('Error:', {
               code: code,
               errno: errno,
               sqlState: sqlState,
-              sqlMessage: sqlMessage,
-              mysqleesError: mysqleesError
+              sqlMessage: sqlMessage
             }, "-> Model = ".concat(this.modelName));
           } // Cleaning Resources
 
@@ -489,21 +484,11 @@ module.exports = /*#__PURE__*/function () {
               var fkQueries = '';
 
               if (Schema.pendingFkQueries.length > 0) {
-                var _iterator3 = _createForOfIteratorHelper(Schema.pendingFkQueries),
-                    _step3;
-
-                try {
-                  for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
-                    var fk = _step3.value;
-
-                    if (Schema.createdModels[fk.ref.to]) {
-                      fkQueries += fk.query;
-                    }
+                for (var fk in Schema.pendingFkQueries) {
+                  if (Schema.createdModels[Schema.pendingFkQueries[fk].ref.to]) {
+                    fkQueries += Schema.pendingFkQueries[fk].query;
+                    delete Schema.pendingFkQueries[fk];
                   }
-                } catch (err) {
-                  _iterator3.e(err);
-                } finally {
-                  _iterator3.f();
                 }
               }
 
@@ -517,21 +502,16 @@ module.exports = /*#__PURE__*/function () {
                         errno = err.errno,
                         sqlState = err.sqlState,
                         sqlMessage = err.sqlMessage;
-                    var mysqleesError = '';
 
                     if (err.errno == 1064) {
-                      mysqleesError = 'Failed to parse Data Type;';
-                      sqlMessage = 'You have an error in your SQL syntax;';
-                    } else {
-                      mysqleesError = 'Failed to migrate schema;';
+                      sqlMessage = 'Failed to parse Data Type; You have an error in your SQL syntax;';
                     }
 
                     console.error('Error:', {
                       code: code,
                       errno: errno,
                       sqlState: sqlState,
-                      sqlMessage: sqlMessage,
-                      mysqleesError: mysqleesError
+                      sqlMessage: sqlMessage
                     }, "-> Model = ".concat(this.modelName));
                   } // Cleaning Resources
 
@@ -561,12 +541,12 @@ module.exports = /*#__PURE__*/function () {
   }, {
     key: "parseIndexes",
     value: function parseIndexes() {
-      var _iterator4 = _createForOfIteratorHelper(this.indexesObject),
-          _step4;
+      var _iterator3 = _createForOfIteratorHelper(this.indexesObject),
+          _step3;
 
       try {
-        for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
-          var index = _step4.value;
+        for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+          var index = _step3.value;
           this.indexes.push("\n            set @var=if((SELECT true FROM information_schema.STATISTICS WHERE\n                TABLE_SCHEMA      =  DATABASE() AND\n                TABLE_NAME        = '".concat(this.modelName, "' AND\n                INDEX_NAME        = '").concat(index.indexName, "') = true,'ALTER TABLE ").concat(this.modelName, "\n                DROP INDEX ").concat(index.indexName, "','select 1');\n    \n            prepare stmt from @var;\n            execute stmt;\n            deallocate prepare stmt;\n            "));
 
           if ("".concat(index.indexName).trim() && "".concat(index.columns).trim() && !index.options.deprecated) {
@@ -574,9 +554,9 @@ module.exports = /*#__PURE__*/function () {
           }
         }
       } catch (err) {
-        _iterator4.e(err);
+        _iterator3.e(err);
       } finally {
-        _iterator4.f();
+        _iterator3.f();
       }
     }
   }, {

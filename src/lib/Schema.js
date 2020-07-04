@@ -184,14 +184,10 @@ module.exports = class Schema {
                     if (err.sql) delete err.sql;
 
                     let {code, errno, sqlState, sqlMessage} = err;
-                    let mysqleesError = '';
                     if (err.errno == 1064) {
-                        mysqleesError = 'Failed to parse Data Type;';
-                        sqlMessage = 'You have an error in your SQL syntax;';
-                    } else {
-                        mysqleesError = 'Failed to generate schema;';
+                        sqlMessage = 'Failed to parse Data Type; You have an error in your SQL syntax;';
                     }
-                    console.error('Error:', {code, errno, sqlState, sqlMessage, mysqleesError}, `-> Model = ${this.modelName}`);
+                    console.error('Error:', {code, errno, sqlState, sqlMessage}, `-> Model = ${this.modelName}`);
                 }       
                     
                 // Cleaning Resources
@@ -537,9 +533,10 @@ module.exports = class Schema {
 
                         let fkQueries = '';
                         if (Schema.pendingFkQueries.length > 0) {
-                            for (const fk of Schema.pendingFkQueries) {
-                                if (Schema.createdModels[fk.ref.to]) {
-                                    fkQueries += fk.query;
+                            for (const fk in Schema.pendingFkQueries) {
+                                if (Schema.createdModels[Schema.pendingFkQueries[fk].ref.to]) {
+                                    fkQueries += Schema.pendingFkQueries[fk].query;
+                                    delete Schema.pendingFkQueries[fk];
                                 }
                             }
                         }
@@ -551,14 +548,10 @@ module.exports = class Schema {
                                     if (err.sql) delete err.sql;
 
                                     let {code, errno, sqlState, sqlMessage} = err;
-                                    let mysqleesError = '';
                                     if (err.errno == 1064) {
-                                        mysqleesError = 'Failed to parse Data Type;';
-                                        sqlMessage = 'You have an error in your SQL syntax;';
-                                    } else {
-                                        mysqleesError = 'Failed to migrate schema;';
+                                        sqlMessage = 'Failed to parse Data Type; You have an error in your SQL syntax;';
                                     }
-                                    console.error('Error:', {code, errno, sqlState, sqlMessage, mysqleesError}, `-> Model = ${this.modelName}`);
+                                    console.error('Error:', {code, errno, sqlState, sqlMessage}, `-> Model = ${this.modelName}`);
                                 }
 
                                 
