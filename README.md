@@ -63,10 +63,10 @@ const mysqlees = require('mysqlees');
     + [Model.update()](#modelupdate)
 13. [Delete Data](#delete-data)
     + [Model.delete()](#modeldelete)
-14. Manage Connection Pool in Model
-    + Model.useConnection()
-    + Model.releaseConnection()
-    + Model.destroyConnection()
+14. [Manage Connection Pool in Model](#manage-connection-pool-in-model)
+    + [Model.useConnection()](#manage-connection-pool-in-model)
+    + [Model.releaseConnection()](#manage-connection-pool-in-model)
+    + [Model.destroyConnection()](#manage-connection-pool-in-model)
 
 ## Establishing connections
 
@@ -1305,9 +1305,7 @@ mysqlees.getConnection()
         })
 ```
 
-### Model.destroyConnection()
-
-If you would like to close the connection and remove it from the pool, use Model.destroyConnection() instead. The pool will create a new connection the next time one is needed. 
+If you would like to close the connection and remove it from the pool, use `Model.destroyConnection()` instead. The pool will create a new connection the next time one is needed. 
 
 ## Data Types Reference
 
