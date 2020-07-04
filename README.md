@@ -437,10 +437,7 @@ const schema = mysqlees.schema({
   column_4: {
     dataType: mysqlees.dataType.int(),
 
-    ref: {
-      to: 'tableName',            // Target Table Name
-      foreignField: 'column_name' // Column Name of Target Table
-    }
+    ref: 'tableName', // Target Table/Model Name
 
   }
 })
