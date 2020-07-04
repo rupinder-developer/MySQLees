@@ -58,7 +58,7 @@ const mysqlees = require('mysqlees');
     + [Model.orderBy()](#modelorderby)
     + [Model.populate()](#modelpopulate)
     + [Model.lean()](#modellean)
-12. [Updata Data](#update-data)
+12. [Update Data](#update-data)
     + [Model.save()](#modelsave)
     + [Model.update()](#modelupdate)
 13. [Delete Data](#delete-data)
