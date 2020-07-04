@@ -58,11 +58,11 @@ const mysqlees = require('mysqlees');
     + [Model.orderBy()](#modelorderby)
     + [Model.populate()](#modelpopulate)
     + [Model.lean()](#modellean)
-12. Updata Data
-    + Model.save()
-    + Model.update()
-13. Delete Data
-    + Model.delete()
+12. [Updata Data](#update-data)
+    + [Model.save()](#modelsave)
+    + [Model.update()](#modelupdate)
+13. [Delete Data](#delete-data)
+    + [Model.delete()](#modeldelete)
 14. Manage Connection Pool in Model
     + Model.useConnection()
     + Model.releaseConnection()
@@ -1240,9 +1240,9 @@ Model.update(data, filter)
 
 ## Delete Data
 
-### Model.update()
+### Model.delete()
 
-You can use `Model.delete(filter)` method to update your data. 
+You can use `Model.delete(filter)` method to delete data from your database. 
 
 ```javascript
 let filter = {
@@ -1274,6 +1274,40 @@ Model.delete(filter)
 ```
 
 ***Note**: Please refer to the ["Filter your query"](#filter-your-query) section for the first parameter of Model.delete() method.*
+
+## Manage Connection Pool in Model
+
+### Model.useConnection()
+
+`Model.useConnection()` method is used to set the connection for the instance of the model that you are using. You only need to use this method, if you want to share the connection state for subsequent queries.
+
+```javascript
+mysqlees.getConnection()
+        .then(connection => {
+            // Use the connection 
+
+            Model.useConnection(connection)
+                 .find()
+                 .limit(1)
+                 .exec()
+                 .then(result => {
+                    // When done with the connection, release it.
+                    Model.releaseConnection();
+                  })
+                  .catch(error => {
+                    console.log(error);
+                  })               
+
+        })
+        .catch(error => {
+          // not connected!
+          console.log(error);
+        })
+```
+
+### Model.destroyConnection()
+
+If you would like to close the connection and remove it from the pool, use Model.destroyConnection() instead. The pool will create a new connection the next time one is needed. 
 
 ## Data Types Reference
 
