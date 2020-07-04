@@ -707,27 +707,10 @@ Now, let's create one Model for your reference.
 **./models/users.js**
 
 ```javascript
-// User Model
 const mysqlees = require('mysqlees');
 
-const schema = mysqlees.schema({
-  user_id: {
-    dataType: mysqlees.dataType.int(),
-    primaryKey: true,
-    autoIncrement: true
-  },
-  full_name: {
-    dataType: mysqlees.dataType.varchar(50),
-    notNull: true
-  },
-  email: {
-    dataType: mysqlees.dataType.varchar(),
-    unique: true,
-    notNull: true
-  }
-}, {
-  timestamps: true
-});
+// Your Schema
+const schema = mysqlees.schema(...);
 
 module.exports = mysqlees.model('users', schema);
 ```
@@ -779,9 +762,95 @@ Model.find(filter)
 // Generated SQL: SELECT * FROM tableName WHERE column1='value1' AND column2='value2'
 ```
 
-**$gt**
+### $or (OR)
 
-$gt selects the data where the value of the field is greater than (i.e. >) the specified value.
+The `$or` operator performs a logical OR operation on an array of two or more `<expressions>` and selects the documents that satisfy at least one of the `<expressions>`. The $or has the following syntax:
+
+```
+{ $or: [ { <expression1> }, { <expression2> }, ... , { <expressionN> } ] }
+```
+
+Example:
+
+```javascript
+let filter = {
+  $or: [ 
+    { quantity: { $lt: 20 } }, 
+    { price: 10 } 
+  ] 
+};
+
+Model.find(filter)
+     .exec()
+     .then(result => {
+      // Your result
+     })
+     .catch(error => {
+       console.log(error);
+     })
+
+// Generated SQL: SELECT * FROM tableName WHERE quantity<20 OR price=10
+```
+
+### $and (AND)
+
+`$and` performs a logical AND operation on an array of one or more expressions (e.g. `<expression1>`, `<expression2>`, etc.) and selects the data that satisfy all the expressions in the array. 
+
+```
+Syntax: { $and: [ { <expression1> }, { <expression2> } , ... , { <expressionN> } ] }
+```
+
+
+**AND Queries With Multiple Expressions Specifying the Same Field**
+
+```javascript
+let filter = {
+  $and: [ 
+    { price: { $gte: 100 } }, 
+    { price: { $lt: 240 } } 
+  ]
+};
+
+Model.find(filter)
+     .exec()
+     .then(result => {
+      // Your result
+     })
+     .catch(error => {
+       console.log(error);
+     })
+
+// Generated SQL: SELECT * FROM tableName WHERE price>=100 AND price<240
+```
+
+This query can be also be constructed with an implicit AND operation by combining the operator expressions for the price field. For example, this query can be written as:
+
+```javascript
+let filter = {
+  price: { $gte: 100, $lt: 240 }
+};
+
+// Generated SQL: SELECT * FROM tableName WHERE price>=100 AND price<240
+```
+
+**AND Queries With Multiple Expressions Specifying the Same Operator**
+
+```javascript
+let filter = {
+    $and: [
+        { $or: [ { qty: { $lt : 10 } }, { qty : { $gt: 50 } } ] },
+        { $or: [ { sale: true }, { price : { $lt : 5 } } ] }
+    ]
+};
+
+// Generated SQL: SELECT * FROM tableName WHERE ((qty<10 OR qty>50) AND (sale=true OR price<5))
+```
+
+
+
+### $gt (>)
+
+`$gt` selects the data where the value of the field is greater than (i.e. >) the specified value.
 
 ```
 Syntax: {field: {$gt: value} }
@@ -806,29 +875,139 @@ Model.find(filter)
 // Generated SQL: SELECT * FROM tableName WHERE qty > 10
 ```
 
-**$gte**
+### $gte (>=)
 
-$gte selects the data where the value of the field is greater than or equal to (i.e. >=) the specified value.
+`$gte` selects the data where the value of the field is greater than or equal to (i.e. >=) the specified value.
 
 ```
 Syntax: {field: {$gte: value} }
 ```
 
-**$lt**
+### $lt (<)
 
-$lt selects the data where the value of the field is less than (i.e. <) the specified value.
+
+`$lt` selects the data where the value of the field is less than (i.e. <) the specified value.
 
 ```
 Syntax: {field: {$lt: value} }
 ```
 
-**$ne**
+### $ne (<> or !=)
 
-$ne selects the data where the value of the field is not equal to the specified value.
+`$ne` selects the data where the value of the field is not equal to the specified value.
 
 ```
 Syntax: {field: {$ne: value} }
 ```
+
+### $like (LIKE)
+
+`$like` is used to search for a specified pattern in a column.
+
+```
+Syntax: {field: {$like: value} }
+```
+
+Example:
+
+```javascript
+let filter = {
+  customer_name: {$like: 'a%'}
+}
+
+Model.find(filter)
+     .exec()
+     .then(result => {
+      // Your result
+     })
+     .catch(error => {
+       console.log(error);
+     })
+
+// Generated SQL: SELECT * FROM tableName WHERE customer_name LIKE 'a%'
+```
+
+### $nlike (NOT LIKE)
+
+It is exactly opposite to $like.
+
+```
+Syntax: {field: {$nlike: value} }
+```
+
+Example:
+
+```javascript
+let filter = {
+  customer_name: {$nlike: 'a%'}
+}
+
+Model.find(filter)
+     .exec()
+     .then(result => {
+      // Your result
+     })
+     .catch(error => {
+       console.log(error);
+     })
+
+// Generated SQL: SELECT * FROM tableName WHERE customer_name NOT LIKE 'a%'
+```
+
+### $in (IN)
+
+The `$in` operator selects the data where the value of a field equals any value in the specified array.
+
+```
+Syntax: { field: { $in: [<value1>, <value2>, ... <valueN> ] } }
+```
+
+Example: 
+
+```javascript
+let filter = {
+  qty: { $in: [5, 15] }
+}
+
+Model.find(filter)
+     .exec()
+     .then(result => {
+      // Your result
+     })
+     .catch(error => {
+       console.log(error);
+     })
+
+// Generated SQL: SELECT * FROM tableName WHERE qty IN(5, 15)
+```
+
+### $nin (NOT IN)
+
+The `$nin` operator selects the data where the field value is not in the specified array
+
+```
+Syntax: { field: { $nin: [<value1>, <value2>, ... <valueN> ] } }
+```
+
+Example: 
+
+```javascript
+let filter = {
+  qty: { $nin: [5, 15] }
+}
+
+Model.find(filter)
+     .exec()
+     .then(result => {
+      // Your result
+     })
+     .catch(error => {
+       console.log(error);
+     })
+
+// Generated SQL: SELECT * FROM tableName WHERE qty NOT IN(5, 15)
+```
+
 
 ## Data Types Reference
 
