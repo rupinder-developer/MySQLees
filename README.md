@@ -1178,7 +1178,7 @@ console.log(normal instanceof mysqlees.Model); // true
 console.log(lean instanceof mysqlees.Model); // false
 ```
 
-The downside of enabling lean is that lean docs don't have:
+The downside of enabling lean is that lean result set don't have:
   * `save()`
 
 ## Data Types Reference
