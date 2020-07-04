@@ -54,9 +54,9 @@ const mysqlees = require('mysqlees');
         + [$in (IN)](#in-in)
         + [$nin (NOT IN)](#nin-not-in)
     + Model.project()
-    + Model.populate()
     + Model.limit()
     + Model.orderBy()
+    + Model.populate()
     + Model.lean()
 12. Updata Data
     + Model.update()
@@ -577,6 +577,7 @@ const schema = mysqlees.schema({
 
 module.exports = mysqlees.model('users', schema);
 ```
+
 ### Rename Columns
 
 To rename a column, we need to use `renamedFrom` option. In this example, we are renaming the column `name` to `full_name`. 
@@ -858,8 +859,6 @@ let filter = {
 // Generated SQL: SELECT * FROM tableName WHERE ((qty<10 OR qty>50) AND (sale=true OR price<5))
 ```
 
-
-
 ### $gt (>)
 
 `$gt` selects the data where the value of the field is greater than (i.e. >) the specified value.
@@ -897,7 +896,6 @@ Syntax: {field: {$gte: value} }
 
 ### $lt (<)
 
-
 `$lt` selects the data where the value of the field is less than (i.e. <) the specified value.
 
 ```
@@ -905,7 +903,6 @@ Syntax: {field: {$lt: value} }
 ```
 
 ### $lte (<=)
-
 
 `$lte` selects the data where the value of the field is less than or equal to (i.e. <=) the specified value.
 
@@ -1029,6 +1026,160 @@ Model.find(filter)
 // Generated SQL: SELECT * FROM tableName WHERE qty NOT IN(5, 15)
 ```
 
+### Model.project()
+
+Projection means choosing which columns (or expressions) the query shall return. You need to chain `.project(array)` method with `Model.find()`.
+
+```javascript
+let projection = ['column1', 'column2'];
+
+Model.find()
+     .project(projection)
+     .exec()
+     .then(result => {
+       // Your result
+     })
+     .catch(error => {
+       console.log(error);
+     });
+
+// Generated SQL: SELECT column1, column2 FROM tableName
+```
+
+### Model.limit()
+
+Lets you limit the number of rows you would like returned by the query:
+
+```javascript 
+Model.find().limit(10).exec()
+
+// Generated SQL: SELECT * FROM tableName LIMIT 10
+```
+
+The second parameter lets you set a result offset.
+
+```javascript 
+Model.find().limit(10, 20).exec()
+
+// Generated SQL: SELECT * FROM tableName LIMIT 20, 10
+```
+
+### Model.orderBy()
+
+```javascript 
+Model.find().orderBy('id', 'DESC').exec()
+
+// Generated SQL: SELECT * FROM tableName ORDER BY id DESC
+
+Model.find().orderBy('title DESC, name ASC').exec()
+
+// Generated SQL: SELECT * FROM tableName ORDER BY title DESC, name ASC
+```
+
+### Model.populate()
+
+Populate will automatically replace the specified path in the record, with record from other table.
+
+Let's look at some examples:
+
+**./models/customers**
+```javascript
+const mysqlees = require('mysqlees');
+
+const schema = mysqlees.schema({
+  customer_id: { primaryKey: true, autoIncrement: true, dataType: mysqlees.dataType.int() },
+  name: { dataType: mysqlees.dataType.vachar() }
+  mobile_number: { dataType: mysqlees.dataType.vachar() }
+});
+
+module.exports = mysqlees.model('customers', schema);
+```
+
+**./models/orders**
+```javascript
+const mysqlees = require('mysqlees');
+
+const schema = mysqlees.schema({
+  order_id: { primaryKey: true, autoIncrement: true, dataType: mysqlees.dataType.int() },
+  total_price: { dataType: mysqlees.dataType.double() }
+  customer: { 
+    dataType: mysqlees.dataType.int(),
+    ref: 'customers' // Target Table/Model Name
+  }
+});
+
+module.exports = mysqlees.model('orders', schema);
+```
+
+```javascript
+const Order = require('./models/orders');
+
+Order.find()
+     .limit(1)
+     .populate('customer') // Column name
+     .exec()
+     .then(result => {
+        console.log(result);
+        /*
+          Sample Output:
+          [
+            {
+              order_id: 1,
+              total_price: 100,
+              customer: {
+                customer_id: 10,
+                name: 'Rupinder Singh'
+                mobile_number: 'Rupinder Singh'
+              }
+            }
+          ]
+         */
+     })
+     .catch(error => {
+      console.log(error);
+     });
+```
+
+Here we populated the customer column of **orders** table.
+
+**Populate with Projection**
+
+You need to pass array as a second argument for selecting the columns of your choise from the target table.
+
+```javascript
+Model.find()
+     .populate('customer', ['name'])  // Only selecting `name` from target table
+     .exec()
+```
+
+You can also populate multiple columns of the table by chaining `.populate()` method more than once.
+
+```javascript
+// Populate Multiple Columns
+
+Model.find()
+     .populate('column1')
+     .populate('column2')
+     .exec()
+```
+
+***Note:** Populate will only work if your target table contains the primary key and the primary key should not be the combination of more than one column.*
+
+### Model.lean()
+
+The lean option tells MySQLees to skip hydrating the result. This makes queries faster and less memory intensive, but the result is an array of RowDataPacket (MySQL Default Result Set), not MySQLees Model. 
+
+```javascript
+const normalDoc = await Model.find();
+const leanDoc = await Model.find().lean();
+
+normalDoc instanceof mysqlees.Model; // true
+
+leanDoc instanceof mysqlees.Model; // false
+```
+
+The downside of enabling lean is that lean docs don't have:
+  * `save()`
 
 ## Data Types Reference
 
