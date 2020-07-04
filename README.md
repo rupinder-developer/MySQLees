@@ -39,13 +39,25 @@ const mysqlees = require('mysqlees');
 10. [Insert Data](#insert-data)
     + [Model.create()](#modelcreate)
     + [Model.insertMany()](#modelinsertmany)
-11. Select Data
-    + Model.find()
-        + project()
-        + populate()
-        + limit()
-        + orderBy()
-        + lean()
+11. [Select Data](#select-data)
+    + [Model.find()](#modelfind)
+      + [Filter your query](#filter-your-query)
+        + [$or (OR)](#or-or)
+        + [$and (AND)](#and-and)
+        + [$gt (>)](#gt-)
+        + [$gte (>=)](#gte-)
+        + [$lt (<)](#lt-)
+        + [$lte (<=)](#lte-)
+        + [$ne (<> or !=)](#ne--or-)
+        + [$like (LIKE)](#like-like)
+        + [$nlike (NOT LIKE)](#nlike-not-like)
+        + [$in (IN)](#in-in)
+        + [$nin (NOT IN)](#nin-not-in)
+    + Model.project()
+    + Model.populate()
+    + Model.limit()
+    + Model.orderBy()
+    + Model.lean()
 12. Updata Data
     + Model.update()
 13. Delete Data
@@ -890,6 +902,15 @@ Syntax: {field: {$gte: value} }
 
 ```
 Syntax: {field: {$lt: value} }
+```
+
+### $lte (<=)
+
+
+`$lte` selects the data where the value of the field is less than or equal to (i.e. <=) the specified value.
+
+```
+Syntax: {field: {$lte: value} }
 ```
 
 ### $ne (<> or !=)
