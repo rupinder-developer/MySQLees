@@ -460,7 +460,7 @@ module.exports = /*#__PURE__*/function (_QueryHelper) {
                             case 22:
                               _context2.prev = 22;
                               _context2.t3 = _context2["catch"](18);
-                              console.error(_context2.t3);
+                              console.error("Error: Failed to populate ".concat(populate[i].col));
 
                             case 25:
                             case "end":
