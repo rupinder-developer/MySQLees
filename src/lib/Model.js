@@ -269,7 +269,7 @@ module.exports =  class Model extends QueryHelper {
                                             }
                                         }
                                     } catch(err) {
-                                        console.error(`Error: Failed to populate ${populate[i].col}`, err);
+                                        console.error(`Error: Failed to populate ${populate[i].col}`);
                                     }
                                 }
 
