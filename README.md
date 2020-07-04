@@ -53,11 +53,11 @@ const mysqlees = require('mysqlees');
         + [$nlike (NOT LIKE)](#nlike-not-like)
         + [$in (IN)](#in-in)
         + [$nin (NOT IN)](#nin-not-in)
-    + Model.project()
-    + Model.limit()
-    + Model.orderBy()
-    + Model.populate()
-    + Model.lean()
+    + [Model.project()](#modelproject)
+    + [Model.limit()](#modellimit)
+    + [Model.orderBy()](#modelorderby)
+    + [Model.populate()](#modelpopulate)
+    + [Model.lean()](#modellean)
 12. Updata Data
     + Model.update()
 13. Delete Data
@@ -1088,7 +1088,7 @@ const mysqlees = require('mysqlees');
 
 const schema = mysqlees.schema({
   customer_id: { primaryKey: true, autoIncrement: true, dataType: mysqlees.dataType.int() },
-  name: { dataType: mysqlees.dataType.vachar() }
+  name: { dataType: mysqlees.dataType.vachar() },
   mobile_number: { dataType: mysqlees.dataType.vachar() }
 });
 
@@ -1101,7 +1101,7 @@ const mysqlees = require('mysqlees');
 
 const schema = mysqlees.schema({
   order_id: { primaryKey: true, autoIncrement: true, dataType: mysqlees.dataType.int() },
-  total_price: { dataType: mysqlees.dataType.double() }
+  total_price: { dataType: mysqlees.dataType.double() },
   customer: { 
     dataType: mysqlees.dataType.int(),
     ref: 'customers' // Target Table/Model Name
@@ -1147,7 +1147,7 @@ Here we populated the customer column of **orders** table.
 You need to pass array as a second argument for selecting the columns of your choise from the target table.
 
 ```javascript
-Model.find()
+Order.find()
      .populate('customer', ['name'])  // Only selecting `name` from target table
      .exec()
 ```
@@ -1170,12 +1170,12 @@ Model.find()
 The lean option tells MySQLees to skip hydrating the result. This makes queries faster and less memory intensive, but the result is an array of RowDataPacket (MySQL Default Result Set), not MySQLees Model. 
 
 ```javascript
-const normalDoc = await Model.find();
-const leanDoc = await Model.find().lean();
+const normal = await Model.find();
+const lean = await Model.find().lean();
 
-normalDoc instanceof mysqlees.Model; // true
+console.log(normal instanceof mysqlees.Model); // true
 
-leanDoc instanceof mysqlees.Model; // false
+console.log(lean instanceof mysqlees.Model); // false
 ```
 
 The downside of enabling lean is that lean docs don't have:
