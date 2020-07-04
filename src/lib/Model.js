@@ -213,7 +213,7 @@ module.exports =  class Model extends QueryHelper {
 
                 if(result && result.length > 0) {
                     if (populate.length > 0) {
-                        const schema = Store.models.get(modelName).schema;
+                        const schema = Store.models.get(modelName).schema; // Schema of this Model
   
                         for (let i in populate) {
                             // Get colum details from schema
@@ -231,35 +231,52 @@ module.exports =  class Model extends QueryHelper {
                                 
                                 let column = schema[populate[i].col]; // Schema Column
                                 let project = populate[i].project; // Projection for populaion
-
-                                if (project.length > 0) {
-                                    project = [...project, column.ref.foreignField];
+                                
+                                // Getting Primary Keys of `ref` Model
+                                let primaryKeys;
+                                let refModel;
+                                if (Store.models.has(column.ref)) {
+                                    refModel = Store.models.get(column.ref)
+                                    primaryKeys = refModel.primaryKeys.array;
+                                    if (primaryKeys.length > 1) {
+                                        shouldProceed = false;
+                                    } else {
+                                        if (project.length > 0) {
+                                            project.push(primaryKeys[0]);
+                                        }
+                                    }
+                                } else {
+                                    shouldProceed = false;
                                 }
 
                                 // Pull out distinct values for column (populate[i].col) from result
-                                let distinct = new Set();
-                                for(let k in result) {
-                                    if (result[k].hasOwnProperty(populate[i].col)) {
-                                        distinct.add(result[k][populate[i].col]);
-                                    } else {
-                                        shouldProceed = false;
-                                        break;
+                                let distinct;
+                                if (shouldProceed) {
+                                    distinct = new Set();
+                                    for(let k in result) {
+                                        if (result[k].hasOwnProperty(populate[i].col)) {
+                                            distinct.add(result[k][populate[i].col]);
+                                        } else {
+                                            shouldProceed = false;
+                                            break;
+                                        }
                                     }
                                 }
+       
 
                                 if(shouldProceed) {
                                     try {
-                                        let populateResult = await this.populateQuery(column.ref.to, this.populateProject(project, column.ref.to), column.ref.foreignField, [...distinct]);
+                                        let populateResult = await this.populateQuery(column.ref, this.populateProject(project), primaryKeys[0], [...distinct]);
                                         for (let j in populateResult) {
                                             if (lean) {
-                                                populatedData[populateResult[j][column.ref.foreignField]] = populateResult[j];
+                                                populatedData[populateResult[j][primaryKeys[0]]] = populateResult[j];
                                             } else {
-                                                const model = this.create(populateResult[j], column.ref.to);
+                                                const model = this.create(populateResult[j], column.ref);
                                                 
                                                 // Saving orignal column data
-                                                model._$orginalColData = () => populateResult[j][column.ref.foreignField];
+                                                model._$orginalColData = () => populateResult[j][primaryKeys[0]];
 
-                                                populatedData[populateResult[j][column.ref.foreignField]] = model;
+                                                populatedData[populateResult[j][primaryKeys[0]]] = model;
                                             }
                                         }
 
@@ -269,7 +286,7 @@ module.exports =  class Model extends QueryHelper {
                                             }
                                         }
                                     } catch(err) {
-                                        // console.error(`Error: Failed to populate ${populate[i].col}`);
+                                        // console.error(`Error: Failed to populate ${populate[i].col}`, err);
                                     }
                                 }
 
@@ -386,10 +403,9 @@ module.exports =  class Model extends QueryHelper {
      * @param {Array} arr 
      * @param {String} modelName 
      */
-    populateProject(arr = [], modelName) {
+    populateProject(arr = []) {
         if (arr.length > 0) {
-            const primaryKeys = Store.models.get(modelName).primaryKeys;
-            const projection = new Set([...arr, ...(primaryKeys.array)]);
+            const projection = new Set([...arr]);
             return [...projection].join();
         }
         return '*';

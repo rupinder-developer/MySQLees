@@ -332,7 +332,8 @@ module.exports = /*#__PURE__*/function (_QueryHelper) {
                       break;
                     }
 
-                    schema = _Store["default"].models.get(modelName).schema;
+                    schema = _Store["default"].models.get(modelName).schema; // Schema of this Model
+
                     _context3.t0 = regeneratorRuntime.keys(populate);
 
                   case 5:
@@ -349,7 +350,7 @@ module.exports = /*#__PURE__*/function (_QueryHelper) {
                     }
 
                     return _context3.delegateYield( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
-                      var populatedData, shouldProceed, column, project, distinct, k;
+                      var populatedData, shouldProceed, column, project, primaryKeys, refModel, distinct, k;
                       return regeneratorRuntime.wrap(function _callee2$(_context2) {
                         while (1) {
                           switch (_context2.prev = _context2.next) {
@@ -366,47 +367,69 @@ module.exports = /*#__PURE__*/function (_QueryHelper) {
                               column = schema[populate[i].col]; // Schema Column
 
                               project = populate[i].project; // Projection for populaion
+                              // Getting Primary Keys of `ref` Model
 
-                              if (project.length > 0) {
-                                project = [].concat(_toConsumableArray(project), [column.ref.foreignField]);
+                              primaryKeys = void 0;
+                              refModel = void 0;
+
+                              if (_Store["default"].models.has(column.ref)) {
+                                refModel = _Store["default"].models.get(column.ref);
+                                primaryKeys = refModel.primaryKeys.array;
+
+                                if (primaryKeys.length > 1) {
+                                  shouldProceed = false;
+                                } else {
+                                  if (project.length > 0) {
+                                    project.push(primaryKeys[0]);
+                                  }
+                                }
+                              } else {
+                                shouldProceed = false;
                               } // Pull out distinct values for column (populate[i].col) from result
 
+
+                              distinct = void 0;
+
+                              if (!shouldProceed) {
+                                _context2.next = 21;
+                                break;
+                              }
 
                               distinct = new Set();
                               _context2.t0 = regeneratorRuntime.keys(result);
 
-                            case 7:
+                            case 11:
                               if ((_context2.t1 = _context2.t0()).done) {
-                                _context2.next = 17;
+                                _context2.next = 21;
                                 break;
                               }
 
                               k = _context2.t1.value;
 
                               if (!result[k].hasOwnProperty(populate[i].col)) {
-                                _context2.next = 13;
+                                _context2.next = 17;
                                 break;
                               }
 
                               distinct.add(result[k][populate[i].col]);
-                              _context2.next = 15;
-                              break;
-
-                            case 13:
-                              shouldProceed = false;
-                              return _context2.abrupt("break", 17);
-
-                            case 15:
-                              _context2.next = 7;
+                              _context2.next = 19;
                               break;
 
                             case 17:
+                              shouldProceed = false;
+                              return _context2.abrupt("break", 21);
+
+                            case 19:
+                              _context2.next = 11;
+                              break;
+
+                            case 21:
                               if (!shouldProceed) {
-                                _context2.next = 24;
+                                _context2.next = 29;
                                 break;
                               }
 
-                              _context2.prev = 18;
+                              _context2.prev = 22;
                               return _context2.delegateYield( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
                                 var populateResult, _loop, j, l;
 
@@ -415,23 +438,23 @@ module.exports = /*#__PURE__*/function (_QueryHelper) {
                                     switch (_context.prev = _context.next) {
                                       case 0:
                                         _context.next = 2;
-                                        return _this6.populateQuery(column.ref.to, _this6.populateProject(project, column.ref.to), column.ref.foreignField, _toConsumableArray(distinct));
+                                        return _this6.populateQuery(column.ref, _this6.populateProject(project), primaryKeys[0], _toConsumableArray(distinct));
 
                                       case 2:
                                         populateResult = _context.sent;
 
                                         _loop = function _loop(j) {
                                           if (lean) {
-                                            populatedData[populateResult[j][column.ref.foreignField]] = populateResult[j];
+                                            populatedData[populateResult[j][primaryKeys[0]]] = populateResult[j];
                                           } else {
-                                            var model = _this6.create(populateResult[j], column.ref.to); // Saving orignal column data
+                                            var model = _this6.create(populateResult[j], column.ref); // Saving orignal column data
 
 
                                             model._$orginalColData = function () {
-                                              return populateResult[j][column.ref.foreignField];
+                                              return populateResult[j][primaryKeys[0]];
                                             };
 
-                                            populatedData[populateResult[j][column.ref.foreignField]] = model;
+                                            populatedData[populateResult[j][primaryKeys[0]]] = model;
                                           }
                                         };
 
@@ -451,22 +474,23 @@ module.exports = /*#__PURE__*/function (_QueryHelper) {
                                     }
                                   }
                                 }, _callee);
-                              })(), "t2", 20);
-
-                            case 20:
-                              _context2.next = 24;
-                              break;
-
-                            case 22:
-                              _context2.prev = 22;
-                              _context2.t3 = _context2["catch"](18);
+                              })(), "t2", 24);
 
                             case 24:
+                              _context2.next = 29;
+                              break;
+
+                            case 26:
+                              _context2.prev = 26;
+                              _context2.t3 = _context2["catch"](22);
+                              console.error("Error: Failed to populate ".concat(populate[i].col), _context2.t3);
+
+                            case 29:
                             case "end":
                               return _context2.stop();
                           }
                         }
-                      }, _callee2, null, [[18, 22]]);
+                      }, _callee2, null, [[22, 26]]);
                     })(), "t2", 9);
 
                   case 9:
@@ -648,12 +672,9 @@ module.exports = /*#__PURE__*/function (_QueryHelper) {
     key: "populateProject",
     value: function populateProject() {
       var arr = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
-      var modelName = arguments.length > 1 ? arguments[1] : undefined;
 
       if (arr.length > 0) {
-        var primaryKeys = _Store["default"].models.get(modelName).primaryKeys;
-
-        var projection = new Set([].concat(_toConsumableArray(arr), _toConsumableArray(primaryKeys.array)));
+        var projection = new Set(_toConsumableArray(arr));
         return _toConsumableArray(projection).join();
       }
 
