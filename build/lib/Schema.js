@@ -97,7 +97,6 @@ module.exports = /*#__PURE__*/function () {
 
           for (var column in this.schema) {
             var _this$schema$column = this.schema[column],
-                ref = _this$schema$column.ref,
                 unique = _this$schema$column.unique,
                 dataType = _this$schema$column.dataType,
                 notNull = _this$schema$column.notNull,
@@ -137,14 +136,6 @@ module.exports = /*#__PURE__*/function () {
 
               if (unique && !primaryKey) {
                 _fs["default"].appendFileSync(alterTable, "".concat(alterTablePrefix, " ADD UNIQUE KEY `").concat(column, "` (`").concat(column, "`);"), 'utf8');
-              } // Adding Foreign Key
-
-
-              if (ref && ref.to && ref.foreignField) {
-                Schema.pendingFkQueries.push({
-                  ref: ref,
-                  query: "".concat(alterTablePrefix, " ADD CONSTRAINT `").concat(this.modelName, "_").concat(column, "` FOREIGN KEY (`").concat(column, "`) REFERENCES `").concat(ref.to, "`(`").concat(ref.foreignField, "`);")
-                });
               } // Set default value for column
 
 
@@ -190,18 +181,7 @@ module.exports = /*#__PURE__*/function () {
     key: "installSchema",
     value: function installSchema() {
       if (_fs["default"].existsSync(this.schemaFiles.createTable) && _fs["default"].existsSync(this.schemaFiles.alterTable)) {
-        var fkQueries = '';
-
-        if (Schema.pendingFkQueries.length > 0) {
-          for (var fk in Schema.pendingFkQueries) {
-            if (Schema.createdModels[Schema.pendingFkQueries[fk].ref.to]) {
-              fkQueries += Schema.pendingFkQueries[fk].query;
-              delete Schema.pendingFkQueries[fk];
-            }
-          }
-        }
-
-        Schema.connection.query("".concat(_fs["default"].readFileSync(this.schemaFiles.createTable), " ").concat(_fs["default"].readFileSync(this.schemaFiles.alterTable), " ").concat(this.indexes.join(''), " ").concat(fkQueries), function (err, result) {
+        Schema.connection.query("".concat(_fs["default"].readFileSync(this.schemaFiles.createTable), " ").concat(_fs["default"].readFileSync(this.schemaFiles.alterTable), " ").concat(this.indexes.join('')), function (err, result) {
           if (err) {
             if (err.sql) delete err.sql;
             var code = err.code,
@@ -248,10 +228,7 @@ module.exports = /*#__PURE__*/function () {
               pkShouldDrop = false,
               updatedColumns = {},
               dbCols = {},
-              droppedFks = {},
-              dropFkQueries = '',
-              // This Variable contains the queries which helps to drop all the present Foreign Keys in the database while updating schema.
-          alterTablePrefix = "ALTER TABLE `".concat(this.modelName, "`");
+              alterTablePrefix = "ALTER TABLE `".concat(this.modelName, "`");
 
           try {
             this.schemaFiles.extra = "".concat(__dirname, "/temp/").concat(this.uuid(), ".sql");
@@ -334,21 +311,6 @@ module.exports = /*#__PURE__*/function () {
                   } else if (dbCol.Default) {
                     // Droping Default Value
                     _fs["default"].appendFileSync(alterTable, "".concat(alterTablePrefix, " ALTER `").concat(dbCol.Field, "` DROP DEFAULT;"), 'utf8');
-                  } // Validate Foreign Key
-
-
-                  if (column.ref && column.ref.to && column.ref.foreignField) {
-                    var colName = schemaCol ? schemaCol : dbCol.Field;
-
-                    if (!droppedFks["".concat(this.modelName, "_").concat(colName)]) {
-                      dropFkQueries += "\n                                        set @var=if((SELECT true FROM information_schema.TABLE_CONSTRAINTS WHERE\n                                            CONSTRAINT_SCHEMA = DATABASE() AND\n                                            TABLE_NAME        = '".concat(this.modelName, "' AND\n                                            CONSTRAINT_NAME   = '").concat(this.modelName, "_").concat(colName, "' AND\n                                            CONSTRAINT_TYPE   = 'FOREIGN KEY') = true,'ALTER TABLE ").concat(this.modelName, "\n                                            DROP FOREIGN KEY ").concat(this.modelName, "_").concat(colName, "','select 1');\n                                \n                                        prepare stmt from @var;\n                                        execute stmt;\n                                        deallocate prepare stmt;\n                                        ");
-                      droppedFks["".concat(this.modelName, "_").concat(colName)] = true;
-                    }
-
-                    Schema.pendingFkQueries.push({
-                      ref: column.ref,
-                      query: "\n                                    set @var=if((SELECT true FROM information_schema.COLUMNS WHERE\n                                        TABLE_NAME        = '".concat(this.modelName, "' AND\n                                        COLUMN_NAME       = '").concat(colName, "' AND\n                                        TABLE_SCHEMA      = '").concat(Schema.config.database, "') = true,'").concat(alterTablePrefix, " ADD CONSTRAINT `").concat(this.modelName, "_").concat(colName, "` FOREIGN KEY (`").concat(colName, "`) REFERENCES `").concat(column.ref.to, "`(`").concat(column.ref.foreignField, "`)','select 1');\n                            \n                                    prepare stmt from @var;\n                                    execute stmt;\n                                    deallocate prepare stmt;")
-                    });
                   }
                 } // Adding Column to the list of Updated Columns
 
@@ -393,14 +355,6 @@ module.exports = /*#__PURE__*/function () {
 
                 if (this.schema[column].unique && !this.schema[column].primaryKey) {
                   _fs["default"].appendFileSync(alterTable, "".concat(alterTablePrefix, " ADD UNIQUE KEY `").concat(column, "` (`").concat(column, "`);"), 'utf8');
-                } // Adding Foreign Key
-
-
-                if (this.schema[column].ref && this.schema[column].ref.to && this.schema[column].ref.foreignField) {
-                  Schema.pendingFkQueries.push({
-                    ref: this.schema[column].ref,
-                    query: "\n                                    set @var=if((SELECT true FROM information_schema.COLUMNS WHERE\n                                        TABLE_NAME        = '".concat(this.modelName, "' AND\n                                        COLUMN_NAME       = '").concat(column, "' AND\n                                        TABLE_SCHEMA      = '").concat(Schema.config.database, "') = true,'").concat(alterTablePrefix, " ADD CONSTRAINT `").concat(this.modelName, "_").concat(column, "` FOREIGN KEY (`").concat(column, "`) REFERENCES `").concat(this.schema[column].ref.to, "`(`").concat(this.schema[column].ref.foreignField, "`)','select 1');\n                            \n                                    prepare stmt from @var;\n                                    execute stmt;\n                                    deallocate prepare stmt;")
-                  });
                 } // Set default value for column
 
 
@@ -458,95 +412,61 @@ module.exports = /*#__PURE__*/function () {
             if (renameColumn !== undefined) {
               _fs["default"].closeSync(renameColumn);
             }
-          } // Removing all Foreign Keys
+          }
 
+          var sql = "".concat(_fs["default"].readFileSync(this.schemaFiles.updateInit), " ").concat(pkShouldDrop ? "".concat(alterTablePrefix, " DROP PRIMARY KEY;") : '', " ").concat(_fs["default"].readFileSync(this.schemaFiles.updateNewCol), " ").concat(_fs["default"].readFileSync(this.schemaFiles.extra), " ").concat(_fs["default"].readFileSync(this.schemaFiles.alterTable), " ").concat(_fs["default"].readFileSync(this.schemaFiles.renameColumn), " ").concat(this.indexes.join('')).trim();
 
-          Schema.connection.query("SELECT TABLE_NAME, CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS T WHERE CONSTRAINT_SCHEMA = '".concat(Schema.config.database, "' AND CONSTRAINT_TYPE='FOREIGN KEY'"), function (err, result) {
-            if (!err) {
-              var _iterator2 = _createForOfIteratorHelper(result),
-                  _step2;
+          if (sql) {
+            Schema.connection.query(sql, function (err, result) {
+              if (err) {
+                if (err.sql) delete err.sql;
+                var code = err.code,
+                    errno = err.errno,
+                    sqlState = err.sqlState,
+                    sqlMessage = err.sqlMessage;
 
-              try {
-                for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
-                  var item = _step2.value;
-
-                  if (!droppedFks[item['CONSTRAINT_NAME']]) {
-                    dropFkQueries += "\n                                set @var=if((SELECT true FROM information_schema.TABLE_CONSTRAINTS WHERE\n                                    CONSTRAINT_SCHEMA = DATABASE() AND\n                                    TABLE_NAME        = '".concat(item['TABLE_NAME'], "' AND\n                                    CONSTRAINT_NAME   = '").concat(item['CONSTRAINT_NAME'], "' AND\n                                    CONSTRAINT_TYPE   = 'FOREIGN KEY') = true,'ALTER TABLE ").concat(item['TABLE_NAME'], "\n                                    DROP FOREIGN KEY ").concat(item['CONSTRAINT_NAME'], "','select 1');\n                        \n                                prepare stmt from @var;\n                                execute stmt;\n                                deallocate prepare stmt;\n                                ");
-                    droppedFks[item['CONSTRAINT_NAME']] = true;
-                  }
+                if (err.errno == 1064) {
+                  sqlMessage = 'Failed to parse Data Type; You have an error in your SQL syntax;';
                 }
-              } catch (err) {
-                _iterator2.e(err);
-              } finally {
-                _iterator2.f();
-              }
 
-              var fkQueries = '';
-
-              if (Schema.pendingFkQueries.length > 0) {
-                for (var fk in Schema.pendingFkQueries) {
-                  if (Schema.createdModels[Schema.pendingFkQueries[fk].ref.to]) {
-                    fkQueries += Schema.pendingFkQueries[fk].query;
-                    delete Schema.pendingFkQueries[fk];
-                  }
-                }
-              }
-
-              var sql = "SET foreign_key_checks = 0; ".concat(dropFkQueries, " ").concat(_fs["default"].readFileSync(this.schemaFiles.updateInit), " ").concat(pkShouldDrop ? "".concat(alterTablePrefix, " DROP PRIMARY KEY;") : '', " ").concat(_fs["default"].readFileSync(this.schemaFiles.updateNewCol), " ").concat(_fs["default"].readFileSync(this.schemaFiles.extra), " ").concat(_fs["default"].readFileSync(this.schemaFiles.alterTable), " ").concat(_fs["default"].readFileSync(this.schemaFiles.renameColumn), " ").concat(this.indexes.join(''), " ").concat(fkQueries, " SET foreign_key_checks = 1;").trim();
-
-              if (sql) {
-                Schema.connection.query(sql, function (err, result) {
-                  if (err) {
-                    if (err.sql) delete err.sql;
-                    var code = err.code,
-                        errno = err.errno,
-                        sqlState = err.sqlState,
-                        sqlMessage = err.sqlMessage;
-
-                    if (err.errno == 1064) {
-                      sqlMessage = 'Failed to parse Data Type; You have an error in your SQL syntax;';
-                    }
-
-                    console.error('Error:', {
-                      code: code,
-                      errno: errno,
-                      sqlState: sqlState,
-                      sqlMessage: sqlMessage
-                    }, "-> Model = ".concat(this.modelName));
-                  } // Cleaning Resources
+                console.error('Error:', {
+                  code: code,
+                  errno: errno,
+                  sqlState: sqlState,
+                  sqlMessage: sqlMessage
+                }, "-> Model = ".concat(this.modelName));
+              } // Cleaning Resources
 
 
-                  this.endConnection();
+              this.endConnection();
 
-                  _fs["default"].unlink(this.schemaFiles.alterTable, function () {});
+              _fs["default"].unlink(this.schemaFiles.alterTable, function () {});
 
-                  _fs["default"].unlink(this.schemaFiles.extra, function () {});
+              _fs["default"].unlink(this.schemaFiles.extra, function () {});
 
-                  _fs["default"].unlink(this.schemaFiles.updateNewCol, function () {});
+              _fs["default"].unlink(this.schemaFiles.updateNewCol, function () {});
 
-                  _fs["default"].unlink(this.schemaFiles.updateInit, function () {});
+              _fs["default"].unlink(this.schemaFiles.updateInit, function () {});
 
-                  _fs["default"].unlink(this.schemaFiles.renameColumn, function () {});
+              _fs["default"].unlink(this.schemaFiles.renameColumn, function () {});
 
-                  delete this.schemaFiles;
-                  delete this.indexes;
-                  delete this.indexesObject;
-                }.bind(this));
-              }
-            }
-          }.bind(this));
+              delete this.schemaFiles;
+              delete this.indexes;
+              delete this.indexesObject;
+            }.bind(this));
+          }
         }
       }.bind(this));
     }
   }, {
     key: "parseIndexes",
     value: function parseIndexes() {
-      var _iterator3 = _createForOfIteratorHelper(this.indexesObject),
-          _step3;
+      var _iterator2 = _createForOfIteratorHelper(this.indexesObject),
+          _step2;
 
       try {
-        for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
-          var index = _step3.value;
+        for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+          var index = _step2.value;
           this.indexes.push("\n            set @var=if((SELECT true FROM information_schema.STATISTICS WHERE\n                TABLE_SCHEMA      =  DATABASE() AND\n                TABLE_NAME        = '".concat(this.modelName, "' AND\n                INDEX_NAME        = '").concat(index.indexName, "') = true,'ALTER TABLE ").concat(this.modelName, "\n                DROP INDEX ").concat(index.indexName, "','select 1');\n    \n            prepare stmt from @var;\n            execute stmt;\n            deallocate prepare stmt;\n            "));
 
           if ("".concat(index.indexName).trim() && "".concat(index.columns).trim() && !index.options.deprecated) {
@@ -554,9 +474,9 @@ module.exports = /*#__PURE__*/function () {
           }
         }
       } catch (err) {
-        _iterator3.e(err);
+        _iterator2.e(err);
       } finally {
-        _iterator3.f();
+        _iterator2.f();
       }
     }
   }, {
@@ -585,8 +505,6 @@ module.exports = /*#__PURE__*/function () {
     value: function startConnection() {
       if (!Schema.connection) {
         // Initializing variables for schema implementation
-        Schema.pendingFkQueries = []; // Pending Foreign Keys Queries
-
         Schema.createdModels = {};
         Schema.implementedModels = [];
         Schema.connection = _Store["default"].mysql.createConnection({
@@ -614,7 +532,6 @@ module.exports = /*#__PURE__*/function () {
       if (Object.keys(Schema.createdModels).length == Schema.implementedModels.length && Schema.implementedModels.length > 0) {
         // Close Schema Connection
         Schema.connection.end(function (err) {
-          delete Schema.pendingFkQueries;
           delete Schema.createdModels;
           delete Schema.implementedModels;
           delete Schema.connection;
