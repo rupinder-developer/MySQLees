@@ -476,7 +476,7 @@ schema.index('indexName', 'columnName');
 /**
  * Indexing on multiple columns
  * 
- * schema.index('indexName', 'column1, column2', ...);
+ * schema.index('indexName', 'column1, column2, ...');
  */
 ```
 
@@ -1195,7 +1195,7 @@ console.log(result[0] instance of mysqlees.Model); // true
 
 // Updating Data
 result[0].name = 'Rupinder Singh';
-await result.save(); // `name` updated to 'Rupinder Singh'
+await result[0].save(); // `name` updated to 'Rupinder Singh'
 ```
 
 ### Model.update()
