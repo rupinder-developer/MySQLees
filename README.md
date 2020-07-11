@@ -1171,12 +1171,12 @@ Model.find()
 The lean option tells MySQLees to skip hydrating the result. This makes queries faster and less memory intensive, but the result is an array of RowDataPacket (MySQL Default Result Set), not MySQLees Model. 
 
 ```javascript
-const normal = await Model.find().exec();
-const lean = await Model.find().lean().exec();
+const normal = await Model.find().limit(1).exec();
+const lean = await Model.find().limit(1).lean().exec();
 
-console.log(normal instanceof mysqlees.Model); // true
+console.log(normal[0] instanceof mysqlees.Model); // true
 
-console.log(lean instanceof mysqlees.Model); // false
+console.log(lean[0] instanceof mysqlees.Model); // false
 ```
 
 The downside of enabling lean is that lean result set don't have:
