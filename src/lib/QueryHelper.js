@@ -1,6 +1,6 @@
 "use strict"
 
-import Store from './Store';
+const Store = require('./Store');
 
 module.exports = class QueryHelper {
     /**

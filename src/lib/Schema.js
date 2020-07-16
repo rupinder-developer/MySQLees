@@ -1,10 +1,10 @@
 "use strict"
 
 // Inbuilt Modules
-import fs from 'fs';
+const fs = require('fs');
 
 // Classes
-import Store from './Store';
+const Store = require('./Store');
 
 module.exports = class Schema {
 

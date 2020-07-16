@@ -1,8 +1,8 @@
 "use strict"
 
 // Classes
-import QueryHelper from './QueryHelper';
-import Store        from './Store';
+const QueryHelper = require('./QueryHelper');
+const Store       = require('./Store');
 
 module.exports =  class Model extends QueryHelper {
     /**

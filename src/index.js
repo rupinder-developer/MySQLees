@@ -1,14 +1,13 @@
 "use strict"
 
 // Dependencies
-import regeneratorRuntime from "./dependencies/runtime";
-import mysql              from 'mysql';
+const mysql = require('mysql');
 
 // Classes
-import Model     from './lib/Model';
-import Store     from './lib/Store';
-import Schema    from './lib/Schema';
-import DataTypes from './lib/DataTypes';
+const Model     = require('./lib/Model');
+const Store     = require('./lib/Store');
+const Schema    = require('./lib/Schema');
+const DataTypes = require('./lib/DataTypes');
 
 class MySQLees {
     static init() {
@@ -28,10 +27,11 @@ class MySQLees {
     }
 
     static model(modelName, schema) {
-        // schema.implementSchema(modelName);
         const model = new Model(schema);
+
         model.modelName = modelName;
-        model.schema = schema.schema;
+        model.schema    = schema.schema;
+
         return model;
     }
 
