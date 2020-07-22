@@ -10,7 +10,7 @@ module.exports =  class Model extends QueryHelper {
      * 
      * @param {Object} obj 
      */
-    constructor(schema) {
+    constructor(schema = null) {
         super();
 
         /**
@@ -43,22 +43,62 @@ module.exports =  class Model extends QueryHelper {
          * 10. _$schema {Schema} - Instance of Schema (Only used in migration)
          */
 
-            
-        this._$modelName  = () => null;
-        this._$connection = () => Store.connection;
-
-        this._$orginalColData = () => '';
+        Object.defineProperty(this, '_$modelName', {
+            value: null,
+            writable: true,
+            configurable: false
+        });
+        Object.defineProperty(this, '_$connection', {
+            value: Store.connection,
+            writable: true,
+            configurable: false
+        });
+        Object.defineProperty(this, '_$orginalColData', {
+            value: '',
+            writable: true,
+            configurable: false
+        });
+        
         
         // Query Chunks
-        this._$where    = () => '';
-        this._$project  = () => '*';
-        this._$limit    = () => '';
-        this._$orderBy  = () => '';
-        this._$populate = () => [];
-        this._$lean     = () => false;
+        Object.defineProperty(this, '_$where', {
+            value: '',
+            writable: true,
+            configurable: false
+        });
+        Object.defineProperty(this, '_$project', {
+            value: '*',
+            writable: true,
+            configurable: false
+        });
+        Object.defineProperty(this, '_$limit', {
+            value: '',
+            writable: true,
+            configurable: false
+        });
+        Object.defineProperty(this, '_$orderBy', {
+            value: '',
+            writable: true,
+            configurable: false
+        });
+        Object.defineProperty(this, '_$populate', {
+            value: [],
+            writable: true,
+            configurable: false
+        });
+        Object.defineProperty(this, '_$lean', {
+            value: false,
+            writable: true,
+            configurable: false
+        });
 
 
-        this._$schema = () => schema; // Only used in migration
+        // Only used in migration
+        Object.defineProperty(this, '_$schema', {
+            value: () => schema,
+            writable: true,
+            configurable: false
+        });
     }
 
     /**
@@ -68,7 +108,7 @@ module.exports =  class Model extends QueryHelper {
      */
     mapObject(obj) {
         // Map obj to Model
-        const schema = Store.models.get(this._$modelName()).schema;
+        const schema = Store.models.get(this._$modelName).schema;
         for (let column in schema) {
             if (obj.hasOwnProperty(column)) {
                 this[column] = obj[column];
@@ -104,7 +144,7 @@ module.exports =  class Model extends QueryHelper {
         const model = new Model();
 
         // Set Model Name
-        model.modelName = modelName ? modelName : this._$modelName();
+        model.modelName = modelName ? modelName : this._$modelName;
 
         // Map all private data to new instace of Model
         this.mapModel(model);
@@ -122,24 +162,23 @@ module.exports =  class Model extends QueryHelper {
      */
     save() {
         return new Promise((resolve, reject) => {
-            const modelName = this._$modelName();
             for (let i in this) {
                 if ((typeof this[i]) === 'function') {
                     continue;
                 }
 
                 if (this[i] instanceof Model) {
-                    this[i] = this[i]._$orginalColData();
+                    this[i] = this[i]._$orginalColData;
                 }
             }
-            this._$connection().query(`INSERT INTO ${modelName} SET ? ON DUPLICATE KEY UPDATE ?`, [this, this], (error, result)  => {
+            this._$connection.query(`INSERT INTO ${this._$modelName} SET ? ON DUPLICATE KEY UPDATE ?`, [this, this], (error, result)  => {
                 if (error) {
                     delete error.sql;
                     reject(error);
                 }
 
                 if (result && result.insertId) {
-                    this[Store.models.get(modelName).aiField] = result.insertId;
+                    this[Store.models.get(this._$modelName).aiField] = result.insertId;
                 }
 
                 resolve(this);
@@ -156,7 +195,7 @@ module.exports =  class Model extends QueryHelper {
      */
     update(data, where = {}) {
         return new Promise((resolve, reject) => {
-            this._$connection().query(`UPDATE ${this._$modelName()} SET ? ${this.isObjectEmpty(where)?'':'WHERE'} ${this.where(where)}`, [data], function(error, result) {
+            this._$connection.query(`UPDATE ${this._$modelName} SET ? ${this.isObjectEmpty(where)?'':'WHERE'} ${this.where(where)}`, [data], function(error, result) {
                 if (error) reject(error);
 
                 resolve(result);
@@ -172,7 +211,7 @@ module.exports =  class Model extends QueryHelper {
      */
     delete(where = {}) {
         return new Promise((resolve, reject) => {
-            this._$connection().query(`DELETE FROM ${this._$modelName()} ${this.isObjectEmpty(where)?'':'WHERE'} ${this.where(where)}`, function(error, result) {
+            this._$connection.query(`DELETE FROM ${this._$modelName} ${this.isObjectEmpty(where)?'':'WHERE'} ${this.where(where)}`, function(error, result) {
                 if (error) reject(error);
 
                 resolve(result);
@@ -190,7 +229,7 @@ module.exports =  class Model extends QueryHelper {
      */
     insertMany(cols, values) {
         return new Promise((resolve, reject) => {
-            this._$connection().query(`INSERT INTO ${this._$modelName()}(${cols.join()}) VALUES ?`, [values], function(error, result) {
+            this._$connection.query(`INSERT INTO ${this._$modelName}(${cols.join()}) VALUES ?`, [values], function(error, result) {
                 if (error) reject(error);
 
                 resolve(result);
@@ -204,11 +243,11 @@ module.exports =  class Model extends QueryHelper {
      * @returns {Promise}
      */
     exec() {
-        const lean      = this._$lean();
-        const populate  = this._$populate();
-        const modelName = this._$modelName();
+        const lean      = this._$lean;
+        const populate  = this._$populate;
+        const modelName = this._$modelName;
         const promise   = new Promise((resolve, reject) => {
-            this._$connection().query(`SELECT ${this._$project()} FROM ${modelName} ${this._$where()} ${this._$orderBy()} ${this._$limit()}`, async (error, result) => {
+            this._$connection.query(`SELECT ${this._$project} FROM ${modelName} ${this._$where} ${this._$orderBy} ${this._$limit}`, async (error, result) => {
                 if (error) reject(error);
 
                 if(result && result.length > 0) {
@@ -274,7 +313,7 @@ module.exports =  class Model extends QueryHelper {
                                                 const model = this.create(populateResult[j], column.ref);
                                                 
                                                 // Saving orignal column data
-                                                model._$orginalColData = () => populateResult[j][primaryKeys[0]];
+                                                model._$orginalColData = populateResult[j][primaryKeys[0]];
 
                                                 populatedData[populateResult[j][primaryKeys[0]]] = model;
                                             }
@@ -322,7 +361,7 @@ module.exports =  class Model extends QueryHelper {
      */
     find(where = {}) {
         if (!this.isObjectEmpty(where)) {
-            this._$where = () => `WHERE ${this.where(where)}`;
+            this._$where = `WHERE ${this.where(where)}`;
         }
         return this;
     }
@@ -337,9 +376,9 @@ module.exports =  class Model extends QueryHelper {
      */
     project(arr = []) {
         if (arr.length > 0) {
-            const primaryKeys = Store.models.get(this._$modelName()).primaryKeys;
+            const primaryKeys = Store.models.get(this._$modelName).primaryKeys;
             const projection = new Set([...arr, ...(primaryKeys.array)]);
-            this._$project = () => [...projection].join();
+            this._$project = [...projection].join();
         }
         
         return this;
@@ -354,7 +393,7 @@ module.exports =  class Model extends QueryHelper {
      * @return {Model}
      */
     limit(limit, offset = null) {
-        this._$limit = () => `LIMIT ${offset ? `${offset}, ` : ''} ${limit}`;
+        this._$limit = `LIMIT ${offset ? `${offset}, ` : ''} ${limit}`;
         return this;
     }
 
@@ -367,7 +406,7 @@ module.exports =  class Model extends QueryHelper {
      * @return {Model}
      */
     orderBy(cols, sortBy = '') {
-        this._$orderBy = () => `ORDER BY ${cols} ${sortBy}`;
+        this._$orderBy = `ORDER BY ${cols} ${sortBy}`;
         return this;
     }
 
@@ -377,7 +416,7 @@ module.exports =  class Model extends QueryHelper {
      * @return {Model}
      */
     lean() {
-        this._$lean = () => true;
+        this._$lean = true;
         return this;
     }
 
@@ -390,10 +429,10 @@ module.exports =  class Model extends QueryHelper {
      * @return {Model}
      */
     populate(col, project = []) {
-        let populate = this._$populate();
+        let populate = this._$populate;
         populate.push({col, project});
         
-        this._$populate = () => populate;
+        this._$populate = populate;
         return this;
     }
 
@@ -423,7 +462,7 @@ module.exports =  class Model extends QueryHelper {
      */
     populateQuery(tableName, project, col, arr) {
         return new Promise((resolve, reject) => {
-            this._$connection().query(`SELECT ${project} FROM ${tableName} WHERE ${Store.mysql.escapeId(col)} IN (?)`, [arr], (error, result) => {
+            this._$connection.query(`SELECT ${project} FROM ${tableName} WHERE ${Store.mysql.escapeId(col)} IN (?)`, [arr], (error, result) => {
                 if (error) reject(error);
 
                 resolve(result);
@@ -435,12 +474,36 @@ module.exports =  class Model extends QueryHelper {
      * Clear Query Chunks
      */
     clearChunks() {
-        this._$where    = () => '';
-        this._$project  = () => '*';
-        this._$limit    = () => '';
-        this._$orderBy  = () => '';
-        this._$populate = () => [];
-        this._$lean     = () => false;
+        Object.defineProperty(this, '_$where', {
+            value: '',
+            writable: true,
+            configurable: false
+        });
+        Object.defineProperty(this, '_$project', {
+            value: '*',
+            writable: true,
+            configurable: false
+        });
+        Object.defineProperty(this, '_$limit', {
+            value: '',
+            writable: true,
+            configurable: false
+        });
+        Object.defineProperty(this, '_$orderBy', {
+            value: '',
+            writable: true,
+            configurable: false
+        });
+        Object.defineProperty(this, '_$populate', {
+            value: [],
+            writable: true,
+            configurable: false
+        });
+        Object.defineProperty(this, '_$lean', {
+            value: false,
+            writable: true,
+            configurable: false
+        });
     }
 
     /**
@@ -451,7 +514,7 @@ module.exports =  class Model extends QueryHelper {
      * @return {Model} 
      */
     useConnection(connection) {
-        this._$connection = () => connection;
+        this._$connection = connection;
         return this;
     }
 
@@ -459,16 +522,16 @@ module.exports =  class Model extends QueryHelper {
      * Release Pool Connection
      */
     releaseConnection() {
-        this._$connection().release();
-        this._$connection = () => Store.connection;
+        this._$connection.release();
+        this._$connection = Store.connection;
     }
 
     /**
      * Destroy Pool Connection
      */
     destroyConnection() {
-        this._$connection().destroy();
-        this._$connection = () => Store.connection;
+        this._$connection.destroy();
+        this._$connection = Store.connection;
     }
     
     /**
@@ -507,20 +570,20 @@ module.exports =  class Model extends QueryHelper {
         primaryKeys.string = primaryKeys.array.join();
 
         // Saving Data into Store
-        Store.models.set(this._$modelName(), {primaryKeys, aiField, schema: finalSchema});
+        Store.models.set(this._$modelName, {primaryKeys, aiField, schema: finalSchema});
     }
 
     /**
      * Set Model Name
      */
     set modelName(modelName) {
-        this._$modelName = () => modelName;
+        this._$modelName = modelName;
     }
 
     /**
      * Get Model Name
      */
     get modelName() {
-        return this._$modelName();
+        return this._$modelName;
     }
 }
