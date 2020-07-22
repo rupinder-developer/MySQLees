@@ -1191,7 +1191,7 @@ MySQLees Models track changes. You can modify data by using `Model.save()` metho
 
 ```javascript
 const result = await Model.find().limit(1).exec();
-console.log(result[0] instance of mysqlees.Model); // true
+console.log(result[0] instanceof mysqlees.Model); // true
 
 // Updating Data
 result[0].name = 'Rupinder Singh';
