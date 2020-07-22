@@ -45,59 +45,49 @@ module.exports =  class Model extends QueryHelper {
 
         Object.defineProperty(this, '_$modelName', {
             value: null,
-            writable: true,
-            configurable: false
+            writable: true
         });
         Object.defineProperty(this, '_$connection', {
             value: Store.connection,
-            writable: true,
-            configurable: false
+            writable: true
         });
         Object.defineProperty(this, '_$orginalColData', {
             value: '',
-            writable: true,
-            configurable: false
+            writable: true
         });
         
         
         // Query Chunks
         Object.defineProperty(this, '_$where', {
             value: '',
-            writable: true,
-            configurable: false
+            writable: true
         });
         Object.defineProperty(this, '_$project', {
             value: '*',
-            writable: true,
-            configurable: false
+            writable: true
         });
         Object.defineProperty(this, '_$limit', {
             value: '',
-            writable: true,
-            configurable: false
+            writable: true
         });
         Object.defineProperty(this, '_$orderBy', {
             value: '',
-            writable: true,
-            configurable: false
+            writable: true
         });
         Object.defineProperty(this, '_$populate', {
             value: [],
-            writable: true,
-            configurable: false
+            writable: true
         });
         Object.defineProperty(this, '_$lean', {
             value: false,
-            writable: true,
-            configurable: false
+            writable: true
         });
 
 
         // Only used in migration
         Object.defineProperty(this, '_$schema', {
             value: () => schema,
-            writable: true,
-            configurable: false
+            writable: true
         });
     }
 
@@ -476,33 +466,27 @@ module.exports =  class Model extends QueryHelper {
     clearChunks() {
         Object.defineProperty(this, '_$where', {
             value: '',
-            writable: true,
-            configurable: false
+            writable: true
         });
         Object.defineProperty(this, '_$project', {
             value: '*',
-            writable: true,
-            configurable: false
+            writable: true
         });
         Object.defineProperty(this, '_$limit', {
             value: '',
-            writable: true,
-            configurable: false
+            writable: true
         });
         Object.defineProperty(this, '_$orderBy', {
             value: '',
-            writable: true,
-            configurable: false
+            writable: true
         });
         Object.defineProperty(this, '_$populate', {
             value: [],
-            writable: true,
-            configurable: false
+            writable: true
         });
         Object.defineProperty(this, '_$lean', {
             value: false,
-            writable: true,
-            configurable: false
+            writable: true
         });
     }
 
