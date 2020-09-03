@@ -115,15 +115,6 @@ module.exports =  class Model extends QueryHelper {
     }
 
     /**
-     * Map one Model to another
-     * 
-     * @param {Model} model - Instance of Model 
-     */
-    mapModel(model) {
-        model._$connection  = this._$connection;
-    }
-
-    /**
      * Create new instace of Model
      * 
      * @param {Object} obj
@@ -137,7 +128,7 @@ module.exports =  class Model extends QueryHelper {
         model.modelName = modelName ? modelName : this._$modelName;
 
         // Map all private data to new instace of Model
-        this.mapModel(model);
+        model._$connection  = this._$connection;
 
         // Map data to new instace of Model
         model.mapObject(obj);
