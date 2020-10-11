@@ -41,6 +41,8 @@ module.exports =  class Model extends QueryHelper {
          * 9. _$orginalColData {String} - Store orginal column data before populating, which in will further helps to run .save() on parent model
          *
          * 10. _$schema {Schema} - Instance of Schema (Only used in migration)
+         *  
+         * 11. _$isUpsert {Boolean} - Decide whether upsert query will run while using .save() method or not.
          */
 
         Object.defineProperty(this, '_$modelName', {
@@ -80,6 +82,12 @@ module.exports =  class Model extends QueryHelper {
         });
         Object.defineProperty(this, '_$lean', {
             value: false,
+            writable: true
+        });
+
+
+        Object.defineProperty(this, '_$isUpsert', {
+            value: true,
             writable: true
         });
 
@@ -125,7 +133,12 @@ module.exports =  class Model extends QueryHelper {
         const model = new Model();
 
         // Set Model Name
-        model.modelName = modelName ? modelName : this._$modelName;
+        if (modelName) {
+            model.modelName = modelName;
+        } else {
+            model.modelName = this._$modelName;
+            model._$isUpsert = false;
+        }
 
         // Map all private data to new instace of Model
         model._$connection  = this._$connection;
@@ -152,18 +165,35 @@ module.exports =  class Model extends QueryHelper {
                     this[i] = this[i]._$orginalColData;
                 }
             }
-            this._$connection.query(`INSERT INTO ${this._$modelName} SET ? ON DUPLICATE KEY UPDATE ?`, [this, this], (error, result)  => {
-                if (error) {
-                    delete error.sql;
-                    reject(error);
-                }
 
-                if (result && result.insertId) {
-                    this[Store.models.get(this._$modelName).aiField] = result.insertId;
-                }
-
-                resolve(this);
-            });
+            if (this._$isUpsert) {
+                this._$connection.query(`INSERT INTO ${this._$modelName} SET ? ON DUPLICATE KEY UPDATE ?`, [this, this], (error, result)  => {
+                    if (error) {
+                        delete error.sql;
+                        reject(error);
+                    }
+    
+                    if (result && result.insertId) {
+                        this[Store.models.get(this._$modelName).aiField] = result.insertId;
+                    }
+    
+                    resolve(this);
+                });
+            } else {
+                this._$isUpsert = true;
+                this._$connection.query(`INSERT INTO ${this._$modelName} SET ?`, [this], (error, result)  => {
+                    if (error) {
+                        delete error.sql;
+                        reject(error);
+                    }
+    
+                    if (result && result.insertId) {
+                        this[Store.models.get(this._$modelName).aiField] = result.insertId;
+                    }
+    
+                    resolve(this);
+                });
+            }
         });   
     }
 
